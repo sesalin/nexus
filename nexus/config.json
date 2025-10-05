@@ -1,16 +1,23 @@
 {
   "name": "Nexus Nexdom",
-  "version": "0.1.46",
+  "version": "0.1.47",
   "slug": "nexus",
   "description": "Nexus es una interfaz visual y personalizable para controlar tu ecosistema Nexdom desde Home Assistant.",
-  "arch": ["amd64"],
+  "arch": [
+    "amd64"
+  ],
   "image": "docker.io/chekosg/nexus_dashboard",
   "startup": "services",
   "boot": "auto",
   "ingress": false,
   "init": false,
   "homeassistant_api": true,
-  "map": ["config:rw", "ssl:ro", "media:rw", "share:rw"],
+  "map": [
+    "config:rw",
+    "ssl:ro",
+    "media:rw",
+    "share:rw"
+  ],
   "options": {
     "port": 5050,
     "vapid_public_key": "",
@@ -29,8 +36,9 @@
     "hass_url": "str",
     "ha_token": "password"
   },
-  "ports": { "5050/tcp": 5050 },
+  "ports": {
+    "5050/tcp": 5050
+  },
   "webui": "http://[HOST]:[PORT:5050]/",
   "watchdog": "http://[HOST]:[PORT:5050]/health"
 }
-
