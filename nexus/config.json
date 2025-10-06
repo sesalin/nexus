@@ -1,6 +1,6 @@
 {
   "name": "Nexus Nexdom",
-  "version": "0.1.62",
+  "version": "0.1.63",
   "slug": "nexus",
   "description": "Nexus es una interfaz visual y personalizable para controlar tu ecosistema Nexdom desde Home Assistant.",
   "arch": [
