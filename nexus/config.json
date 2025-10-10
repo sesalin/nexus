@@ -1,17 +1,24 @@
 {
   "name": "Nexus Dash",
-  "version": "0.1.82",
+  "version": "0.1.83",
   "slug": "nexus",
   "description": "Dashboard amigable para controlar Home Assistant",
-  "arch": ["amd64", "aarch64"],
+  "arch": [
+    "amd64",
+    "aarch64"
+  ],
   "image": "docker.io/chekosg/nexus_dashboard",
   "startup": "services",
   "boot": "auto",
   "ingress": false,
   "init": false,
-  "map": ["config:rw", "ssl:ro", "media:rw", "share:rw"],
+  "map": [
+    "config:rw",
+    "ssl:ro",
+    "media:rw",
+    "share:rw"
+  ],
   "homeassistant_api": true,
-
   "options": {
     "port": 5050,
     "hass_url": "http://homeassistant:8123",
@@ -35,7 +42,6 @@
     "jwt_secret": "",
     "totp_secret_key": ""
   },
-
   "schema": {
     "port": "int",
     "hass_url": "str?",
@@ -59,9 +65,9 @@
     "jwt_secret": "password?",
     "totp_secret_key": "password?"
   },
-
-  "ports": { "5050/tcp": 5050 },
+  "ports": {
+    "5050/tcp": 5050
+  },
   "webui": "http://[HOST]:[PORT:5050]/",
   "watchdog": "http://[HOST]:[PORT:5050]/health"
 }
-
