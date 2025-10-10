@@ -1,44 +1,61 @@
 {
-  "name": "Nexus Nexdom",
-  "version": "v0.1.80",
+  "name": "Nexus Dash",
+  "version": "0.1.80",
   "slug": "nexus",
-  "description": "Nexus es una interfaz visual y personalizable para controlar tu ecosistema Nexdom desde Home Assistant.",
-  "arch": [
-    "amd64"
-  ],
-  "image": "docker.io/chekosg/nexus_dashboard",
+  "description": "Dashboard amigable para controlar Home Assistant",
+  "arch": ["amd64", "aarch64"],
   "startup": "services",
   "boot": "auto",
-  "ingress": false,
-  "init": false,
+  "map": ["config:rw", "ssl:ro", "media:rw", "share:rw"],
   "homeassistant_api": true,
-  "map": [
-    "config:rw",
-    "ssl:ro",
-    "media:rw",
-    "share:rw"
-  ],
+
   "options": {
     "port": 5050,
+    "hass_url": "http://homeassistant:8123",
+    "public_base": "",
+    "ha_base": "",
+    "client_id": "",
+    "redirect_uri": "",
+    "session_secret": "",
     "vapid_public_key": "",
     "vapid_private_key": "",
     "internal_push_token": "",
-    "contact_email": "mailto:soporte@nexdom.io",
-    "hass_url": "http://192.168.100.90:8123",
-    "ha_token": ""
+    "contact_email": "soporte@nexdom.io",
+    "support_phone": "+528112345678",
+    "support_email": "soporte@nexdom.mx",
+    "support_whatsapp": "+528112345678",
+    "admin_email": "sergio@nexdom.mx",
+    "n8n_webhook_url": "https://tu-n8n.com/webhook/send-admin-otp",
+    "nd_disable_cooldown": true,
+    "nd_snap_keep": 20,
+    "nd_snap_max_age_days": 30,
+    "jwt_secret": "",
+    "totp_secret_key": ""
   },
+
   "schema": {
-    "port": "int(1024,65535)",
-    "vapid_public_key": "str",
-    "vapid_private_key": "str",
-    "internal_push_token": "password",
+    "port": "int",
+    "hass_url": "str?",
+    "public_base": "str?",
+    "ha_base": "str?",
+    "client_id": "str?",
+    "redirect_uri": "str?",
+    "session_secret": "password?",
+    "vapid_public_key": "str?",
+    "vapid_private_key": "str?",
+    "internal_push_token": "password?",
     "contact_email": "str?",
-    "hass_url": "str",
-    "ha_token": "password"
+    "support_phone": "str?",
+    "support_email": "str?",
+    "support_whatsapp": "str?",
+    "admin_email": "str?",
+    "n8n_webhook_url": "str?",
+    "nd_disable_cooldown": "bool?",
+    "nd_snap_keep": "int?",
+    "nd_snap_max_age_days": "int?",
+    "jwt_secret": "password?",
+    "totp_secret_key": "password?"
   },
-  "ports": {
-    "5050/tcp": 5050
-  },
-  "webui": "http://[HOST]:[PORT:5050]/",
-  "watchdog": "http://[HOST]:[PORT:5050]/health"
+
+  "ports": { "5050/tcp": 5050 }
 }
