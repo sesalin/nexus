@@ -19,6 +19,11 @@
     "share:rw"
   ],
   "homeassistant_api": true,
+  "hassio_api": true,
+  "environment": {
+    "ADDON": "true",
+    "ND_DATA_VIA_SUPERVISOR": "true"
+  },
   "options": {
     "port": 5050,
     "hass_url": "http://homeassistant:8123",
