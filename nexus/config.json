@@ -45,7 +45,12 @@
     "nd_snap_keep": 20,
     "nd_snap_max_age_days": 30,
     "jwt_secret": "",
-    "totp_secret_key": ""
+    "totp_secret_key": "",
+    "cf_access_aud": "",
+    "cf_access_iss": "",
+    "cf_access_public_key": "",
+    "cf_access_public_key_file": "",
+    "cf_access_enforce": false
   },
   "schema": {
     "port": "int",
@@ -68,7 +73,12 @@
     "nd_snap_keep": "int?",
     "nd_snap_max_age_days": "int?",
     "jwt_secret": "password?",
-    "totp_secret_key": "password?"
+    "totp_secret_key": "password?",
+    "cf_access_aud": "str?",
+    "cf_access_iss": "str?",
+    "cf_access_public_key": "str?",
+    "cf_access_public_key_file": "str?",
+    "cf_access_enforce": "bool?"
   },
   "ports": {
     "5050/tcp": 5050
