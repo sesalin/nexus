@@ -27,6 +27,7 @@
   "options": {
     "port": 5050,
     "hass_url": "",
+    "nd_disable_cooldown": 0,
     "vapid_public_key": "",
     "vapid_private_key": "",
     "internal_push_token": "",
@@ -37,6 +38,7 @@
   "schema": {
     "port": "int",
     "hass_url": "str?",
+    "nd_disable_cooldown": "int(0,1)",
     "vapid_public_key": "str?",
     "vapid_private_key": "str?",
     "internal_push_token": "password?",
