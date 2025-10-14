@@ -1,6 +1,6 @@
 {
   "name": "Nexus Dash",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "slug": "nexus",
   "description": "Dashboard amigable para controlar Home Assistant",
   "arch": [
