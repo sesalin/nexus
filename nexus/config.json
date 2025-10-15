@@ -33,7 +33,9 @@
     "internal_push_token": "",
     "contact_email": "",
     "support_phone": "",
-    "support_whatsapp": ""
+    "support_whatsapp": "",
+    "openai_api_key": "",
+    "nexdom_pin": ""
   },
   "schema": {
     "port": "int",
@@ -44,7 +46,9 @@
     "internal_push_token": "password?",
     "contact_email": "str?",
     "support_phone": "str?",
-    "support_whatsapp": "str?"
+    "support_whatsapp": "str?",
+    "openai_api_key": "password?",
+    "nexdom_pin": "str?"
   },
   "ports": {
     "5050/tcp": 5050
