@@ -48,7 +48,7 @@
     "support_phone": "str?",
     "support_whatsapp": "str?",
     "openai_api_key": "password?",
-    "nexdom_pin": "str?"
+    "nexdom_pin": "str"
   },
   "ports": {
     "5050/tcp": 5050
