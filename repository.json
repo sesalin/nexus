@@ -17,7 +17,7 @@
       "description": "Envía métricas de Home Assistant OS a InfluxDB central con buffer y envío cada 5 minutos",
       "logo": "telegraf_nexdom/logo.png",
       "background": "dark",
-      "version": "1.2.9"
+      "version": "1.3.0"
     }
   ]
 }
