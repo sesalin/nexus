@@ -36,6 +36,14 @@ fi
 
 log_info "Leyendo opciones desde ${CONFIG_PATH} con UID $(id -u) ($(id -un))"
 
+INTERVAL_SECONDS=$(jq -r '.interval_seconds // 300' "${CONFIG_PATH}")
+if [[ ! "${INTERVAL_SECONDS}" =~ ^[0-9]+$ ]] || [[ "${INTERVAL_SECONDS}" -le 0 ]]; then
+  log_warn "interval_seconds inválido (${INTERVAL_SECONDS}), usando 300 segundos"
+  INTERVAL_SECONDS=300
+fi
+TELEGRAF_INTERVAL="${INTERVAL_SECONDS}s"
+TELEGRAF_FLUSH_INTERVAL="${TELEGRAF_INTERVAL}"
+
 INFLUX_URL=$(jq -r '.influx_url // "https://influx.nexdom.mx"' "${CONFIG_PATH}")
 INFLUX_TOKEN=$(jq -r '.influx_token // empty' "${CONFIG_PATH}")
 if [[ -z "${INFLUX_TOKEN}" ]]; then
@@ -51,11 +59,13 @@ MQTT_USER=$(jq -r '.mqtt_user // "telegraf"' "${CONFIG_PATH}")
 MQTT_PASSWORD=$(jq -r '.mqtt_password // empty' "${CONFIG_PATH}")
 CLIENT_ID=$(jq -r '.client_id // "haos_cliente"' "${CONFIG_PATH}")
 
+export TELEGRAF_INTERVAL TELEGRAF_FLUSH_INTERVAL
 export INFLUX_URL INFLUX_TOKEN INFLUX_ORG INFLUX_BUCKET MQTT_HOST MQTT_PORT MQTT_USER MQTT_PASSWORD CLIENT_ID
 
 echo "🚀 Iniciando Telegraf Nexdom Collector..."
 echo "   → MQTT ${MQTT_HOST}:${MQTT_PORT} (usuario: ${MQTT_USER}, client_id: ${CLIENT_ID})"
 echo "   → Influx ${INFLUX_URL} (bucket: \"${INFLUX_BUCKET}\", org: ${INFLUX_ORG})"
+echo "   → Intervalo Telegraf: ${TELEGRAF_INTERVAL}"
 
 if command -v timeout >/dev/null 2>&1; then
   if timeout 5 bash -c "echo > /dev/tcp/${MQTT_HOST}/${MQTT_PORT}" 2>/dev/null; then
