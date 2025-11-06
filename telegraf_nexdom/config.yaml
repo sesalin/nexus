@@ -1,5 +1,5 @@
 name: "Telegraf Nexdom Collector"
-version: "1.3.2"
+version: "1.3.3"
 slug: "telegraf_nexdom"
 description: "Envía métricas MQTT locales de HAOS a InfluxDB central con buffer, reintento y envío cada 5 minutos"
 arch:
