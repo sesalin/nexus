@@ -10,11 +10,6 @@ clear_logs
 
 CONFIG_PATH="/data/options.json"
 
-if [[ ! -f "${CONFIG_PATH}" ]]; then
-  echo "ERROR: No se encontró el archivo de configuración ${CONFIG_PATH}" >&2
-  exit 1
-fi
-
 log_info() {
   echo "ℹ️  $*"
 }
@@ -26,6 +21,20 @@ log_warn() {
 log_error() {
   echo "❌ $*" >&2
 }
+
+if [[ ! -f "${CONFIG_PATH}" ]]; then
+  log_error "No se encontró el archivo de configuración ${CONFIG_PATH}"
+  exit 1
+fi
+
+if [[ ! -r "${CONFIG_PATH}" ]]; then
+  log_error "Sin permisos para leer ${CONFIG_PATH}. UID $(id -u) ($(id -un))"
+  log_warn "Entradas en /data:"
+  ls -l /data || true
+  exit 1
+fi
+
+log_info "Leyendo opciones desde ${CONFIG_PATH} con UID $(id -u) ($(id -un))"
 
 INFLUX_URL=$(jq -r '.influx_url // "https://influx.nexdom.mx"' "${CONFIG_PATH}")
 INFLUX_TOKEN=$(jq -r '.influx_token // empty' "${CONFIG_PATH}")
