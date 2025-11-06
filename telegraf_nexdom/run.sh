@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# --- limpiar panel de logs del add-on al iniciar (cosmético) ---
+clear_logs() {
+  printf '\033[2J\033[3J\033[H'
+  echo "🧹 Logs reiniciados $(date -Iseconds)"
+}
+clear_logs
+
 CONFIG_PATH="/data/options.json"
 
 if [[ ! -f "${CONFIG_PATH}" ]]; then
