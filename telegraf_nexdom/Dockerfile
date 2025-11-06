@@ -6,4 +6,6 @@ COPY run.sh /run.sh
 COPY telegraf.conf /etc/telegraf/telegraf.conf
 RUN chmod +x /run.sh
 
+USER root
+
 CMD ["/run.sh"]
