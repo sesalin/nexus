@@ -1,0 +1,36 @@
+name: "Nexdom Health Reporter"
+version: "0.1.0"
+slug: "nexdom_health"
+description: "Reporta estado de HAOS al backend central mediante webhooks (push)."
+arch:
+  - amd64
+  - aarch64
+  - armv7
+startup: services
+init: false
+boot: auto
+hassio_api: true
+homeassistant_api: true
+apparmor: true
+map:
+  - config:rw
+options:
+  client_id: "haos_cliente"
+  ha_token: ""
+  webhook_url: "https://n8n.nexdom.mx/webhook/health"
+  interval_seconds: 300
+  device_warn_threshold: 1
+  device_error_threshold: 10
+  storage_warn_free_percent: 20
+  storage_error_free_percent: 10
+  log_level: "info"
+schema:
+  client_id: str
+  ha_token: str
+  webhook_url: str
+  interval_seconds: int
+  device_warn_threshold: int
+  device_error_threshold: int
+  storage_warn_free_percent: int
+  storage_error_free_percent: int
+  log_level: list(debug|info|warning|error)

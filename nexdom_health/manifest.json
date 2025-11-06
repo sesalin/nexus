@@ -1,0 +1,41 @@
+{
+  "name": "Nexdom Health Reporter",
+  "slug": "nexdom_health",
+  "version": "0.1.0",
+  "stage": "experimental",
+  "description": "Add-on ligero que consulta Supervisor/Core y envía un informe a un webhook central.",
+  "arch": [
+    "amd64",
+    "aarch64",
+    "armv7"
+  ],
+  "startup": "services",
+  "boot": "auto",
+  "url": "https://nexdom.mx",
+  "panel_icon": "mdi:health-check",
+  "image": "docker.io/chekosg/nexdom_health-{arch}",
+  "options": {
+    "client_id": "haos_cliente",
+    "ha_token": "",
+    "webhook_url": "https://n8n.nexdom.mx/webhook/health",
+    "interval_seconds": 300,
+    "device_warn_threshold": 1,
+    "device_error_threshold": 10,
+    "storage_warn_free_percent": 20,
+    "storage_error_free_percent": 10,
+    "log_level": "info"
+  },
+  "schema": {
+    "client_id": "str",
+    "ha_token": "str",
+    "webhook_url": "str",
+    "interval_seconds": "int",
+    "device_warn_threshold": "int",
+    "device_error_threshold": "int",
+    "storage_warn_free_percent": "int",
+    "storage_error_free_percent": "int",
+    "log_level": "list(debug|info|warning|error)"
+  },
+  "logo": "logo.png",
+  "icon": "icon.png"
+}
