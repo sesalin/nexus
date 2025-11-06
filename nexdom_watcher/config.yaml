@@ -1,5 +1,5 @@
 name: "Nexdom Watcher Executor"
-version: "1.4.6"
+version: "1.4.7"
 slug: "nexdom_watcher"
 description: "Detecta add-ons pendientes, dispositivos offline y ejecuta acciones controladas publicando eventos MQTT hacia el stack central"
 arch:
@@ -10,6 +10,7 @@ init: false
 boot: auto
 hassio_api: true
 homeassistant_api: true
+hassio_role: manager
 apparmor: true
 map:
   - config:rw
