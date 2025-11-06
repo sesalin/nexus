@@ -18,6 +18,15 @@
       "logo": "telegraf_nexdom/logo.png",
       "background": "dark",
       "version": "1.3.3"
+    },
+    {
+      "name": "Nexdom Watcher",
+      "slug": "nexdom_watcher",
+      "description": "Monitorea HAOS: detecta updates de add-ons y dispositivos fuera de línea; publica eventos en MQTT y soporta recheck inmediato tras acciones.",
+      "logo": "nexdom_watcher/logo.png",
+      "background": "dark",
+      "version": "0.1.0"
     }
   ]
 }
+

@@ -1,0 +1,42 @@
+name: "Nexdom Watcher Executor"
+version: "1.4.0"
+slug: "nexdom_watcher"
+description: "Detecta add-ons pendientes, dispositivos offline y ejecuta acciones controladas publicando eventos MQTT hacia el stack central"
+arch:
+  - amd64
+startup: services
+init: false
+boot: auto
+hassio_api: true
+homeassistant_api: true
+apparmor: true
+map:
+  - config:rw
+options:
+  mqtt_host: "core-mosquitto"
+  mqtt_port: 1883
+  mqtt_user: "telegraf"
+  mqtt_password: "telegraf123"
+  mqtt_base_topic: "nexdom"
+  client_id: "haos_cliente"
+  ha_token: ""
+  ha_core_url: "http://homeassistant:8123"
+  ha_supervisor_url: "http://supervisor"
+  addons_check_seconds: 43200
+  devices_check_seconds: 300
+  publish_retain: true
+  log_level: "info"
+schema:
+  mqtt_host: str
+  mqtt_port: int
+  mqtt_user: str
+  mqtt_password: str
+  mqtt_base_topic: str
+  client_id: str
+  ha_token: str
+  ha_core_url: str
+  ha_supervisor_url: str
+  addons_check_seconds: int
+  devices_check_seconds: int
+  publish_retain: bool
+  log_level: list(debug|info|warning|error)
