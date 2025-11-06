@@ -166,9 +166,12 @@ class HealthCollector:
         return Status("ok", detail)
 
 
-def post_payload(webhook_url: str, payload: Dict[str, Any]) -> None:
+def post_payload(webhook_url: str, payload: Dict[str, Any], token: str | None = None) -> None:
     try:
-        response = requests.post(webhook_url, json=payload, timeout=10)
+        headers = {}
+        if token:
+            headers["X-Auth-Token"] = token
+        response = requests.post(webhook_url, json=payload, headers=headers, timeout=10)
         response.raise_for_status()
     except requests.RequestException as exc:
         LOGGER.error("Error enviando webhook: %s", exc)

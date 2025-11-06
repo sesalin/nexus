@@ -20,6 +20,7 @@ class Config:
     client_id: str
     ha_token: str
     webhook_url: str
+    webhook_token: str
     interval_seconds: int
     log_level: Literal["debug", "info", "warning", "error"]
     thresholds: Thresholds
@@ -49,6 +50,7 @@ class Config:
             client_id=str(data["client_id"]),
             ha_token=str(data["ha_token"]),
             webhook_url=str(data["webhook_url"]),
+            webhook_token=str(data.get("webhook_token", "")),
             interval_seconds=interval,
             log_level=str(data.get("log_level", "info")).lower(),  # type: ignore[arg-type]
             thresholds=thresholds,

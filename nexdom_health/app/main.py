@@ -29,7 +29,7 @@ async def worker(config: Config) -> None:
                 payload["status"]["devices"]["state"],
                 payload["status"]["storage"]["state"],
             )
-            post_payload(config.webhook_url, payload)
+            post_payload(config.webhook_url, payload, token=config.webhook_token)
         except Exception:  # noqa: BLE001
             LOGGER.exception("Error generando o enviando reporte")
 
