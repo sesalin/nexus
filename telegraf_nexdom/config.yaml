@@ -1,0 +1,33 @@
+name: "Telegraf Nexdom Collector"
+version: "1.2.2"
+slug: "telegraf_nexdom"
+description: "Envía métricas MQTT locales de HAOS a InfluxDB central con buffer, reintento y envío cada 5 minutos"
+arch:
+  - amd64
+  - aarch64
+startup: services
+init: false
+boot: auto
+hassio_api: false
+homeassistant_api: false
+apparmor: true
+map:
+  - config:rw
+options:
+  influx_token: ""
+  influx_org: "Nexdom"
+  influx_bucket: "haos"
+  mqtt_host: "core-mosquitto"
+  mqtt_port: 1883
+  mqtt_user: "telegraf"
+  mqtt_password: "telegraf123"
+  client_id: "haos_cliente"
+schema:
+  influx_token: str
+  influx_org: str
+  influx_bucket: str
+  mqtt_host: str
+  mqtt_port: int
+  mqtt_user: str
+  mqtt_password: str
+  client_id: str

@@ -10,6 +10,15 @@
       "logo": "nexus/logo.png",
       "background": "dark",
       "version": "0.3.27"
+    },
+    {
+      "name": "Telegraf Nexdom Collector",
+      "slug": "telegraf_nexdom",
+      "description": "Envía métricas de Home Assistant OS a InfluxDB central con buffer y envío cada 5 minutos",
+      "logo": "telegraf_nexdom/logo.png",
+      "background": "dark",
+      "version": "1.2.2"
     }
   ]
 }
+
