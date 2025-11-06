@@ -1,11 +1,12 @@
 {
   "name": "Telegraf Nexdom Collector",
   "slug": "telegraf_nexdom",
-  "version": "1.4.4",
+  "version": "1.4.6",
   "stage": "stable",
   "description": "Cliente Telegraf para HAOS que envía métricas MQTT locales hacia InfluxDB central de Nexdom.",
   "arch": [
-    "amd64"
+    "amd64",
+    "aarch64"
   ],
   "startup": "services",
   "boot": "auto",

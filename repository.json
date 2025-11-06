@@ -9,7 +9,7 @@
       "description": "Nexus es una interfaz visual y personalizable para controlar tu ecosistema Nexdom desde Home Assistant",
       "logo": "nexus/logo.png",
       "background": "dark",
-      "version": "0.3.27"
+      "version": "1.4.6"
     },
     {
       "name": "Telegraf Nexdom Collector",
@@ -17,7 +17,7 @@
       "description": "Envía métricas de Home Assistant OS a InfluxDB central con buffer y envío cada 5 minutos",
       "logo": "telegraf_nexdom/logo.png",
       "background": "dark",
-      "version": "1.3.3"
+      "version": "1.4.6"
     },
     {
       "name": "Nexdom Watcher",
@@ -25,7 +25,7 @@
       "description": "Monitorea HAOS: detecta updates de add-ons y dispositivos fuera de línea; publica eventos en MQTT y soporta recheck inmediato tras acciones.",
       "logo": "nexdom_watcher/logo.png",
       "background": "dark",
-      "version": "0.1.0"
+      "version": "1.4.6"
     }
   ]
 }

@@ -1,11 +1,12 @@
 {
   "name": "Nexdom Watcher Executor",
   "slug": "nexdom_watcher",
-  "version": "1.4.4",
+  "version": "1.4.6",
   "stage": "experimental",
   "description": "Servicio que detecta add-ons con actualizaciones pendientes y dispositivos offline en HAOS, publica eventos MQTT y ejecuta acciones bajo demanda.",
   "arch": [
-    "amd64"
+    "amd64",
+    "aarch64"
   ],
   "startup": "services",
   "boot": "auto",
