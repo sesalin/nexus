@@ -7,6 +7,18 @@ import logging
 from dataclasses import dataclass
 from typing import Awaitable, Callable, Optional
 
+# Compatibilidad con paho-mqtt 2.x (asyncio-mqtt espera message_retry_set)
+try:
+    import paho.mqtt.client as paho_client
+
+    if not hasattr(paho_client.Client, "message_retry_set"):
+        def _noop(self, *_args, **_kwargs):
+            return None
+
+        paho_client.Client.message_retry_set = _noop  # type: ignore[attr-defined,method-assign]
+except Exception:  # noqa: BLE001
+    pass
+
 from asyncio_mqtt import Client, MqttError, Topic
 
 MessageHandler = Callable[[str, str], Awaitable[None]]

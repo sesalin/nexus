@@ -1,5 +1,5 @@
 name: "Nexdom Watcher Executor"
-version: "1.5.0"
+version: "1.5.1"
 slug: "nexdom_watcher"
 description: "Detecta add-ons pendientes, dispositivos offline y ejecuta acciones controladas publicando eventos MQTT hacia el stack central"
 arch:
