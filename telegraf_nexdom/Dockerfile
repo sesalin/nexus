@@ -8,4 +8,4 @@ RUN chmod +x /run.sh
 
 USER root
 
-CMD ["/run.sh"]
+ENTRYPOINT ["/run.sh"]
