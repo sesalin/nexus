@@ -53,6 +53,7 @@ Desde la pestaña **Configuration** del add-on:
 | `client_id` | Identificador del host (aparece en el webhook) | `haos_cliente` |
 | `ha_token` | Long-Lived Token con acceso a Core/Supervisor | _obligatorio_ |
 | `webhook_url` | Endpoint donde se enviarán los reportes | `https://n8n.nexdom.mx/webhook/health` |
+| `webhook_token` | Se envía en el header `X-Auth-Token` para validar el webhook | _obligatorio_ |
 | `interval_seconds` | Frecuencia de envío (mínimo 60s) | `300` |
 | `device_warn_threshold` | Máx. entidades offline para `warn` | `1` |
 | `device_error_threshold` | Máx. entidades offline antes de `error` | `10` |
@@ -85,7 +86,7 @@ Guarda la configuración y enciende el add-on.
 El `release.sh` en la raíz del repo ya contempla este add-on. Para construir y publicar sólo “nexdom_health”:
 
 ```bash
-./release.sh 0.1.0 \
+./release.sh 0.1.1 \
   --addon health \
   --platforms "linux/amd64,linux/arm64,linux/arm/v7" \
   --image-health docker.io/tu_usuario/nexdom_health \

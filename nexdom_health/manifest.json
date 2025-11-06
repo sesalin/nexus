@@ -1,7 +1,7 @@
 {
   "name": "Nexdom Health Reporter",
   "slug": "nexdom_health",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "stage": "experimental",
   "description": "Add-on ligero que consulta Supervisor/Core y envía un informe a un webhook central.",
   "arch": [

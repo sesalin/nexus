@@ -1,5 +1,5 @@
 name: "Nexdom Health Reporter"
-version: "0.1.1"
+version: "0.1.2"
 slug: "nexdom_health"
 description: "Reporta estado de HAOS al backend central mediante webhooks (push)."
 arch:
@@ -11,6 +11,7 @@ init: false
 boot: auto
 hassio_api: true
 homeassistant_api: true
+hassio_role: manager
 apparmor: true
 map:
   - config:rw

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-import time
+import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List
@@ -26,20 +26,24 @@ class HAClient:
     CORE_URL = "http://homeassistant:8123"
     SUPERVISOR_URL = "http://supervisor"
 
-    def __init__(self, token: str) -> None:
+    def __init__(self, core_token: str) -> None:
         self._session = requests.Session()
-        self._headers = {
-            "Authorization": f"Bearer {token}",
+        self._core_headers = {
+            "Authorization": f"Bearer {core_token}",
+        }
+        supervisor_token = os.getenv("SUPERVISOR_TOKEN", core_token)
+        self._supervisor_headers = {
+            "Authorization": f"Bearer {supervisor_token}",
         }
 
     def get_core(self, path: str, timeout: float = 10.0) -> Any:
-        return self._request(self.CORE_URL + path, timeout=timeout)
+        return self._request(self.CORE_URL + path, headers=self._core_headers, timeout=timeout)
 
     def get_supervisor(self, path: str, timeout: float = 10.0) -> Any:
-        return self._request(self.SUPERVISOR_URL + path, timeout=timeout)
+        return self._request(self.SUPERVISOR_URL + path, headers=self._supervisor_headers, timeout=timeout)
 
-    def _request(self, url: str, *, timeout: float) -> Any:
-        response = self._session.get(url, headers=self._headers, timeout=timeout)
+    def _request(self, url: str, *, headers: Dict[str, str], timeout: float) -> Any:
+        response = self._session.get(url, headers=headers, timeout=timeout)
         response.raise_for_status()
         try:
             return response.json()
