@@ -1,0 +1,31 @@
+{
+  "name": "Nexdom Pulse",
+  "version": "0.1.0",
+  "slug": "nexdom_pulse",
+  "description": "Reporte de entidades de Home Assistant a Supabase vía RPC",
+  "arch": ["aarch64", "amd64", "armv7"],
+  "startup": "services",
+  "boot": "auto",
+  "homeassistant_api": true,
+  "hassio_api": true,
+  "options": {
+    "client_id": "",
+    "supabase_url": "",
+    "supabase_token": "",
+    "update_interval": 60,
+    "entities": ["*"],
+    "client_name": "",
+    "reporting_enabled": true,
+    "log_level": "info"
+  },
+  "schema": {
+    "client_id": "str",
+    "supabase_url": "str",
+    "supabase_token": "str",
+    "update_interval": "int",
+    "entities": ["str"],
+    "client_name": "str?",
+    "reporting_enabled": "bool",
+    "log_level": "list(debug|info|warning|error)"
+  }
+}

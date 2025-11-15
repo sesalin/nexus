@@ -1,0 +1,43 @@
+{
+  "name": "Nexdom Pulse",
+  "slug": "nexdom_pulse",
+  "version": "0.1.0",
+  "stage": "experimental",
+  "description": "Add-on que escucha el WebSocket de Home Assistant y envía entidades filtradas a Supabase por RPC.",
+  "arch": [
+    "amd64",
+    "aarch64",
+    "armv7"
+  ],
+  "startup": "services",
+  "boot": "auto",
+  "url": "https://nexdom.mx",
+  "panel_icon": "mdi:pulse",
+  "image": "docker.io/chekosg/nexdom_pulse-{arch}",
+  "options": {
+    "client_id": "haos_cliente",
+    "supabase_url": "https://project.supabase.co",
+    "supabase_token": "",
+    "update_interval": 60,
+    "entities": [
+      "*"
+    ],
+    "client_name": "",
+    "reporting_enabled": true,
+    "log_level": "info"
+  },
+  "schema": {
+    "client_id": "str",
+    "supabase_url": "str",
+    "supabase_token": "str",
+    "update_interval": "int",
+    "entities": [
+      "str"
+    ],
+    "client_name": "str?",
+    "reporting_enabled": "bool",
+    "log_level": "list(debug|info|warning|error)"
+  },
+  "logo": "logo.png",
+  "icon": "icon.png"
+}
