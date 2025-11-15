@@ -34,7 +34,14 @@
               "logo": "nexdom_health/logo.png",
               "background": "dark",
               "version": "0.1.0"
+            },
+            {
+              "name": "Nexdom Pulse",
+              "slug": "nexdom_pulse",
+              "description": "Envía entidades seleccionadas de Home Assistant hacia Supabase mediante RPC para monitoreo centralizado.",
+              "logo": "nexdom_pulse/logo.png",
+              "background": "dark",
+              "version": "0.1.0"
             }
           ]
         }
-

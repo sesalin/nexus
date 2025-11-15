@@ -1,0 +1,3 @@
+[submodule "nexdom_pulse"]
+	path = nexdom_pulse
+	url = git@github.com:sesalin/nexdom-pulse.git
