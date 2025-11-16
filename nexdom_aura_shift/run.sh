@@ -1,6 +1,4 @@
-#!/bin/sh
-set -e
-if [ -f /tmp/requirements.txt ]; then
-  pip3 install --no-cache-dir -r /tmp/requirements.txt || true
-fi
+#!/usr/bin/with-contenv sh
+set -euo pipefail
+
 exec python3 -u /app/main.py

@@ -12,9 +12,10 @@ WORKDIR /app
 COPY requirements.txt /tmp/requirements.txt
 RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
 
-COPY run.sh /usr/local/bin/run.sh
+RUN mkdir -p /etc/services.d/nexdom_aura_shift
+COPY run.sh /etc/services.d/nexdom_aura_shift/run
 COPY app /app
 
-RUN chmod +x /usr/local/bin/run.sh
+RUN chmod +x /etc/services.d/nexdom_aura_shift/run
 
-CMD ["/usr/local/bin/run.sh"]
+CMD ["/init"]
