@@ -1,7 +1,7 @@
 {
   "name": "Nexdom Pulse",
   "slug": "nexdom_pulse",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "stage": "experimental",
   "description": "Add-on que escucha el WebSocket de Home Assistant y envía entidades filtradas a Supabase por RPC.",
   "arch": [
