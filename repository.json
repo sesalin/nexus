@@ -42,6 +42,14 @@
               "logo": "nexdom_pulse/logo.png",
               "background": "dark",
               "version": "0.1.6"
+            },
+            {
+              "name": "Nexdom AuraShift",
+              "slug": "nexdom_aura_shift",
+              "description": "Ambientación visual dinámica para Home Assistant mediante fondos rotativos totalmente configurables.",
+              "logo": "nexdom_aura_shift/logo.png",
+              "background": "dark",
+              "version": "0.1.0"
             }
           ]
         }
