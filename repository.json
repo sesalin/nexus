@@ -49,7 +49,7 @@
               "description": "Ambientación visual dinámica para Home Assistant mediante fondos rotativos totalmente configurables.",
               "logo": "nexdom_aura_shift/logo.png",
               "background": "dark",
-              "version": "0.1.0"
+              "version": "0.1.1"
             }
           ]
         }
