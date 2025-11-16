@@ -1,4 +1,4 @@
-#!/command/with-contenv bash
-set -euo pipefail
+#!/bin/sh
+set -e
 
 exec python3 -u /app/main.py

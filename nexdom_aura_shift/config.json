@@ -11,6 +11,7 @@
     "i386"
   ],
   "startup": "application",
+  "init": false,
   "boot": "auto",
   "map": ["config:rw"],
   "options": {
