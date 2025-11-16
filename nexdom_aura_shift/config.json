@@ -1,6 +1,6 @@
 {
   "name": "Nexdom AuraShift",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "slug": "nexdom_aura_shift",
   "description": "Ambientación visual dinámica para Home Assistant mediante fondos rotativos y totalmente configurables",
   "arch": [
