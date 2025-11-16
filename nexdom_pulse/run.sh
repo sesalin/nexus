@@ -1,2 +1,4 @@
-#!/bin/sh
-python3 -u /app/main.py
+#!/usr/bin/env sh
+set -e
+
+exec python3 -u /app/main.py
