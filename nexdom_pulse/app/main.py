@@ -53,13 +53,23 @@ class HAOSReporter:
         token = os.environ.get("SUPERVISOR_TOKEN")
         if token:
             return token.strip()
+        candidate_files: List[str] = []
         token_file = os.environ.get("SUPERVISOR_TOKEN_FILE")
-        if token_file and os.path.exists(token_file):
+        if token_file:
+            candidate_files.append(token_file)
+        # Standard HassOS path exposed to add-ons
+        candidate_files.append("/run/secrets/supervisor_token")
+        candidate_files.append("/data/supervisor_token")
+        for path in candidate_files:
+            if not path or not os.path.exists(path):
+                continue
             try:
-                with open(token_file, "r", encoding="utf-8") as f:
-                    return f.read().strip()
+                with open(path, "r", encoding="utf-8") as f:
+                    data = f.read().strip()
+                    if data:
+                        return data
             except OSError as exc:
-                logging.error("No se pudo leer SUPERVISOR_TOKEN_FILE (%s): %s", token_file, exc)
+                logging.warning("No se pudo leer token del archivo %s: %s", path, exc)
         return ""
 
     def validate_required(self):
