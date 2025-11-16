@@ -22,7 +22,7 @@ class HAOSReporter:
         self.reporting_enabled = True
         self.log_level = "info"
         self.ws_url = "ws://supervisor/core/websocket"
-        self.supervisor_token = os.environ.get("SUPERVISOR_TOKEN", "")
+        self.supervisor_token = ""
         self.id_counter = 1
         self.changed_buffer: Dict[str, Dict[str, Any]] = {}
         self.connected_once = False
@@ -47,6 +47,20 @@ class HAOSReporter:
             "error": logging.ERROR,
         }.get(self.log_level, logging.INFO)
         logging.basicConfig(level=level, format="%(asctime)s %(levelname)s %(message)s")
+
+    def load_supervisor_token(self):
+        """Return the Supervisor token from env var or fallback file."""
+        token = os.environ.get("SUPERVISOR_TOKEN")
+        if token:
+            return token.strip()
+        token_file = os.environ.get("SUPERVISOR_TOKEN_FILE")
+        if token_file and os.path.exists(token_file):
+            try:
+                with open(token_file, "r", encoding="utf-8") as f:
+                    return f.read().strip()
+            except OSError as exc:
+                logging.error("No se pudo leer SUPERVISOR_TOKEN_FILE (%s): %s", token_file, exc)
+        return ""
 
     def validate_required(self):
         required = [self.client_id, self.supabase_url, self.supabase_token, self.update_interval, self.entities_patterns]
@@ -168,6 +182,7 @@ class HAOSReporter:
     async def run(self):
         self.load_options()
         self.setup_logging()
+        self.supervisor_token = self.load_supervisor_token()
         self.validate_required()
         backoff = 1
         while True:
