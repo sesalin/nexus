@@ -1,0 +1,54 @@
+name: NexDom Backup Sync
+version: 2.0.0
+slug: nexdom_bkup_sync
+description: Gestor de respaldos locales y remotos con configuración centralizada NexDom
+arch:
+  - amd64
+  - armv7
+  - aarch64
+startup: services
+boot: auto
+hassio_api: true
+ingress: false
+panel_icon: mdi:backup-restore
+ports:
+  8099/tcp: 8099
+map:
+  - data:rw
+  - backup:rw
+options: {}
+schema:
+  remote_config_enabled: bool?
+  remote_config_endpoint: str?
+  client_id: str?
+  client_token: str?
+  local:
+    enabled: bool?
+    frequency: str?
+    retention_days: int?
+    time: str?
+    partial: bool?
+    addons: list(str)?
+    folders: list(str)?
+  remote:
+    enabled: bool?
+    frequency: str?
+    day: str?
+    retention_weeks: int?
+    time: str?
+  storage:
+    provider: str?
+    url: str?
+    bucket: str?
+    token: str?
+    access_key: str?
+    secret_key: str?
+    region: str?
+    key_id: str?
+    app_key: str?
+  limits:
+    max_snapshot_size_gb: int?
+    retry_attempts: int?
+    retry_backoff_seconds: int?
+  logging:
+    notify_on_failure: bool?
