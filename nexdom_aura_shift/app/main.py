@@ -52,10 +52,32 @@ def indices_validos(opts):
     r = range(opts["start_index"], opts["end_index"] + 1)
     return [i for i in r if (opts["images_path"] / f"{i}.png").is_file()]
 
+#def copiar_actual(opts, idx):
+#    src = opts["images_path"] / f"{idx}.png"
+#    dst = opts["images_path"] / opts["current_filename"]
+#    shutil.copyfile(src, dst)
+
 def copiar_actual(opts, idx):
     src = opts["images_path"] / f"{idx}.png"
     dst = opts["images_path"] / opts["current_filename"]
-    shutil.copyfile(src, dst)
+
+    try:
+        # 1. borrar si existe (inode nuevo siempre)
+        if dst.exists():
+            dst.unlink()
+
+        # 2. copiar con write nuevo
+        with open(src, "rb") as fsrc, open(dst, "wb") as fdst:
+            fdst.write(fsrc.read())
+
+        # 3. asegurar timestamp modificado
+        now = time.time()
+        os.utime(dst, (now, now))
+
+    except Exception as ex:
+        logging.error("error al reemplazar current.png: %s", str(ex))
+        raise
+
 
 def siguiente_secuencial(opts, actual):
     s = opts["start_index"]
