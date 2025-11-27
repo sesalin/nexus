@@ -2,17 +2,23 @@
 const CACHE_NAME = 'nexdom-os-v1.0.0';
 const OFFLINE_CACHE_NAME = 'nexdom-offline-v1.0.0';
 
-// Ajustar las rutas cacheadas al scope real del SW (Ingress usa paths dinámicos)
-const BASE_URL = new URL('./', self.registration.scope).href;
-const withBase = (path) => new URL(path, BASE_URL).toString();
-
-// Archivos estáticos conocidos (el resto se cachea dinámicamente cuando se piden)
+// Archivos a cachear para funcionamiento offline
 const CACHE_FILES = [
-  withBase('./'),
-  withBase('manifest.json'),
-  withBase('icon-192.png'),
-  withBase('icon-512.png'),
-  withBase('icon-apple.png'),
+  '/',
+  '/zones',
+  '/gadgets',
+  '/energy',
+  '/security',
+  '/scenes',
+  '/routines',
+  '/voice',
+  '/static/js/bundle.js',
+  '/static/css/main.css',
+  '/assets/logo-white.svg',
+  '/assets/images/kitchen.jpg',
+  '/assets/images/living.jpg',
+  '/assets/images/bedroom.jpg',
+  '/assets/images/office.jpg'
 ];
 
 // URLs de APIs críticas que necesitan cache especial
@@ -179,7 +185,7 @@ async function handlePageRequest(request) {
     }
     
     // Fallback final a la página principal
-    const indexResponse = await cache.match(withBase('./'));
+    const indexResponse = await cache.match('/');
     if (indexResponse) {
       return indexResponse;
     }
@@ -283,8 +289,8 @@ self.addEventListener('push', (event) => {
     
     const options = {
       body: data.body,
-      icon: withBase('icon-192.png'),
-      badge: withBase('icon-192.png'),
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
       vibrate: [100, 50, 100],
       data: data.data,
       actions: data.actions || [],
@@ -305,7 +311,7 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   
   const data = event.notification.data;
-  let urlToOpen = withBase('./');
+  let urlToOpen = '/';
   
   if (data && data.url) {
     urlToOpen = data.url;

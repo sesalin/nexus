@@ -4,32 +4,49 @@ import { motion } from 'framer-motion';
 // Cliente para Home Assistant
 class HomeAssistantClient {
   private baseUrl: string;
-  private token: string;
   private ws: WebSocket | null = null;
   private messageId: number = 1;
   private listeners: Map<string, Function[]> = new Map();
+  private reconnectAttempts: number = 0;
+  private maxReconnectAttempts: number = 5;
+  private sessionToken: string | null = null;
 
-  constructor(baseUrl: string, token: string) {
+  constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
-    this.token = token;
+    // Generar un token de sesión temporal para autenticación
+    this.generateSessionToken();
+  }
+
+  private generateSessionToken() {
+    // Generar un token simple basado en timestamp y random
+    this.sessionToken = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   async getStates() {
     const response = await fetch(`${this.baseUrl}/api/states`, {
       headers: { 
-        'Authorization': `Bearer ${this.token}`,
         'Content-Type': 'application/json'
       }
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     return response.json();
   }
 
   async getAreas() {
     const response = await fetch(`${this.baseUrl}/config/area_registry`, {
       headers: { 
-        'Authorization': `Bearer ${this.token}`
+        'Content-Type': 'application/json'
       }
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     return response.json();
   }
 
@@ -37,31 +54,56 @@ class HomeAssistantClient {
     const response = await fetch(`${this.baseUrl}/api/services/${domain}/${service}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.token}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(data)
     });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Service call failed' }));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+    
     return response.json();
   }
 
   async connectWebSocket(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(`${this.baseUrl.replace('http', 'ws')}/api/websocket`);
+      const wsUrl = `${this.baseUrl.replace('http', 'ws')}/ws`;
+      this.ws = new WebSocket(wsUrl);
       
       this.ws.onopen = () => {
-        console.log('[Nexdom] WebSocket conectado');
+        console.log('[Nexdom] WebSocket conectado al proxy backend');
+        this.reconnectAttempts = 0;
+        resolve();
       };
       
       this.ws.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        this.handleWebSocketMessage(message);
+        try {
+          const message = JSON.parse(event.data);
+          this.handleWebSocketMessage(message);
+        } catch (error) {
+          console.error('[Nexdom] Error parsing WebSocket message:', error);
+        }
       };
       
-      this.ws.onclose = () => {
-        console.log('[Nexdom] WebSocket cerrado');
-        // Reconectar después de 5 segundos
-        setTimeout(() => this.connectWebSocket(), 5000);
+      this.ws.onclose = (event) => {
+        console.log('[Nexdom] WebSocket cerrado:', event.code, event.reason);
+        this.ws = null;
+        
+        // Reconectar con backoff exponencial
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+          this.reconnectAttempts++;
+          const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts - 1), 30000);
+          console.log(`[Nexdom] Reintentando conexión en ${delay}ms (intento ${this.reconnectAttempts})`);
+          
+          setTimeout(() => {
+            this.connectWebSocket().catch(console.error);
+          }, delay);
+        } else {
+          console.error('[Nexdom] Máximo número de intentos de reconexión alcanzado');
+          this.emit('connected', false);
+        }
       };
 
       this.ws.onerror = (error) => {
@@ -74,10 +116,8 @@ class HomeAssistantClient {
   private handleWebSocketMessage(message: any) {
     switch (message.type) {
       case 'auth_required':
-        this.ws?.send(JSON.stringify({
-          type: 'auth',
-          access_token: this.token
-        }));
+        // En el proxy backend, la autenticación ya está manejada
+        console.log('[Nexdom] Autenticación requerida, pero proxy maneja esto automáticamente');
         break;
         
       case 'auth_ok':
@@ -92,19 +132,39 @@ class HomeAssistantClient {
         break;
         
       case 'event':
-        if (message.event.event_type === 'state_changed') {
+        if (message.event && message.event.event_type === 'state_changed') {
           this.emit('state_changed', message.event.data);
+        }
+        break;
+        
+      case 'result':
+        // Confirmación de servicios ejecutados
+        if (message.success === false) {
+          console.error('[Nexdom] Error en servicio:', message.error);
+        }
+        break;
+        
+      case 'error':
+        console.error('[Nexdom] Error WebSocket:', message.message);
+        break;
+        
+      default:
+        // Otros tipos de mensajes se reenvían a los listeners
+        if (message.type && message.type !== 'auth_required') {
+          this.emit(message.type, message);
         }
         break;
     }
   }
 
   private subscribeToEvents() {
-    this.ws?.send(JSON.stringify({
-      id: this.messageId++,
-      type: 'subscribe_events',
-      event_type: 'state_changed'
-    }));
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({
+        id: this.messageId++,
+        type: 'subscribe_events',
+        event_type: 'state_changed'
+      }));
+    }
   }
 
   on(event: string, callback: Function) {
@@ -116,7 +176,13 @@ class HomeAssistantClient {
 
   private emit(event: string, data: any) {
     const callbacks = this.listeners.get(event) || [];
-    callbacks.forEach(callback => callback(data));
+    callbacks.forEach(callback => {
+      try {
+        callback(data);
+      } catch (error) {
+        console.error(`[Nexdom] Error in callback for event ${event}:`, error);
+      }
+    });
   }
 
   disconnect() {
@@ -133,47 +199,55 @@ export const useHomeAssistant = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [entities, setEntities] = useState<any[]>([]);
   const [zones, setZones] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const baseUrl = process.env.HA_URL || 'http://homeassistant.local:8123';
-    const token = process.env.HA_TOKEN;
-    
-    if (!token) {
-      console.warn('[Nexdom] No se encontró token de HA, usando datos mock');
-      return;
-    }
-
-    const haClient = new HomeAssistantClient(baseUrl, token);
+    // Usar rutas relativas - el proxy backend maneja la conexión con HA
+    const baseUrl = window.location.origin;
+    const haClient = new HomeAssistantClient(baseUrl);
     setClient(haClient);
 
     // Cargar datos iniciales
     const loadData = async () => {
       try {
+        console.log('[Nexdom] Cargando datos desde proxy backend...');
+        
         const [states, areas] = await Promise.all([
           haClient.getStates(),
           haClient.getAreas()
         ]);
         
+        console.log(`[Nexdom] Estados cargados: ${states.length}, Áreas: ${areas.length}`);
         setEntities(states);
         createZonesFromEntities(states, areas);
+        setError(null);
       } catch (error) {
         console.error('[Nexdom] Error cargando datos:', error);
+        setError(error instanceof Error ? error.message : 'Error desconocido');
+        
+        // Fallback a datos mock si no hay conexión
+        setEntities(getMockEntities());
+        setZones(getMockZones());
       }
     };
 
     loadData();
 
     // Conectar WebSocket
-    haClient.connectWebSocket().catch(console.error);
+    haClient.connectWebSocket().catch(error => {
+      console.error('[Nexdom] Error conectando WebSocket:', error);
+      setError('Error de conexión WebSocket');
+    });
 
     // Escuchar eventos
     haClient.on('connected', setIsConnected);
     haClient.on('state_changed', (data: any) => {
       const { entity_id, old_state, new_state } = data;
       
+      // Actualizar entidades
       setEntities(prev => 
         prev.map(entity =>
-          entity.entity_id === entity_id ? { ...entity, ...new_state } : entity
+          entity.entity_id === entity_id ? { ...entity, ...new_state, attributes: { ...entity.attributes, ...new_state.attributes } } : entity
         )
       );
       
@@ -182,10 +256,15 @@ export const useHomeAssistant = () => {
         prevZones.map(zone => ({
           ...zone,
           entities: zone.entities.map((entity: any) =>
-            entity.entity_id === entity_id ? { ...entity, ...new_state } : entity
+            entity.entity_id === entity_id ? { ...entity, ...new_state, attributes: { ...entity.attributes, ...new_state.attributes } } : entity
           )
         }))
       );
+      
+      // Disparar evento para notificaciones PWA
+      window.dispatchEvent(new CustomEvent('homeassistant:state_changed', {
+        detail: { entity_id, old_state, new_state }
+      }));
     });
 
     return () => haClient.disconnect();
@@ -215,6 +294,7 @@ export const useHomeAssistant = () => {
     
     try {
       const result = await client.callService(domain, service, data);
+      console.log(`[Nexdom] Servicio ${domain}.${service} ejecutado exitosamente`);
       return result;
     } catch (error) {
       console.error('[Nexdom] Error llamando servicio:', error);
@@ -237,31 +317,89 @@ export const useHomeAssistant = () => {
     isConnected,
     entities,
     zones,
+    error,
     callService,
     toggleEntity
   };
 };
 
+// Datos mock para fallback
+const getMockEntities = () => [
+  {
+    entity_id: 'light.living_room',
+    state: 'off',
+    attributes: {
+      friendly_name: 'Luz Sala de Estar',
+      area_id: 'living_room',
+      brightness: 0
+    }
+  },
+  {
+    entity_id: 'switch.office_light',
+    state: 'on',
+    attributes: {
+      friendly_name: 'Luz Oficina',
+      area_id: 'office'
+    }
+  },
+  {
+    entity_id: 'climate.bedroom',
+    state: 'heat',
+    attributes: {
+      friendly_name: 'Climatización Dormitorio',
+      area_id: 'bedroom',
+      temperature: 22
+    }
+  }
+];
+
+const getMockZones = () => [
+  {
+    id: 'living_room',
+    name: 'Sala de Estar',
+    entities: [getMockEntities()[0]]
+  },
+  {
+    id: 'office',
+    name: 'Oficina',
+    entities: [getMockEntities()[1]]
+  },
+  {
+    id: 'bedroom',
+    name: 'Dormitorio',
+    entities: [getMockEntities()[2]]
+  }
+];
+
 // Componente de conexión
 export const HomeAssistantStatus: React.FC = () => {
-  const { isConnected } = useHomeAssistant();
+  const { isConnected, error } = useHomeAssistant();
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       className={`fixed top-4 right-4 px-3 py-1 rounded-full text-xs font-medium ${
-        isConnected 
-          ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-          : 'bg-red-500/20 text-red-400 border border-red-500/30'
+        error 
+          ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+          : isConnected 
+            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+            : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
       }`}
     >
       <div className="flex items-center gap-2">
         <div className={`w-2 h-2 rounded-full ${
-          isConnected ? 'bg-green-400' : 'bg-red-400'
+          error 
+            ? 'bg-red-400' 
+            : isConnected ? 'bg-green-400' : 'bg-yellow-400'
         }`} />
-        {isConnected ? 'HA Conectado' : 'HA Desconectado'}
+        {error ? 'Proxy Error' : isConnected ? 'HA Conectado' : 'Conectando...'}
       </div>
+      {error && (
+        <div className="mt-1 text-xs text-red-300" title={error}>
+          Backend: {error.substring(0, 20)}...
+        </div>
+      )}
     </motion.div>
   );
 };

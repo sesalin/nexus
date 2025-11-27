@@ -1,31 +1,61 @@
-FROM node:20-alpine
+# Multi-stage build para Nexdom OS add-on
+# Stage 1: Build React frontend
+FROM node:20-alpine AS builder
 
-# Crear usuario no-root para seguridad
-RUN addgroup -g 1000 nexdom && adduser -D -s /bin/sh nexdom -G nexdom
-
-# Instalar dependencias
 WORKDIR /app
 
-# Copiar archivos de dependencias
+# Copy package files for frontend
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --only=production
 
-# Copiar código fuente
+# Copy source files
 COPY . .
+
+# Build frontend
 RUN npm run build
 
-# Configurar permisos
-RUN chown -R nexdom:nexdom /app
+# Stage 2: Setup backend dependencies
+FROM node:20-alpine AS backend-builder
 
-# Cambiar a usuario no-root
-USER nexdom
+WORKDIR /app/backend
+COPY backend/package*.json ./
+RUN npm ci --only=production
 
-# Exponer puerto
+# Stage 3: Final runtime image
+FROM nginx:alpine
+
+# Install Node.js for backend
+RUN apk add --no-cache nodejs npm curl
+
+# Create app directory
+WORKDIR /app
+
+# Copy backend
+COPY --from=backend-builder /app/backend /app/backend
+
+# Copy built frontend to nginx directory
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy nginx configuration
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+
+# Create scripts directory
+RUN mkdir -p /app/scripts
+
+# Copy startup script
+COPY ha-addon/run.sh /app/scripts/start.sh
+RUN chmod +x /app/scripts/start.sh
+
+# Install backend dependencies
+WORKDIR /app/backend
+RUN npm install --only=production
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8123/health || exit 1
+
+# Expose port
 EXPOSE 8123
 
-# Salud checks
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8123/ || exit 1
-
-# Comando por defecto
-CMD ["npm", "run", "serve"]
+# Start script
+CMD ["/app/scripts/start.sh"]
