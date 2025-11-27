@@ -1,4 +1,4 @@
-        {
+{
           "name": "Nexus Nexdom",
           "url": "https://github.com/nexdom/addons",
           "maintainer": "Okehc <sergio@nexdom.mx>",
@@ -10,6 +10,14 @@
               "logo": "nexus/logo.png",
               "background": "dark",
               "version": "1.5.1"
+            },
+            {
+              "name": "Nexdom Dashboard",
+              "slug": "nexdom_dashboard",
+              "description": "Dashboard web de Nexdom para Home Assistant",
+              "logo": "nexdom_aura_shift/logo.png",
+              "background": "dark",
+              "version": "0.0.1"
             },
             {
               "name": "Telegraf Nexdom Collector",

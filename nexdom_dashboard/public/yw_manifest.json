@@ -1,0 +1,11 @@
+{
+  "project_type": "react",
+  "ai_config": {
+    "chat_assistant": {
+      "model": "deepseek-v3",
+      "temperature": 0.7,
+      "maxTokens": 4000,
+      "system_prompt": "You are Nexdom AI, a smart home assistant. Help the user manage their home, devices, and routines."
+    }
+  }
+}

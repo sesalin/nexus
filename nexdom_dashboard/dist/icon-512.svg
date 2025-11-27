@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" fill="#0a0a0a" rx="64"/>
+  
+  <!-- Main logo circle -->
+  <circle cx="256" cy="256" r="200" fill="#00FF88" opacity="0.1"/>
+  <circle cx="256" cy="256" r="160" fill="#00FF88" opacity="0.2"/>
+  
+  <!-- Inner circle -->
+  <circle cx="256" cy="256" r="120" fill="#00FF88"/>
+  
+  <!-- Home icon -->
+  <path d="M256 120 L120 256 L256 392 L392 256 Z" fill="#0a0a0a"/>
+  
+  <!-- Smart devices -->
+  <circle cx="256" cy="200" r="8" fill="#00FF88"/>
+  <circle cx="200" cy="256" r="6" fill="#00FF88"/>
+  <circle cx="312" cy="256" r="6" fill="#00FF88"/>
+  <circle cx="256" cy="312" r="8" fill="#00FF88"/>
+  
+  <!-- Connection lines -->
+  <path d="M200 230 L256 200 L312 230" stroke="#00FF88" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M180 256 L256 230 L332 256" stroke="#00FF88" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M200 282 L256 312 L312 282" stroke="#00FF88" stroke-width="4" fill="none" stroke-linecap="round"/>
+  
+  <!-- Data flow -->
+  <path d="M256 256 Q240 270 256 284 Q272 270 256 256" fill="#0a0a0a"/>
+</svg>

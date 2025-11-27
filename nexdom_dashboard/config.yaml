@@ -1,0 +1,15 @@
+name: "Nexdom Dashboard"
+version: "0.0.1"
+slug: "nexdom_dashboard"
+description: "Dashboard web de Nexdom para Home Assistant"
+arch:
+  - amd64
+  - aarch64
+startup: application
+init: false
+boot: auto
+ingress: true
+ingress_port: 80
+webui: "http://[HOST]:[PORT:80]/"
+map:
+  - config:rw

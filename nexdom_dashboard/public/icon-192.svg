@@ -1,0 +1,24 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="192" height="192" fill="#0a0a0a" rx="32"/>
+  
+  <!-- Main logo circle -->
+  <circle cx="96" cy="96" r="80" fill="#00FF88" opacity="0.1"/>
+  <circle cx="96" cy="96" r="60" fill="#00FF88" opacity="0.2"/>
+  
+  <!-- Inner circle -->
+  <circle cx="96" cy="96" r="45" fill="#00FF88"/>
+  
+  <!-- Home icon -->
+  <path d="M96 50 L50 96 L96 142 L142 96 Z" fill="#0a0a0a"/>
+  
+  <!-- Small dot representing smart device -->
+  <circle cx="96" cy="78" r="3" fill="#00FF88"/>
+  
+  <!-- Connection lines -->
+  <path d="M75 85 L96 78 L117 85" stroke="#00FF88" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M70 96 L96 90 L122 96" stroke="#00FF88" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- Bottom waves -->
+  <path d="M96 96 Q86 106 96 116 Q106 106 96 96" fill="#0a0a0a"/>
+</svg>
