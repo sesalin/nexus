@@ -31,7 +31,9 @@ app.use(helmet({
 app.use(cors({
   origin: [
     `http://localhost:${FRONTEND_PORT}`,
-    `http://localhost:${FRONTEND_PORT}/`
+    `http://localhost:${FRONTEND_PORT}/`,
+    // Allow Home Assistant ingress origins
+    /^https?:\/\/.*\.local\.ha\.dev$/
   ],
   credentials: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

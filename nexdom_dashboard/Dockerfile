@@ -1,27 +1,64 @@
-ARG BUILD_FROM
-
-# Build stage: instala dependencias y genera el bundle
-FROM ${BUILD_FROM} AS build
-RUN apk add --no-cache nodejs npm
+# Multi-stage build para Nexdom OS add-on
+# Stage 1: Build React frontend
+FROM node:20-alpine AS builder
 
 WORKDIR /app
+
+# Copy package files for frontend
 COPY package*.json ./
-RUN npm ci
+COPY src/ ./src/
+COPY public/ ./public/
+COPY vite.config.ts ./
+COPY tailwind.config.js ./
+COPY tsconfig*.json ./
+COPY postcss.config.js ./
 
-COPY . .
-RUN npm run build
+# Install dependencies and build frontend
+RUN npm ci --only=production && npm run build
 
-# Runtime stage: sólo nginx y los archivos estáticos generados
-FROM ${BUILD_FROM}
-RUN apk add --no-cache nginx
+# Stage 2: Setup backend dependencies
+FROM node:20-alpine AS backend-builder
 
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY --from=build /app/dist /usr/share/nginx/html
+WORKDIR /app/backend
+COPY backend/package*.json ./
+RUN npm ci --only=production
 
+# Stage 3: Final runtime image
+FROM nginx:alpine
+
+# Install Node.js for backend
+RUN apk add --no-cache nodejs npm curl
+
+# Create app directory
 WORKDIR /app
-COPY run.sh /run.sh
-RUN chmod +x /run.sh
 
-EXPOSE 80
+# Copy backend
+COPY --from=backend-builder /app/backend /app/backend
+COPY backend/src/server.js /app/backend/src/
 
-CMD ["/run.sh"]
+# Copy built frontend to nginx directory
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy nginx configuration with proxy
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+
+# Install backend dependencies
+WORKDIR /app/backend
+RUN npm install --only=production
+
+# Create scripts directory
+RUN mkdir -p /app/scripts
+
+# Copy startup script
+COPY ha-addon/run.sh /app/scripts/start.sh
+RUN chmod +x /app/scripts/start.sh
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8123/health || exit 1
+
+# Expose port
+EXPOSE 8123
+
+# Start script
+CMD ["/app/scripts/start.sh"]
