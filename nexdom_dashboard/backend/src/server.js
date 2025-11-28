@@ -8,14 +8,21 @@ const { RateLimiterMemory } = require('rate-limiter-flexible');
 
 // Configuración
 const SUPERVISOR_URL = process.env.SUPERVISOR_URL || 'http://supervisor';
-const SUPERVISOR_TOKEN = process.env.SUPERVISOR_TOKEN;
+const HASSIO_TOKEN = process.env.HASSIO_TOKEN || process.env.SUPERVISOR_TOKEN;
 const BACKEND_PORT = process.env.BACKEND_PORT || 3000;
 const FRONTEND_PORT = process.env.FRONTEND_PORT || 8123;
 
-if (!SUPERVISOR_TOKEN) {
-  console.error('[Error] SUPERVISOR_TOKEN is required but not provided');
+if (!HASSIO_TOKEN) {
+  console.error('[Error] HASSIO_TOKEN (or SUPERVISOR_TOKEN) is required but not provided');
+  console.error('[Error] Available env vars:', Object.keys(process.env).filter(k => k.includes('HASSIO') || k.includes('SUPERVISOR')));
   process.exit(1);
 }
+
+console.log('[Server] Configuration:');
+console.log(`  Supervisor URL: ${SUPERVISOR_URL}`);
+console.log(`  Backend Port: ${BACKEND_PORT}`);
+console.log(`  Frontend Port: ${FRONTEND_PORT}`);
+console.log(`  Has Token: ${!!HASSIO_TOKEN}`);
 
 // Crear aplicación Express
 const app = express();
@@ -60,28 +67,36 @@ app.use((req, res, next) => {
     .catch(() => res.status(429).json({ error: 'Too many requests' }));
 });
 
-// Cliente para estados/servicios y registros (core API)
+// Cliente para estados/servicios y registros
+// IMPORTANTE: El Supervisor API usa /api directamente, NO /core/api
 const haCoreClient = axios.create({
-  baseURL: `${SUPERVISOR_URL}/core/api`,
+  baseURL: `${SUPERVISOR_URL}/api`,
   timeout: 10000,
   headers: {
-    'Authorization': `Bearer ${SUPERVISOR_TOKEN}`,
+    'Authorization': `Bearer ${HASSIO_TOKEN}`,
     'Content-Type': 'application/json'
   }
 });
+
+console.log('[Server] API Client initialized with base URL:', `${SUPERVISOR_URL}/api`);
 
 // Endpoints REST Proxy
 
 // GET /api/states - Obtener todos los estados
 app.get('/api/states', async (req, res) => {
   try {
+    console.log('[API] Fetching states from Home Assistant...');
     const response = await haCoreClient.get('/states');
+    console.log(`[API] Successfully fetched ${response.data.length} states`);
     res.json(response.data);
   } catch (error) {
     console.error('[Error] Getting states:', error.message);
-    res.status(500).json({ 
+    console.error('[Error] Response status:', error.response?.status);
+    console.error('[Error] Response data:', error.response?.data);
+    res.status(error.response?.status || 500).json({
       error: 'Failed to fetch states',
-      message: error.message 
+      message: error.message,
+      details: error.response?.data
     });
   }
 });
@@ -97,51 +112,63 @@ app.get('/api/states/:entityId', async (req, res) => {
     if (error.response?.status === 404) {
       res.status(404).json({ error: 'Entity not found' });
     } else {
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to fetch entity state',
-        message: error.message 
+        message: error.message
       });
     }
   }
 });
 
 // GET /api/config/area_registry - Obtener áreas
+// NOTA: Este endpoint puede devolver lista vacía si no hay áreas configuradas
 app.get('/api/config/area_registry', async (req, res) => {
   try {
-    const response = await haCoreClient.get('/config/area_registry');
-    res.status(response.status).json(response.data);
+    console.log('[API] Fetching area registry from Home Assistant...');
+    const response = await haCoreClient.get('/config/area_registry/list');
+    const areas = response.data || [];
+    console.log(`[API] Successfully fetched ${areas.length} areas`);
+    res.json(areas);
   } catch (error) {
     const status = error.response?.status || 500;
     const data = error.response?.data;
-    console.error('[Error] Getting areas:', status, error.message, data);
+    console.error('[Error] Getting areas:', status, error.message);
+    console.error('[Error] Response data:', data);
     // Si el endpoint no existe o HA responde 404, devolver lista vacía para no romper el frontend
     if (status === 404) {
+      console.log('[API] Area registry endpoint not found, returning empty array');
       return res.json([]);
     }
-    res.status(status).json({ 
+    res.status(status).json({
       error: 'Failed to fetch areas',
       message: error.message,
-      data
+      details: data
     });
   }
 });
 
 // GET /api/config/entity_registry - Obtener registro de entidades
+// NOTA: Este endpoint puede devolver lista vacía si no hay entidades registradas
 app.get('/api/config/entity_registry', async (req, res) => {
   try {
-    const response = await haCoreClient.get('/config/entity_registry');
-    res.status(response.status).json(response.data);
+    console.log('[API] Fetching entity registry from Home Assistant...');
+    const response = await haCoreClient.get('/config/entity_registry/list');
+    const entities = response.data || [];
+    console.log(`[API] Successfully fetched ${entities.length} entity registry entries`);
+    res.json(entities);
   } catch (error) {
     const status = error.response?.status || 500;
     const data = error.response?.data;
-    console.error('[Error] Getting entity registry:', status, error.message, data);
+    console.error('[Error] Getting entity registry:', status, error.message);
+    console.error('[Error] Response data:', data);
     if (status === 404) {
+      console.log('[API] Entity registry endpoint not found, returning empty array');
       return res.json([]);
     }
-    res.status(status).json({ 
+    res.status(status).json({
       error: 'Failed to fetch entity registry',
       message: error.message,
-      data
+      details: data
     });
   }
 });
@@ -151,26 +178,26 @@ app.post('/api/services/:domain/:service', async (req, res) => {
   try {
     const { domain, service } = req.params;
     const serviceData = req.body;
-    
+
     const response = await haCoreClient.post(`/services/${domain}/${service}`, serviceData);
     res.json(response.data);
   } catch (error) {
     console.error(`[Error] Calling service ${req.params.domain}.${req.params.service}:`, error.message);
-    
+
     if (error.response?.status === 400) {
-      res.status(400).json({ 
+      res.status(400).json({
         error: 'Invalid service call',
-        message: error.message 
+        message: error.message
       });
     } else if (error.response?.status === 422) {
-      res.status(422).json({ 
+      res.status(422).json({
         error: 'Service call failed',
-        message: error.message 
+        message: error.message
       });
     } else {
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to call service',
-        message: error.message 
+        message: error.message
       });
     }
   }
@@ -178,145 +205,220 @@ app.post('/api/services/:domain/:service', async (req, res) => {
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     supervisor_url: SUPERVISOR_URL,
-    has_supervisor_token: !!SUPERVISOR_TOKEN
+    has_hassio_token: !!HASSIO_TOKEN,
+    backend_port: BACKEND_PORT,
+    frontend_port: FRONTEND_PORT
   });
 });
 
 // Configuración de WebSocket Proxy
 const wss = new WebSocketServer({ noServer: true });
+const clientConnections = new Map(); // Track client connections
 
 // Manejar upgrade de conexión HTTP a WebSocket
 server.on('upgrade', (req, socket, head) => {
-  if (req.url === '/ws') {
+  console.log('[WS] Upgrade request received for:', req.url);
+  if (req.url === '/ws' || req.url.startsWith('/ws')) {
     wss.handleUpgrade(req, socket, head, (ws) => {
-      handleWebSocketConnection(ws);
+      wss.emit('connection', ws, req);
     });
   } else {
+    console.log('[WS] Invalid WebSocket URL, destroying socket');
     socket.destroy();
   }
 });
 
 let supervisorWs = null;
 let reconnectAttempts = 0;
-const maxReconnectAttempts = 5;
+const maxReconnectAttempts = 10;
+let reconnectTimer = null;
 
-// Manejar conexión WebSocket con Home Assistant
-function handleWebSocketConnection(clientWs) {
-  console.log('[WS] New client connected');
-  
-  // Conectar al supervisor WebSocket
-  connectToSupervisorWebSocket(clientWs);
-  
+// Handle WebSocket connections from frontend clients
+wss.on('connection', (clientWs, req) => {
+  const clientId = `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  clientConnections.set(clientId, clientWs);
+  console.log(`[WS] New client connected: ${clientId} (Total clients: ${clientConnections.size})`);
+
+  // Conectar al supervisor si no está conectado
+  if (!supervisorWs || supervisorWs.readyState !== 1) {
+    console.log('[WS] Connecting to supervisor WebSocket...');
+    connectToSupervisorWebSocket();
+  } else {
+    // Si ya está conectado, enviar auth_ok al cliente
+    console.log('[WS] Supervisor already connected, notifying client');
+    clientWs.send(JSON.stringify({ type: 'auth_ok' }));
+  }
+
   // Manejar mensajes del cliente
   clientWs.on('message', (message) => {
     try {
-      const data = JSON.parse(message);
-      console.log('[WS] Client message:', data.type);
-      
+      const data = JSON.parse(message.toString());
+      console.log('[WS] Client message:', data.type, data.id ? `(id: ${data.id})` : '');
+
       if (supervisorWs && supervisorWs.readyState === 1) {
         // Reenviar mensaje al supervisor
         supervisorWs.send(JSON.stringify(data));
       } else {
-        console.log('[WS] Supervisor not connected, queuing message');
+        console.log('[WS] Supervisor not connected, sending error to client');
         clientWs.send(JSON.stringify({
           type: 'result',
           id: data.id,
           success: false,
-          error: 'Supervisor WebSocket not connected'
+          error: { message: 'Supervisor WebSocket not connected' }
         }));
       }
     } catch (error) {
       console.error('[WS] Error processing client message:', error.message);
-      clientWs.send(JSON.stringify({
-        type: 'error',
-        message: 'Invalid message format'
-      }));
+      try {
+        clientWs.send(JSON.stringify({
+          type: 'error',
+          message: 'Invalid message format'
+        }));
+      } catch (e) {
+        console.error('[WS] Error sending error message:', e.message);
+      }
     }
   });
-  
+
   // Manejar desconexión del cliente
   clientWs.on('close', () => {
-    console.log('[WS] Client disconnected');
+    clientConnections.delete(clientId);
+    console.log(`[WS] Client disconnected: ${clientId} (Remaining clients: ${clientConnections.size})`);
+
+    // Si no quedan clientes, desconectar del supervisor
+    if (clientConnections.size === 0 && supervisorWs) {
+      console.log('[WS] No clients remaining, closing supervisor connection');
+      supervisorWs.close();
+      supervisorWs = null;
+    }
   });
-  
+
   // Manejar errores del cliente
   clientWs.on('error', (error) => {
-    console.error('[WS] Client error:', error.message);
+    console.error(`[WS] Client error (${clientId}):`, error.message);
   });
-}
+});
 
 // Conectar al WebSocket del supervisor
-function connectToSupervisorWebSocket(clientWs) {
+function connectToSupervisorWebSocket() {
+  // Clear any existing reconnect timer
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+
   const wsUrl = SUPERVISOR_URL.replace('http', 'ws') + '/core/websocket';
-  
-  supervisorWs = new (require('ws'))(wsUrl);
-  
+  console.log('[WS] Connecting to supervisor at:', wsUrl);
+
+  try {
+    supervisorWs = new (require('ws'))(wsUrl);
+  } catch (error) {
+    console.error('[WS] Error creating WebSocket connection:', error.message);
+    scheduleReconnect();
+    return;
+  }
+
   supervisorWs.on('open', () => {
-    console.log('[WS] Connected to supervisor');
+    console.log('[WS] Connected to supervisor WebSocket');
     reconnectAttempts = 0;
-    // Autenticación inmediata con el token del supervisor
-    supervisorWs.send(JSON.stringify({
-      type: 'auth',
-      access_token: SUPERVISOR_TOKEN
-    }));
+    // La autenticación se enviará cuando recibamos 'auth_required'
   });
-  
+
   supervisorWs.on('message', (message) => {
     try {
-      const data = JSON.parse(message);
-      console.log('[WS] Supervisor message:', data.type);
-      
+      const data = JSON.parse(message.toString());
+      const logType = data.type === 'event' ? 'event' : data.type;
+      console.log(`[WS] Supervisor message: ${logType}`, data.id ? `(id: ${data.id})` : '');
+
       // Responder autenticación si es requerida
       if (data.type === 'auth_required') {
+        console.log('[WS] Auth required, sending token...');
         supervisorWs.send(JSON.stringify({
           type: 'auth',
-          access_token: SUPERVISOR_TOKEN
+          access_token: HASSIO_TOKEN
         }));
       }
-      
-      // Reenviar mensaje al cliente
-      if (clientWs && clientWs.readyState === 1) {
-        clientWs.send(message);
+
+      // Cuando auth es exitoso, notificar a todos los clientes
+      if (data.type === 'auth_ok') {
+        console.log('[WS] Auth successful, notifying all clients');
+        broadcastToClients(message);
+      } else if (data.type === 'auth_invalid') {
+        console.error('[WS] Auth failed!');
+        broadcastToClients(message);
+      } else {
+        // Reenviar mensaje a todos los clientes conectados
+        broadcastToClients(message);
       }
     } catch (error) {
       console.error('[WS] Error processing supervisor message:', error.message);
     }
   });
-  
+
   supervisorWs.on('close', (code, reason) => {
-    console.log(`[WS] Supervisor disconnected: ${code} ${reason}`);
+    console.log(`[WS] Supervisor disconnected: code=${code} reason=${reason || 'none'}`);
     supervisorWs = null;
-    
-    // Intentar reconectar
-    if (reconnectAttempts < maxReconnectAttempts) {
-      reconnectAttempts++;
-      console.log(`[WS] Reconnecting to supervisor (attempt ${reconnectAttempts})`);
-      setTimeout(() => {
-        connectToSupervisorWebSocket(clientWs);
-      }, 5000);
-    } else {
-      console.log('[WS] Max reconnect attempts reached');
-      clientWs.send(JSON.stringify({
-        type: 'auth_invalid',
-        message: 'Connection to supervisor failed'
-      }));
+
+    // Intentar reconectar si hay clientes conectados
+    if (clientConnections.size > 0) {
+      scheduleReconnect();
     }
   });
-  
+
   supervisorWs.on('error', (error) => {
     console.error('[WS] Supervisor connection error:', error.message);
-    
-    if (reconnectAttempts < maxReconnectAttempts) {
-      reconnectAttempts++;
-      setTimeout(() => {
-        connectToSupervisorWebSocket(clientWs);
-      }, 5000);
+    // El evento 'close' se disparará después del error
+  });
+}
+
+// Broadcast message to all connected clients
+function broadcastToClients(message) {
+  const messageStr = typeof message === 'string' ? message : JSON.stringify(message);
+  let successCount = 0;
+  let failCount = 0;
+
+  clientConnections.forEach((clientWs, clientId) => {
+    try {
+      if (clientWs.readyState === 1) { // OPEN
+        clientWs.send(messageStr);
+        successCount++;
+      } else {
+        failCount++;
+      }
+    } catch (error) {
+      console.error(`[WS] Error sending to client ${clientId}:`, error.message);
+      failCount++;
     }
   });
+
+  if (failCount > 0) {
+    console.log(`[WS] Broadcast complete: ${successCount} success, ${failCount} failed`);
+  }
+}
+
+// Schedule reconnect with exponential backoff
+function scheduleReconnect() {
+  if (reconnectAttempts >= maxReconnectAttempts) {
+    console.error('[WS] Max reconnect attempts reached, giving up');
+    // Notify clients
+    broadcastToClients(JSON.stringify({
+      type: 'auth_invalid',
+      message: 'Connection to Home Assistant failed after multiple attempts'
+    }));
+    return;
+  }
+
+  reconnectAttempts++;
+  const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000);
+  console.log(`[WS] Scheduling reconnect attempt ${reconnectAttempts}/${maxReconnectAttempts} in ${delay}ms`);
+
+  reconnectTimer = setTimeout(() => {
+    connectToSupervisorWebSocket();
+  }, delay);
 }
 
 // Manejar cierre del servidor

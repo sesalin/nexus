@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GadgetCard, GadgetProps } from '../templates/GadgetCard';
 import { ChevronDown } from 'lucide-react';
-import { useNexdomStore } from '../../../store/nexdomStore';
+import { useHomeAssistant } from '../HomeAssistant';
 
 // Helper to get icon path (reusing logic from GadgetGrid)
 const iconModules = import.meta.glob('../../../assets/icons/*.svg', { eager: true, as: 'url' });
@@ -20,7 +20,7 @@ const getIconPath = (type: string): string => {
   const key = `../../../assets/icons/${name}.svg`;
   const resolved = iconModules[key] as string | undefined;
   if (resolved) return resolved;
-  
+
   // Fallback al path estático del build
   try {
     return new URL(`../../../assets/icons/${name}.svg`, import.meta.url).href;
@@ -31,35 +31,63 @@ const getIconPath = (type: string): string => {
 
 export const ZonesPanel: React.FC = () => {
   const [expandedZone, setExpandedZone] = useState<string | null>(null);
-  const { rooms, devices } = useNexdomStore();
+  const { zones, isConnected, error, toggleEntity } = useHomeAssistant();
 
-  const zones = useMemo(() => {
-    if (!rooms || rooms.length === 0) return [];
+  const zonesWithGadgets = useMemo(() => {
+    return zones.map((zone) => {
+      const gadgets = zone.entities.map((entity) => {
+        const domain = entity.entity_id.split('.')[0];
 
-    return rooms.map((room) => {
-      const gadgets = devices
-        .filter((d) => d.room === room.id || d.room === room.name)
-        .map((d) => {
-          const domain = d.id.split('.')[0];
-          return {
-            id: d.id,
-            name: d.name,
-            model: d.type || domain,
-            type: d.type,
-            status: d.status === 'offline' ? 'Offline' : d.status,
-            value: d.lastUpdate ? new Date(d.lastUpdate).toLocaleTimeString() : '',
-            iconPath: getIconPath(d.type),
-            isActive: d.status !== 'offline',
-          } as GadgetProps;
-        });
+        // Mapear dominio a tipo de gadget
+        const typeMap: Record<string, any> = {
+          'light': 'light',
+          'switch': 'switch',
+          'sensor': 'sensor',
+          'binary_sensor': 'sensor',
+          'climate': 'thermostat',
+          'camera': 'camera',
+          'lock': 'lock',
+          'cover': 'cover',
+          'media_player': 'remote',
+        };
+
+        const gadgetType = typeMap[domain] || 'sensor';
+
+        // Formatear valor según tipo
+        let value = entity.state;
+        if (entity.attributes.unit_of_measurement) {
+          value = `${entity.state} ${entity.attributes.unit_of_measurement}`;
+        } else if (domain === 'light' && entity.attributes.brightness) {
+          value = `${Math.round((entity.attributes.brightness / 255) * 100)}%`;
+        } else if (domain === 'climate' && entity.attributes.temperature) {
+          value = `${entity.attributes.temperature}°C`;
+        }
+
+        return {
+          id: entity.entity_id,
+          name: entity.attributes.friendly_name || entity.entity_id,
+          model: domain,
+          type: gadgetType,
+          status: entity.state,
+          value: value,
+          iconPath: getIconPath(gadgetType),
+          isActive: entity.state !== 'off' && entity.state !== 'unavailable' && entity.state !== 'unknown',
+          onPrimaryAction: () => {
+            console.log('[ZonesPanel] Toggling entity:', entity.entity_id);
+            toggleEntity(entity.entity_id).catch(err => {
+              console.error('[ZonesPanel] Error toggling entity:', err);
+            });
+          },
+        } as GadgetProps;
+      });
 
       return {
-        id: room.id,
-        name: room.name,
+        id: zone.id,
+        name: zone.name,
         gadgets,
       };
     });
-  }, [rooms, devices]);
+  }, [zones, toggleEntity]);
 
   const toggleZone = (id: string) => {
     setExpandedZone(expandedZone === id ? null : id);
@@ -70,27 +98,42 @@ export const ZonesPanel: React.FC = () => {
       <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
         <span className="w-2 h-8 bg-nexdom-lime rounded-full shadow-[0_0_10px_#00FF88]"></span>
         Zonas
+        {!isConnected && (
+          <span className="text-xs font-normal text-yellow-400 ml-auto">
+            ⚠ Descone ctado
+          </span>
+        )}
       </h2>
 
-      {zones.length === 0 && (
+      {error && (
+        <div className="glass-panel rounded-[2rem] p-4 border border-red-500/30 bg-red-500/10">
+          <p className="text-red-300 text-sm">
+            ⚠ Error de conexión: {error}
+          </p>
+        </div>
+      )}
+
+      {zonesWithGadgets.length === 0 && (
         <div className="glass-panel rounded-[2rem] p-6 text-gray-300 border border-white/10">
-          No hay áreas configuradas en Home Assistant o aún no se sincronizan dispositivos.
+          {isConnected
+            ? 'No hay áreas configuradas en Home Assistant o aún no se sincronizan dispositivos.'
+            : 'Conectando con Home Assistant...'
+          }
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-6">
-        {zones.map((zone) => (
+        {zonesWithGadgets.map((zone) => (
           <motion.div
             key={zone.id}
             layout
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`glass-panel rounded-[2rem] overflow-hidden border border-white/5 transition-all duration-500 ${
-              expandedZone === zone.id ? 'ring-1 ring-nexdom-lime/30 bg-white/5' : 'hover:bg-white/5'
-            }`}
+            className={`glass-panel rounded-[2rem] overflow-hidden border border-white/5 transition-all duration-500 ${expandedZone === zone.id ? 'ring-1 ring-nexdom-lime/30 bg-white/5' : 'hover:bg-white/5'
+              }`}
           >
             {/* Zone Header / Card */}
-            <div 
+            <div
               className="relative h-48 cursor-pointer group overflow-hidden bg-gradient-to-r from-white/5 via-white/0 to-white/5"
               onClick={() => toggleZone(zone.id)}
             >
@@ -108,8 +151,8 @@ export const ZonesPanel: React.FC = () => {
                       {zone.gadgets.filter(g => g.isActive).length} Activos
                     </p>
                   </div>
-                  
-                  <motion.div 
+
+                  <motion.div
                     animate={{ rotate: expandedZone === zone.id ? 180 : 0 }}
                     className="p-2 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white group-hover:bg-nexdom-lime group-hover:text-black transition-colors"
                   >
@@ -134,9 +177,7 @@ export const ZonesPanel: React.FC = () => {
                       {zone.gadgets.map((gadget) => (
                         <GadgetCard
                           key={gadget.id}
-                          {...gadget as any}
-                          iconPath={getIconPath(gadget.type)}
-                          onPrimaryAction={() => console.log('Toggle', gadget.id)}
+                          {...gadget}
                         />
                       ))}
                     </div>
