@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 // Cliente para Home Assistant
 class HomeAssistantClient {
-  private baseUrl: string;
+  private basePath: string;
   private ws: WebSocket | null = null;
   private messageId: number = 1;
   private listeners: Map<string, Function[]> = new Map();
@@ -11,8 +11,9 @@ class HomeAssistantClient {
   private maxReconnectAttempts: number = 5;
   private sessionToken: string | null = null;
 
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
+  constructor(basePath: string) {
+    // basePath debe incluir el prefijo de ingress (/api/hassio_ingress/...) para no saltarse el proxy
+    this.basePath = basePath;
     // Generar un token de sesión temporal para autenticación
     this.generateSessionToken();
   }
@@ -23,7 +24,7 @@ class HomeAssistantClient {
   }
 
   async getStates() {
-    const response = await fetch(`${this.baseUrl}/api/states`, {
+    const response = await fetch(`${this.basePath}/api/states`, {
       headers: { 
         'Content-Type': 'application/json'
       }
@@ -37,7 +38,7 @@ class HomeAssistantClient {
   }
 
   async getAreas() {
-    const response = await fetch(`${this.baseUrl}/config/area_registry`, {
+    const response = await fetch(`${this.basePath}/config/area_registry`, {
       headers: { 
         'Content-Type': 'application/json'
       }
@@ -51,7 +52,7 @@ class HomeAssistantClient {
   }
 
   async callService(domain: string, service: string, data: any) {
-    const response = await fetch(`${this.baseUrl}/api/services/${domain}/${service}`, {
+    const response = await fetch(`${this.basePath}/api/services/${domain}/${service}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -69,7 +70,8 @@ class HomeAssistantClient {
 
   async connectWebSocket(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const wsUrl = `${this.baseUrl.replace('http', 'ws')}/ws`;
+      const origin = window.location.origin.replace(/^http/, 'ws');
+      const wsUrl = `${origin}${this.basePath}/ws`;
       this.ws = new WebSocket(wsUrl);
       
       this.ws.onopen = () => {
@@ -202,9 +204,9 @@ export const useHomeAssistant = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Usar rutas relativas - el proxy backend maneja la conexión con HA
-    const baseUrl = window.location.origin;
-    const haClient = new HomeAssistantClient(baseUrl);
+    // Usar el path completo de ingress para que las peticiones lleguen al backend dentro del add-on
+    const ingressPath = window.location.pathname.replace(/\/$/, '');
+    const haClient = new HomeAssistantClient(ingressPath || '');
     setClient(haClient);
 
     // Cargar datos iniciales
