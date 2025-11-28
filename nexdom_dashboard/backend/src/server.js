@@ -60,19 +60,9 @@ app.use((req, res, next) => {
     .catch(() => res.status(429).json({ error: 'Too many requests' }));
 });
 
-// Cliente para estados/servicios (core API)
+// Cliente para estados/servicios y registros (core API)
 const haCoreClient = axios.create({
   baseURL: `${SUPERVISOR_URL}/core/api`,
-  timeout: 10000,
-  headers: {
-    'Authorization': `Bearer ${SUPERVISOR_TOKEN}`,
-    'Content-Type': 'application/json'
-  }
-});
-
-// Cliente para registros/config (REST principal)
-const haConfigClient = axios.create({
-  baseURL: `${SUPERVISOR_URL}/api`,
   timeout: 10000,
   headers: {
     'Authorization': `Bearer ${SUPERVISOR_TOKEN}`,
@@ -118,7 +108,7 @@ app.get('/api/states/:entityId', async (req, res) => {
 // GET /api/config/area_registry - Obtener áreas
 app.get('/api/config/area_registry', async (req, res) => {
   try {
-    const response = await haConfigClient.get('/config/area_registry');
+    const response = await haCoreClient.get('/config/area_registry');
     res.status(response.status).json(response.data);
   } catch (error) {
     const status = error.response?.status || 500;
@@ -139,7 +129,7 @@ app.get('/api/config/area_registry', async (req, res) => {
 // GET /api/config/entity_registry - Obtener registro de entidades
 app.get('/api/config/entity_registry', async (req, res) => {
   try {
-    const response = await haConfigClient.get('/config/entity_registry');
+    const response = await haCoreClient.get('/config/entity_registry');
     res.status(response.status).json(response.data);
   } catch (error) {
     const status = error.response?.status || 500;
