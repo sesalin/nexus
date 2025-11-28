@@ -4,96 +4,99 @@
 #1 transferring dockerfile: 1.53kB done
 #1 DONE 0.0s
 
-#2 [auth] library/node:pull token for registry-1.docker.io
-#2 DONE 0.0s
+#2 [internal] load metadata for docker.io/library/node:20-alpine
+#2 ...
 
-#3 [auth] library/nginx:pull token for registry-1.docker.io
+#3 [auth] library/node:pull token for registry-1.docker.io
 #3 DONE 0.0s
 
-#4 [internal] load metadata for docker.io/library/node:20-alpine
+#4 [internal] load metadata for docker.io/library/nginx:alpine
 #4 ...
 
-#5 [internal] load metadata for docker.io/library/nginx:alpine
-#5 DONE 0.8s
+#2 [internal] load metadata for docker.io/library/node:20-alpine
+#2 DONE 1.0s
 
-#4 [internal] load metadata for docker.io/library/node:20-alpine
-#4 DONE 0.8s
+#5 [auth] library/nginx:pull token for registry-1.docker.io
+#5 DONE 0.0s
+
+#4 [internal] load metadata for docker.io/library/nginx:alpine
+#4 DONE 1.4s
 
 #6 [internal] load .dockerignore
 #6 transferring context: 2B done
 #6 DONE 0.0s
 
-#7 [stage-2  1/12] FROM docker.io/library/nginx:alpine@sha256:b3c656d55d7ad751196f21b7fd2e8d4da9cb430e32f646adcf92441b72f82b14
-#7 resolve docker.io/library/nginx:alpine@sha256:b3c656d55d7ad751196f21b7fd2e8d4da9cb430e32f646adcf92441b72f82b14 0.0s done
-#7 CACHED
+#7 [builder 1/6] FROM docker.io/library/node:20-alpine@sha256:16858294071a56ffd4cce9f17b57136cc39e41507b40e245b4f8e906f7a19463
+#7 resolve docker.io/library/node:20-alpine@sha256:16858294071a56ffd4cce9f17b57136cc39e41507b40e245b4f8e906f7a19463 0.0s done
+#7 DONE 0.0s
 
-#8 [builder 1/6] FROM docker.io/library/node:20-alpine@sha256:16858294071a56ffd4cce9f17b57136cc39e41507b40e245b4f8e906f7a19463
-#8 resolve docker.io/library/node:20-alpine@sha256:16858294071a56ffd4cce9f17b57136cc39e41507b40e245b4f8e906f7a19463 0.0s done
-#8 DONE 0.0s
+#8 [builder 2/6] WORKDIR /app
+#8 CACHED
 
 #9 [backend-builder 2/4] WORKDIR /app/backend
 #9 CACHED
 
-#10 [builder 2/6] WORKDIR /app
+#10 [stage-2  1/12] FROM docker.io/library/nginx:alpine@sha256:b3c656d55d7ad751196f21b7fd2e8d4da9cb430e32f646adcf92441b72f82b14
+#10 resolve docker.io/library/nginx:alpine@sha256:b3c656d55d7ad751196f21b7fd2e8d4da9cb430e32f646adcf92441b72f82b14 0.0s done
 #10 CACHED
 
 #11 [internal] load build context
-#11 transferring context: 16.12kB 0.1s done
-#11 DONE 0.2s
+#11 transferring context: 21.82kB 0.7s done
+#11 DONE 0.7s
 
 #12 [backend-builder 3/4] COPY backend/package*.json ./
 #12 DONE 0.0s
 
-#13 [backend-builder 4/4] RUN npm ci --only=production
-#13 ...
+#13 [builder 3/6] COPY package*.json index.html vite.config.ts tailwind.config.js postcss.config.js tsconfig*.json ./
+#13 DONE 0.1s
 
-#14 [builder 3/6] COPY package*.json index.html vite.config.ts tailwind.config.js postcss.config.js tsconfig*.json ./
-#14 DONE 0.1s
+#14 [backend-builder 4/4] RUN npm ci --only=production
+#14 ...
 
 #15 [builder 4/6] COPY src/ ./src/
 #15 DONE 0.1s
 
 #16 [builder 5/6] COPY public/ ./public/
-#16 DONE 0.0s
+#16 DONE 0.1s
 
 #17 [builder 6/6] RUN npm ci && npm run build
 #17 ...
 
-#13 [backend-builder 4/4] RUN npm ci --only=production
-#13 0.556 npm warn config only Use `--omit=dev` to omit dev dependencies from the install.
-#13 2.393 
-#13 2.393 added 88 packages, and audited 89 packages in 2s
-#13 2.393 
-#13 2.393 16 packages are looking for funding
-#13 2.393   run `npm fund` for details
-#13 2.394 
-#13 2.394 found 0 vulnerabilities
-#13 2.396 npm notice
-#13 2.396 npm notice New major version of npm available! 10.8.2 -> 11.6.4
-#13 2.396 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.4
-#13 2.396 npm notice To update run: npm install -g npm@11.6.4
-#13 2.396 npm notice
-#13 DONE 2.5s
+#14 [backend-builder 4/4] RUN npm ci --only=production
+#14 0.061 npm warn config only Use `--omit=dev` to omit dev dependencies from the install.
+#14 2.271 
+#14 2.271 added 88 packages, and audited 89 packages in 2s
+#14 2.271 
+#14 2.271 16 packages are looking for funding
+#14 2.271   run `npm fund` for details
+#14 2.272 
+#14 2.272 found 0 vulnerabilities
+#14 2.273 npm notice
+#14 2.273 npm notice New major version of npm available! 10.8.2 -> 11.6.4
+#14 2.273 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.4
+#14 2.273 npm notice To update run: npm install -g npm@11.6.4
+#14 2.273 npm notice
+#14 DONE 2.4s
 
 #18 [stage-2  2/12] RUN apk add --no-cache nodejs npm curl
-#18 0.272 fetch https://dl-cdn.alpinelinux.org/alpine/v3.22/main/x86_64/APKINDEX.tar.gz
-#18 0.507 fetch https://dl-cdn.alpinelinux.org/alpine/v3.22/community/x86_64/APKINDEX.tar.gz
-#18 0.878 (1/8) Installing ada-libs (2.9.2-r4)
-#18 0.916 (2/8) Installing icu-data-en (76.1-r1)
-#18 0.989 Executing icu-data-en-76.1-r1.post-install
-#18 0.992 *
-#18 0.992 * If you need ICU with non-English locales and legacy charset support, install
-#18 0.992 * package icu-data-full.
-#18 0.992 *
-#18 0.992 (3/8) Installing icu-libs (76.1-r1)
-#18 1.094 (4/8) Installing simdjson (3.12.0-r0)
-#18 1.122 (5/8) Installing simdutf (7.2.1-r0)
-#18 1.157 (6/8) Installing sqlite-libs (3.49.2-r1)
-#18 1.214 (7/8) Installing nodejs (22.16.0-r2)
-#18 2.504 (8/8) Installing npm (11.6.4-r0)
-#18 2.731 Executing busybox-1.37.0-r19.trigger
-#18 2.738 OK: 121 MiB in 78 packages
-#18 DONE 2.8s
+#18 0.262 fetch https://dl-cdn.alpinelinux.org/alpine/v3.22/main/x86_64/APKINDEX.tar.gz
+#18 0.545 fetch https://dl-cdn.alpinelinux.org/alpine/v3.22/community/x86_64/APKINDEX.tar.gz
+#18 8.482 (1/8) Installing ada-libs (2.9.2-r4)
+#18 0.605 (2/8) Installing icu-data-en (76.1-r1)
+#18 0.653 Executing icu-data-en-76.1-r1.post-install
+#18 0.656 *
+#18 0.656 * If you need ICU with non-English locales and legacy charset support, install
+#18 0.656 * package icu-data-full.
+#18 0.656 *
+#18 0.657 (3/8) Installing icu-libs (76.1-r1)
+#18 0.732 (4/8) Installing simdjson (3.12.0-r0)
+#18 0.760 (5/8) Installing simdutf (7.2.1-r0)
+#18 0.791 (6/8) Installing sqlite-libs (3.49.2-r1)
+#18 0.837 (7/8) Installing nodejs (22.16.0-r2)
+#18 2.779 (8/8) Installing npm (11.6.4-r0)
+#18 3.047 Executing busybox-1.37.0-r19.trigger
+#18 3.053 OK: 121 MiB in 78 packages
+#18 DONE 3.2s
 
 #17 [builder 6/6] RUN npm ci && npm run build
 #17 ...
@@ -102,58 +105,69 @@
 #19 DONE 0.1s
 
 #20 [stage-2  4/12] COPY --from=backend-builder /app/backend /app/backend
-#20 DONE 0.1s
-
-#21 [stage-2  5/12] COPY backend/src/server.js /app/backend/src/
-#21 DONE 0.0s
+#20 DONE 0.2s
 
 #17 [builder 6/6] RUN npm ci && npm run build
-#17 4.901 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
-#17 7.050 npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+#17 ...
+
+#21 [stage-2  5/12] COPY backend/src/server.js /app/backend/src/
+#21 DONE 0.1s
+
+#17 [builder 6/6] RUN npm ci && npm run build
+#17 4.613 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+#17 6.456 npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+#17 9.523 
+#17 9.523 added 588 packages, and audited 589 packages in 10s
+#17 9.523 
+#17 9.523 84 packages are looking for funding
+#17 9.523   run `npm fund` for details
+#17 9.542 
+#17 9.542 4 vulnerabilities (3 moderate, 1 high)
+#17 9.542 
+#17 9.542 To address issues that do not require attention, run:
+#17 9.542   npm audit fix
+#17 9.542 
+#17 9.542 To address all issues (including breaking changes), run:
+#17 9.542   npm audit fix --force
+#17 9.542 
+#17 9.542 Run `npm audit` for details.
+#17 9.543 npm notice
+#17 9.543 npm notice New major version of npm available! 10.8.2 -> 11.6.4
+#17 9.543 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.4
+#17 9.543 npm notice To update run: npm install -g npm@11.6.4
+#17 9.543 npm notice
+#17 9.703 
+#17 9.703 > youware-react-template@0.0.0 build
+#17 9.703 > vite build
+#17 9.703 
+#17 17.55 vite v7.0.0 building for production...
+#17 9.947 transforming...
+#17 10.58 [plugin vite:esbuild] src/components/dashboard/HomeAssistant.tsx: Duplicate member "getEntityRegistry" in class body
+#17 10.58 257|    }
+#17 10.58 258|  
+#17 10.58 259|    getEntityRegistry() {
+#17 10.58    |    ^
+#17 10.58 260|      return this.entityRegistry;
+#17 10.58 261|    }
 #17 10.58 
-#17 10.58 added 588 packages, and audited 589 packages in 10s
-#17 10.58 
-#17 10.58 84 packages are looking for funding
-#17 10.58   run `npm fund` for details
-#17 10.60 
-#17 10.60 4 vulnerabilities (3 moderate, 1 high)
-#17 10.60 
-#17 10.60 To address issues that do not require attention, run:
-#17 10.60   npm audit fix
-#17 10.60 
-#17 10.60 To address all issues (including breaking changes), run:
-#17 10.60   npm audit fix --force
-#17 10.60 
-#17 10.60 Run `npm audit` for details.
-#17 10.60 npm notice
-#17 10.60 npm notice New major version of npm available! 10.8.2 -> 11.6.4
-#17 10.60 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.4
-#17 10.60 npm notice To update run: npm install -g npm@11.6.4
-#17 10.60 npm notice
-#17 10.76 
-#17 10.76 > youware-react-template@0.0.0 build
-#17 10.76 > vite build
-#17 10.76 
-#17 11.21 vite v7.0.0 building for production...
-#17 11.54 transforming...
-#17 12.40 The glob option "as" has been deprecated in favour of "query". Please update `as: 'url'` to `query: '?url', import: 'default'`.
-#17 12.41 The glob option "as" has been deprecated in favour of "query". Please update `as: 'url'` to `query: '?url', import: 'default'`.
-#17 15.24 ✓ 2248 modules transformed.
-#17 16.09 rendering chunks...
-#17 16.12 computing gzip size...
-#17 16.15 dist/assets/Vibracion-1v42FypZ.svg       5.02 kB │ gzip:   1.63 kB
-#17 16.15 dist/assets/Nivel-agua-BdL9wD9b.svg      5.50 kB │ gzip:   1.63 kB
-#17 16.15 dist/index.html                          6.30 kB │ gzip:   2.08 kB
-#17 16.15 dist/assets/logo-white-C9UCssQt.svg     12.08 kB │ gzip:   2.73 kB
-#17 16.15 dist/assets/index-LqERhusT.css          41.35 kB │ gzip:   6.87 kB
-#17 16.15 dist/assets/index-DYlwSbZF.js        1,256.44 kB │ gzip: 283.59 kB
-#17 16.15 
-#17 16.15 (!) Some chunks are larger than 500 kB after minification. Consider:
-#17 16.15 - Using dynamic import() to code-split the application
-#17 16.15 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-#17 16.15 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
-#17 16.15 ✓ built in 4.91s
-#17 DONE 16.5s
+#17 11.18 The glob option "as" has been deprecated in favour of "query". Please update `as: 'url'` to `query: '?url', import: 'default'`.
+#17 11.19 The glob option "as" has been deprecated in favour of "query". Please update `as: 'url'` to `query: '?url', import: 'default'`.
+#17 13.87 ✓ 2248 modules transformed.
+#17 14.67 rendering chunks...
+#17 14.69 computing gzip size...
+#17 14.72 dist/assets/Vibracion-1v42FypZ.svg       5.02 kB │ gzip:   1.63 kB
+#17 14.72 dist/assets/Nivel-agua-BdL9wD9b.svg      5.50 kB │ gzip:   1.63 kB
+#17 14.72 dist/index.html                          6.30 kB │ gzip:   2.08 kB
+#17 14.72 dist/assets/logo-white-C9UCssQt.svg     12.08 kB │ gzip:   2.73 kB
+#17 14.72 dist/assets/index-LqERhusT.css          41.35 kB │ gzip:   6.87 kB
+#17 14.72 dist/assets/index-D6pQIve3.js        1,257.11 kB │ gzip: 283.75 kB
+#17 14.72 
+#17 14.72 (!) Some chunks are larger than 500 kB after minification. Consider:
+#17 14.72 - Using dynamic import() to code-split the application
+#17 14.72 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+#17 14.72 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+#17 14.72 ✓ built in 5.06s
+#17 DONE 22.4s
 
 #22 [stage-2  6/12] COPY --from=builder /app/dist /usr/share/nginx/html
 #22 DONE 0.1s
@@ -165,33 +179,33 @@
 #24 DONE 0.0s
 
 #25 [stage-2  9/12] RUN npm install --only=production
-#25 0.344 npm warn config only Use `--omit=dev` to omit dev dependencies from the install.
-#25 1.101 
-#25 1.101 up to date, audited 89 packages in 795ms
-#25 1.101 
-#25 1.102 16 packages are looking for funding
-#25 1.102   run `npm fund` for details
-#25 1.103 
-#25 1.103 found 0 vulnerabilities
-#25 DONE 1.2s
+#25 0.347 npm warn config only Use `--omit=dev` to omit dev dependencies from the install.
+#25 1.021 
+#25 1.021 up to date, audited 89 packages in 712ms
+#25 1.021 
+#25 1.022 16 packages are looking for funding
+#25 1.022   run `npm fund` for details
+#25 1.023 
+#25 1.023 found 0 vulnerabilities
+#25 DONE 1.1s
 
 #26 [stage-2 10/12] RUN mkdir -p /app/scripts
 #26 DONE 0.4s
 
 #27 [stage-2 11/12] COPY ha-addon/run.sh /app/scripts/start.sh
-#27 DONE 0.1s
+#27 DONE 0.0s
 
 #28 [stage-2 12/12] RUN chmod +x /app/scripts/start.sh
 #28 DONE 0.2s
 
 #29 exporting to image
 #29 exporting layers
-#29 exporting layers 2.1s done
-#29 exporting manifest sha256:1baedec94f8f5b3e0ee30f5ceb5fae54599677e81c7c1c39dc97e538c53272cc 0.0s done
-#29 exporting config sha256:489619dcb82ba0ef76f648aab481b984892c39bbbb327dfe87044a9c788b8017 0.0s done
-#29 exporting attestation manifest sha256:d48c3e7ceb90480a319c6bce38747d691aefaf8f585bfd469a2f10e733a04e03 0.0s done
-#29 exporting manifest list sha256:4f3c49a3179f695f51200e4efd9fe9e1d00c17c43ea65da09a97075e1ed8f9aa 0.0s done
+#29 exporting layers 2.3s done
+#29 exporting manifest sha256:5aeeed0b8a6a81e95e746ecdfcb6cb323c8033b5f0daae83616e29bb53a26e8a 0.0s done
+#29 exporting config sha256:45c264aadf4dc67bb787e95e3c478657341afed7bd946b11d4707934e89f2989 0.0s done
+#29 exporting attestation manifest sha256:9ae340e590af4d11128ba1bcae15b79813ec3d2782757a3b88dc29733737a6ca 0.0s done
+#29 exporting manifest list sha256:1e7053c38ad0691334a567214ed8ef7967b411a5b984373b547053e83dda7791 0.0s done
 #29 naming to docker.io/library/nexdom-os:latest done
 #29 unpacking to docker.io/library/nexdom-os:latest
-#29 unpacking to docker.io/library/nexdom-os:latest 0.9s done
+#29 unpacking to docker.io/library/nexdom-os:latest 0.6s done
 #29 DONE 3.1s

@@ -10,6 +10,9 @@ class HomeAssistantClient {
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
   private sessionToken: string | null = null;
+  private pendingRequests: Map<number, {resolve: (data: any) => void; reject: (err: any) => void}> = new Map();
+  private areaRegistry: any[] = [];
+  private entityRegistry: any[] = [];
 
   constructor(basePath: string) {
     // basePath debe incluir el prefijo de ingress (/api/hassio_ingress/...) para no saltarse el proxy
@@ -174,6 +177,21 @@ class HomeAssistantClient {
         console.log('[Nexdom] Autenticación WebSocket exitosa');
         this.subscribeToEvents();
         this.emit('connected', true);
+
+        // Pedir registros de áreas y entidades por WS
+        this.request('config/area_registry/list')
+          .then((areas) => {
+            this.areaRegistry = areas || [];
+            this.emit('area_registry', this.areaRegistry);
+          })
+          .catch((err) => console.error('[Nexdom] Error WS area_registry:', err));
+
+        this.request('config/entity_registry/list')
+          .then((entities) => {
+            this.entityRegistry = entities || [];
+            this.emit('entity_registry', this.entityRegistry);
+          })
+          .catch((err) => console.error('[Nexdom] Error WS entity_registry:', err));
         break;
         
       case 'auth_invalid':
@@ -188,9 +206,18 @@ class HomeAssistantClient {
         break;
         
       case 'result':
-        // Confirmación de servicios ejecutados
         if (message.success === false) {
           console.error('[Nexdom] Error en servicio:', message.error);
+        }
+        // Resolver solicitudes pendientes por id (para listados de registro)
+        if (message.id && this.pendingRequests.has(message.id)) {
+          const pending = this.pendingRequests.get(message.id)!;
+          this.pendingRequests.delete(message.id);
+          if (message.success) {
+            pending.resolve(message.result);
+          } else {
+            pending.reject(message.error || 'WS request failed');
+          }
         }
         break;
         
@@ -215,6 +242,22 @@ class HomeAssistantClient {
         event_type: 'state_changed'
       }));
     }
+  }
+
+  private request(type: string) {
+    return new Promise((resolve, reject) => {
+      const id = this.messageId++;
+      this.pendingRequests.set(id, { resolve, reject });
+      this.ws?.send(JSON.stringify({ id, type }));
+    });
+  }
+
+  getAreaRegistry() {
+    return this.areaRegistry;
+  }
+
+  getEntityRegistry() {
+    return this.entityRegistry;
   }
 
   on(event: string, callback: Function) {
@@ -262,20 +305,9 @@ export const useHomeAssistant = () => {
       try {
         console.log('[Nexdom] Cargando datos desde proxy backend...');
         
-        const [states, areasResult, entityRegistryResult] = await Promise.all([
-          haClient.getStates(),
-          haClient.getAreas().catch((err) => {
-            console.error('[Nexdom] Error cargando áreas:', err);
-            return [];
-          }),
-          haClient.getEntityRegistry().catch((err) => {
-            console.error('[Nexdom] Error cargando entity registry:', err);
-            return [];
-          }),
-        ]);
-
-        const areas = Array.isArray(areasResult) ? areasResult : [];
-        const entityRegistry = Array.isArray(entityRegistryResult) ? entityRegistryResult : [];
+        const states = await haClient.getStates();
+        const areas = haClient.getAreaRegistry();
+        const entityRegistry = haClient.getEntityRegistry();
         
         console.log(`[Nexdom] Estados cargados: ${states.length}, Áreas: ${areas.length}, Entidades registry: ${entityRegistry.length}`);
         setEntities(states);
@@ -333,8 +365,8 @@ export const useHomeAssistant = () => {
   const createZonesFromEntities = (states: any[], areas: any[], entityRegistry: any[]) => {
     // Construir mapa de entity_id -> area_id desde entity_registry
     const entityAreaMap = new Map<string, string>();
-    entityRegistry.forEach((entry: any) => {
-      if (entry.entity_id && entry.area_id) {
+    entityRegistry?.forEach((entry: any) => {
+      if (entry?.entity_id && entry?.area_id) {
         entityAreaMap.set(entry.entity_id, entry.area_id);
       }
     });
@@ -342,7 +374,7 @@ export const useHomeAssistant = () => {
     // Mapa de area_id -> nombre
     const areaNameMap = new Map<string, string>();
     areas?.forEach((area: any) => {
-      if (area.area_id) {
+      if (area?.area_id) {
         areaNameMap.set(area.area_id, area.name);
       }
     });
