@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --watchAll=false"
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.3.22",
@@ -31,6 +35,10 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^30.0.0",
     "@types/matter-js": "^0.20.0",
     "@types/node": "^24.0.14",
     "@types/react": "^18.3.1",
@@ -38,8 +46,12 @@
     "@vitejs/plugin-react": "^4.5.2",
     "@youware/vite-plugin-react": "^1.0.2",
     "autoprefixer": "^10.4.21",
+    "jest": "^30.2.0",
+    "jest-css-modules-transform": "^4.4.2",
+    "jest-environment-jsdom": "^30.2.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
+    "ts-jest": "^29.4.5",
     "typescript": "~5.8.3",
     "vite": "^7.0.0"
   }
