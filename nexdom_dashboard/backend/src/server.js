@@ -60,8 +60,18 @@ app.use((req, res, next) => {
     .catch(() => res.status(429).json({ error: 'Too many requests' }));
 });
 
-// Configurar axios para Home Assistant (API REST principal)
-const haClient = axios.create({
+// Cliente para estados/servicios (core API)
+const haCoreClient = axios.create({
+  baseURL: `${SUPERVISOR_URL}/core/api`,
+  timeout: 10000,
+  headers: {
+    'Authorization': `Bearer ${SUPERVISOR_TOKEN}`,
+    'Content-Type': 'application/json'
+  }
+});
+
+// Cliente para registros/config (REST principal)
+const haConfigClient = axios.create({
   baseURL: `${SUPERVISOR_URL}/api`,
   timeout: 10000,
   headers: {
@@ -75,7 +85,7 @@ const haClient = axios.create({
 // GET /api/states - Obtener todos los estados
 app.get('/api/states', async (req, res) => {
   try {
-    const response = await haClient.get('/states');
+    const response = await haCoreClient.get('/states');
     res.json(response.data);
   } catch (error) {
     console.error('[Error] Getting states:', error.message);
@@ -90,7 +100,7 @@ app.get('/api/states', async (req, res) => {
 app.get('/api/states/:entityId', async (req, res) => {
   try {
     const { entityId } = req.params;
-    const response = await haClient.get(`/states/${entityId}`);
+    const response = await haCoreClient.get(`/states/${entityId}`);
     res.json(response.data);
   } catch (error) {
     console.error(`[Error] Getting state for ${req.params.entityId}:`, error.message);
@@ -108,7 +118,7 @@ app.get('/api/states/:entityId', async (req, res) => {
 // GET /api/config/area_registry - Obtener áreas
 app.get('/api/config/area_registry', async (req, res) => {
   try {
-    const response = await haClient.get('/config/area_registry');
+    const response = await haConfigClient.get('/config/area_registry');
     res.status(response.status).json(response.data);
   } catch (error) {
     const status = error.response?.status || 500;
@@ -129,7 +139,7 @@ app.get('/api/config/area_registry', async (req, res) => {
 // GET /api/config/entity_registry - Obtener registro de entidades
 app.get('/api/config/entity_registry', async (req, res) => {
   try {
-    const response = await haClient.get('/config/entity_registry');
+    const response = await haConfigClient.get('/config/entity_registry');
     res.status(response.status).json(response.data);
   } catch (error) {
     const status = error.response?.status || 500;
@@ -152,7 +162,7 @@ app.post('/api/services/:domain/:service', async (req, res) => {
     const { domain, service } = req.params;
     const serviceData = req.body;
     
-    const response = await haClient.post(`/services/${domain}/${service}`, serviceData);
+    const response = await haCoreClient.post(`/services/${domain}/${service}`, serviceData);
     res.json(response.data);
   } catch (error) {
     console.error(`[Error] Calling service ${req.params.domain}.${req.params.service}:`, error.message);
