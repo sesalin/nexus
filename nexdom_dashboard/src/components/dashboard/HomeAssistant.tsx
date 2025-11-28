@@ -63,6 +63,26 @@ class HomeAssistantClient {
     return response.json();
   }
 
+  async getEntityRegistry() {
+    const response = await fetch(`${this.basePath}/api/config/entity_registry`, {
+      headers: { 
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await response.text();
+      throw new Error(`Unexpected response (areas): ${text.slice(0, 120)}`);
+    }
+    
+    return response.json();
+  }
+
   async callService(domain: string, service: string, data: any) {
     const response = await fetch(`${this.basePath}/api/services/${domain}/${service}`, {
       method: 'POST',
@@ -242,19 +262,24 @@ export const useHomeAssistant = () => {
       try {
         console.log('[Nexdom] Cargando datos desde proxy backend...');
         
-        const [states, areasResult] = await Promise.all([
+        const [states, areasResult, entityRegistryResult] = await Promise.all([
           haClient.getStates(),
           haClient.getAreas().catch((err) => {
             console.error('[Nexdom] Error cargando áreas:', err);
             return [];
-          })
+          }),
+          haClient.getEntityRegistry().catch((err) => {
+            console.error('[Nexdom] Error cargando entity registry:', err);
+            return [];
+          }),
         ]);
 
         const areas = Array.isArray(areasResult) ? areasResult : [];
+        const entityRegistry = Array.isArray(entityRegistryResult) ? entityRegistryResult : [];
         
-        console.log(`[Nexdom] Estados cargados: ${states.length}, Áreas: ${areas.length}`);
+        console.log(`[Nexdom] Estados cargados: ${states.length}, Áreas: ${areas.length}, Entidades registry: ${entityRegistry.length}`);
         setEntities(states);
-        createZonesFromEntities(states, areas);
+        createZonesFromEntities(states, areas, entityRegistry);
         setError(null);
       } catch (error) {
         console.error('[Nexdom] Error cargando datos:', error);
@@ -305,23 +330,38 @@ export const useHomeAssistant = () => {
     return () => haClient.disconnect();
   }, []);
 
-  const createZonesFromEntities = (states: any[], areas: any[]) => {
-    const zonesWithEntities = areas.map(area => ({
-      id: area.area_id,
-      name: area.name,
-      entities: states.filter(entity => entity.attributes.area_id === area.area_id)
+  const createZonesFromEntities = (states: any[], areas: any[], entityRegistry: any[]) => {
+    // Construir mapa de entity_id -> area_id desde entity_registry
+    const entityAreaMap = new Map<string, string>();
+    entityRegistry.forEach((entry: any) => {
+      if (entry.entity_id && entry.area_id) {
+        entityAreaMap.set(entry.entity_id, entry.area_id);
+      }
+    });
+
+    // Mapa de area_id -> nombre
+    const areaNameMap = new Map<string, string>();
+    areas?.forEach((area: any) => {
+      if (area.area_id) {
+        areaNameMap.set(area.area_id, area.name);
+      }
+    });
+
+    const grouped: Record<string, any[]> = {};
+    states.forEach((entity) => {
+      const areaIdFromRegistry = entityAreaMap.get(entity.entity_id);
+      const areaId = areaIdFromRegistry || entity.attributes?.area_id || 'unassigned';
+      grouped[areaId] = grouped[areaId] || [];
+      grouped[areaId].push(entity);
+    });
+
+    const zonesBuilt = Object.entries(grouped).map(([id, ents]) => ({
+      id,
+      name: areaNameMap.get(id) || (id === 'unassigned' ? 'Sin Asignar' : `Área ${id}`),
+      entities: ents,
     }));
 
-    const unassignedEntities = states.filter(entity => !entity.attributes.area_id);
-    if (unassignedEntities.length > 0) {
-      zonesWithEntities.push({
-        id: 'unassigned',
-        name: 'Sin Asignar',
-        entities: unassignedEntities
-      });
-    }
-
-    setZones(zonesWithEntities);
+    setZones(zonesBuilt);
   };
 
   const callService = async (domain: string, service: string, data: any) => {

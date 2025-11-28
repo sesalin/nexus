@@ -114,6 +114,10 @@ app.get('/api/config/area_registry', async (req, res) => {
     const status = error.response?.status || 500;
     const data = error.response?.data;
     console.error('[Error] Getting areas:', status, error.message, data);
+    // Si el endpoint no existe o HA responde 404, devolver lista vacía para no romper el frontend
+    if (status === 404) {
+      return res.json([]);
+    }
     res.status(status).json({ 
       error: 'Failed to fetch areas',
       message: error.message,
@@ -131,6 +135,9 @@ app.get('/api/config/entity_registry', async (req, res) => {
     const status = error.response?.status || 500;
     const data = error.response?.data;
     console.error('[Error] Getting entity registry:', status, error.message, data);
+    if (status === 404) {
+      return res.json([]);
+    }
     res.status(status).json({ 
       error: 'Failed to fetch entity registry',
       message: error.message,
