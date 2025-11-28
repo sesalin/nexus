@@ -96,9 +96,10 @@ export const Icon: React.FC<IconProps> = ({
 
   // Render dynamic SVG by name or URL
   if (svgName) {
-    const dynamicSvgSource = svgName.startsWith('/') || svgName.startsWith('data:') 
-      ? svgName  // Already a URL or data URL
-      : `../assets/icons/${svgName}.svg`;  // Just the filename, construct path
+    const isAbsolute = svgName.startsWith('http://') || svgName.startsWith('https://') || svgName.startsWith('/');
+    const dynamicSvgSource = isAbsolute || svgName.startsWith('data:')
+      ? svgName
+      : `../assets/icons/${svgName}.svg`;  // filename -> asset path
     
     return (
       <div 

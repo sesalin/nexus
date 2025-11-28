@@ -37,6 +37,7 @@ function App() {
 
     const devices = entities.map((entity) => {
       const [domain] = entity.entity_id.split('.');
+      const areaId = entity.attributes?.area_id || 'unassigned';
       const typeMap: Record<string, Device['type']> = {
         light: 'light',
         switch: 'switch',
@@ -51,7 +52,7 @@ function App() {
         name: entity.attributes?.friendly_name || entity.entity_id,
         type: typeMap[domain] || 'sensor',
         status: entity.state === 'unavailable' ? 'offline' : 'online',
-        room: entity.attributes?.area_id,
+        room: areaId,
         lastUpdate: entity.last_changed || entity.last_updated,
       } as Device;
     });

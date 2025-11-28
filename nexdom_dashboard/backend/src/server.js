@@ -60,9 +60,9 @@ app.use((req, res, next) => {
     .catch(() => res.status(429).json({ error: 'Too many requests' }));
 });
 
-// Configurar axios para Home Assistant
+// Configurar axios para Home Assistant (API REST principal)
 const haClient = axios.create({
-  baseURL: `${SUPERVISOR_URL}/core/api`,
+  baseURL: `${SUPERVISOR_URL}/api`,
   timeout: 10000,
   headers: {
     'Authorization': `Bearer ${SUPERVISOR_TOKEN}`,
