@@ -109,26 +109,32 @@ app.get('/api/states/:entityId', async (req, res) => {
 app.get('/api/config/area_registry', async (req, res) => {
   try {
     const response = await haClient.get('/config/area_registry');
-    res.json(response.data);
+    res.status(response.status).json(response.data);
   } catch (error) {
-    console.error('[Error] Getting areas:', error.message);
-    res.status(500).json({ 
+    const status = error.response?.status || 500;
+    const data = error.response?.data;
+    console.error('[Error] Getting areas:', status, error.message, data);
+    res.status(status).json({ 
       error: 'Failed to fetch areas',
-      message: error.message 
+      message: error.message,
+      data
     });
   }
 });
 
-// GET /config/entity_registry - Obtener registro de entidades
-app.get('/config/entity_registry', async (req, res) => {
+// GET /api/config/entity_registry - Obtener registro de entidades
+app.get('/api/config/entity_registry', async (req, res) => {
   try {
     const response = await haClient.get('/config/entity_registry');
-    res.json(response.data);
+    res.status(response.status).json(response.data);
   } catch (error) {
-    console.error('[Error] Getting entity registry:', error.message);
-    res.status(500).json({ 
+    const status = error.response?.status || 500;
+    const data = error.response?.data;
+    console.error('[Error] Getting entity registry:', status, error.message, data);
+    res.status(status).json({ 
       error: 'Failed to fetch entity registry',
-      message: error.message 
+      message: error.message,
+      data
     });
   }
 });

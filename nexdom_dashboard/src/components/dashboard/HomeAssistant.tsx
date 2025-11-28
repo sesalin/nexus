@@ -242,10 +242,15 @@ export const useHomeAssistant = () => {
       try {
         console.log('[Nexdom] Cargando datos desde proxy backend...');
         
-        const [states, areas] = await Promise.all([
+        const [states, areasResult] = await Promise.all([
           haClient.getStates(),
-          haClient.getAreas()
+          haClient.getAreas().catch((err) => {
+            console.error('[Nexdom] Error cargando áreas:', err);
+            return [];
+          })
         ]);
+
+        const areas = Array.isArray(areasResult) ? areasResult : [];
         
         console.log(`[Nexdom] Estados cargados: ${states.length}, Áreas: ${areas.length}`);
         setEntities(states);
