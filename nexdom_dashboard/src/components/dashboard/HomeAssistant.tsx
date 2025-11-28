@@ -171,7 +171,18 @@ class HomeAssistantClient {
         // Primero suscribirse a eventos
         this.subscribeToEvents();
 
-        // Luego pedir registros de áreas y entidades por WS
+        // IMPORTANTE: Pedir states primero, luego registros
+        console.log('[Nexdom] Solicitando states...');
+        this.request('get_states')
+          .then((states: any) => {
+            console.log(`[Nexdom] ✓ ${states.length} states recibidos`);
+            this.emit('states_loaded', states);
+          })
+          .catch((err) => {
+            console.error('[Nexdom] Error cargando states:', err);
+          });
+
+        // Luego solicitar registros de áreas y entidades
         console.log('[Nexdom] Solicitando registros de áreas y entidades...');
         this.request('config/area_registry/list')
           .then((result: any) => {
@@ -246,7 +257,7 @@ class HomeAssistantClient {
     }
   }
 
-  private request(type: string, params?: any): Promise<any> {
+  request(type: string, params?: any): Promise<any> {
     return new Promise((resolve, reject) => {
       if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
         reject(new Error('WebSocket not connected'));
@@ -321,33 +332,17 @@ export const useHomeAssistant = () => {
     const haClient = new HomeAssistantClient(basePath || '');
     setClient(haClient);
 
-    // Cargar datos iniciales desde REST API
-    const loadInitialData = async () => {
-      try {
-        console.log('[Nexdom] Cargando datos iniciales desde proxy backend...');
-
-        const states = await haClient.getStates();
-        console.log(`[Nexdom] ✓ ${states.length} estados cargados desde REST`);
-
-        setEntities(states);
-        setError(null);
-      } catch (error) {
-        console.error('[Nexdom] Error cargando datos iniciales:', error);
-        setError(error instanceof Error ? error.message : 'Error de conexión');
-
-        // Fallback a datos mock si no hay conexión
-        console.log('[Nexdom] Usando datos mock como fallback');
-        setEntities(getMockEntities());
-        setZones(getMockZones());
-      }
-    };
-
-    loadInitialData();
-
     // Configurar listeners ANTES de conectar WebSocket
     haClient.on('connected', (connected: boolean) => {
       console.log('[Nexdom] Conexión WebSocket:', connected ? 'establecida' : 'perdida');
       setIsConnected(connected);
+    });
+
+    // Cuando llegan los states
+    haClient.on('states_loaded', (states: any[]) => {
+      console.log('[Nexdom] States cargados, actualizando UI');
+      setEntities(states);
+      setError(null);
     });
 
     // Cuando se cargan los registros de áreas y entidades, crear zonas
@@ -388,15 +383,20 @@ export const useHomeAssistant = () => {
       }));
     });
 
-    // Conectar WebSocket DESPUÉS de configurar listeners
+    // Conectar WebSocket - los requests se harán automáticamente después de auth_ok
+    console.log('[Nexdom] Iniciando conexión WebSocket...');
     haClient.connectWebSocket()
       .then(() => {
-        console.log('[Nexdom] ✓ WebSocket conectado y autenticado');
+        console.log('[Nexdom] ✓ WebSocket conectado');
+        // Los requests de states/areas/entities se hacen automáticamente en auth_ok
       })
       .catch(error => {
         console.error('[Nexdom] ✗ Error conectando WebSocket:', error);
         setError('Error de conexión WebSocket');
         setIsConnected(false);
+        // Fallback a mock
+        setEntities(getMockEntities());
+        setZones(getMockZones());
       });
 
     return () => {

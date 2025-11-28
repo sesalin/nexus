@@ -1,7 +1,9 @@
 name: "Nexdom Dashboard"
-version: "0.0.17"
+version: "0.0.19"
 slug: "nexdom_dashboard"
 description: "Dashboard web de Nexdom para Home Assistant"
+logo: "nexdom_aura_shift/logo.png"
+background: "dark"
 arch:
   - amd64
   - aarch64
