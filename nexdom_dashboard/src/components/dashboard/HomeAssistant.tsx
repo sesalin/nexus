@@ -87,9 +87,10 @@ class HomeAssistantClient {
 
   async connectWebSocket(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // En ingress mode, simplemente usar /ws que nginx redirigirá al backend
+      // Para WebSocket, SÍ necesitamos el path completo incluyendo ingress
+      // porque nginx necesita el path completo para hacer el upgrade
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+      const wsUrl = `${wsProtocol}//${window.location.host}${window.location.pathname}ws`;
 
       console.log('[Nexdom] Conectando WebSocket al proxy backend:', wsUrl);
       this.ws = new WebSocket(wsUrl);

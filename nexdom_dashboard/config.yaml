@@ -1,5 +1,5 @@
 name: "Nexdom Dashboard"
-version: "0.0.16"
+version: "0.0.17"
 slug: "nexdom_dashboard"
 description: "Dashboard web de Nexdom para Home Assistant"
 arch:
