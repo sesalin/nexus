@@ -27,19 +27,29 @@ class HomeAssistantClient {
   }
 
   async getStates() {
-    const response = await fetch(`${this.basePath}/api/states`, {
+    // IMPORTANTE: Cuando se ejecuta como ingress add-on, basePath ya incluye todo el routing
+    // NO debemos agregar /api/ de nuevo - el backend ya está en /api/states
+    // El basePath en ingress es algo como: /api/hassio_ingress/TOKEN
+    // Y el nginx del add-on ya redirige eso al backend en puerto 3000
+    // Entonces solo necesitamos hacer fetch a '/api/states' directamente
+    const url = `/api/states`;
+
+    console.log('[HomeAssistant] Fetching states from:', url);
+    const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json'
       }
     });
 
     if (!response.ok) {
+      console.error(`[HomeAssistant] States request failed: ${response.status} ${response.statusText}`);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const contentType = response.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
       const text = await response.text();
+      console.error('[HomeAssistant] Unexpected response type:', contentType);
       throw new Error(`Unexpected response (states): ${text.slice(0, 120)}`);
     }
 
@@ -48,7 +58,11 @@ class HomeAssistantClient {
 
 
   async callService(domain: string, service: string, data: any) {
-    const response = await fetch(`${this.basePath}/api/services/${domain}/${service}`, {
+    // Usar path directo sin basePath para evitar duplicación
+    const url = `/api/services/${domain}/${service}`;
+
+    console.log(`[HomeAssistant] Calling service: ${domain}.${service}`, data);
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -61,8 +75,10 @@ class HomeAssistantClient {
       const errorData = isJson ? await response.json().catch(() => ({ error: 'Service call failed' })) : null;
       if (!isJson) {
         const text = await response.text();
+        console.error('[HomeAssistant] Service call failed:', text.slice(0, 120));
         throw new Error(`Service call failed: ${text.slice(0, 120)}`);
       }
+      console.error('[HomeAssistant] Service error:', errorData);
       throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
 
@@ -71,10 +87,9 @@ class HomeAssistantClient {
 
   async connectWebSocket(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Usar path relativo - el proxy backend maneja la conexión a HAOS
-      // No necesitamos construir la URL completa
+      // En ingress mode, simplemente usar /ws que nginx redirigirá al backend
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${wsProtocol}//${window.location.host}${this.basePath}/ws`;
+      const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
 
       console.log('[Nexdom] Conectando WebSocket al proxy backend:', wsUrl);
       this.ws = new WebSocket(wsUrl);

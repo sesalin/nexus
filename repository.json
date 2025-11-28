@@ -1,63 +1,63 @@
 {
-          "name": "Nexus Nexdom",
-          "url": "https://github.com/nexdom/addons",
-          "maintainer": "Okehc <sergio@nexdom.mx>",
-          "addons": [
-            {
-              "name": "Nexus",
-              "slug": "nexus",
-              "description": "Nexus es una interfaz visual y personalizable...",
-              "logo": "nexus/logo.png",
-              "background": "dark",
-              "version": "1.5.1"
-            },
-            {
-              "name": "Nexdom Dashboard",
-              "slug": "nexdom_dashboard",
-              "description": "Dashboard web de Nexdom para Home Assistant",
-              "logo": "nexdom_aura_shift/logo.png",
-              "background": "dark",
-              "version": "0.0.1"
-            },
-            {
-              "name": "Telegraf Nexdom Collector",
-              "slug": "telegraf_nexdom",
-              "description": "Envía métricas de Home Assistant OS...",
-              "logo": "telegraf_nexdom/logo.png",
-              "background": "dark",
-              "version": "1.5.1"
-            },
-            {
-              "name": "Nexdom Watcher",
-              "slug": "nexdom_watcher",
-              "description": "Monitorea HAOS: detecta updates...",
-              "logo": "nexdom_watcher/logo.png",
-              "background": "dark",
-              "version": "1.5.1"
-            },
-            {
-              "name": "Nexdom Health Reporter",
-              "slug": "nexdom_health",
-              "description": "Genera un resumen de salud local (HAOS, updates, dispositivos, almacenamiento) y lo envía a un webhook central.",
-              "logo": "nexdom_health/logo.png",
-              "background": "dark",
-              "version": "0.1.0"
-            },
-            {
-              "name": "Nexdom Pulse",
-              "slug": "nexdom_pulse",
-              "description": "Envía entidades seleccionadas de Home Assistant hacia Supabase mediante RPC para monitoreo centralizado.",
-              "logo": "nexdom_pulse/logo.png",
-              "background": "dark",
-              "version": "0.1.6"
-            },
-            {
-              "name": "Nexdom AuraShift",
-              "slug": "nexdom_aura_shift",
-              "description": "Ambientación visual dinámica para Home Assistant mediante fondos rotativos totalmente configurables.",
-              "logo": "nexdom_aura_shift/logo.png",
-              "background": "dark",
-              "version": "0.1.6"
-            }
-          ]
-        }
+  "name": "Nexus Nexdom",
+  "url": "https://github.com/nexdom/addons",
+  "maintainer": "Okehc <sergio@nexdom.mx>",
+  "addons": [
+    {
+      "name": "Nexus",
+      "slug": "nexus",
+      "description": "Nexus es una interfaz visual y personalizable...",
+      "logo": "nexus/logo.png",
+      "background": "dark",
+      "version": "1.5.1"
+    },
+    {
+      "name": "Nexdom Dashboard",
+      "slug": "nexdom_dashboard",
+      "description": "Dashboard web de Nexdom para Home Assistant",
+      "logo": "nexdom_aura_shift/logo.png",
+      "background": "dark",
+      "version": "0.0.2"
+    },
+    {
+      "name": "Telegraf Nexdom Collector",
+      "slug": "telegraf_nexdom",
+      "description": "Envía métricas de Home Assistant OS...",
+      "logo": "telegraf_nexdom/logo.png",
+      "background": "dark",
+      "version": "1.5.1"
+    },
+    {
+      "name": "Nexdom Watcher",
+      "slug": "nexdom_watcher",
+      "description": "Monitorea HAOS: detecta updates...",
+      "logo": "nexdom_watcher/logo.png",
+      "background": "dark",
+      "version": "1.5.1"
+    },
+    {
+      "name": "Nexdom Health Reporter",
+      "slug": "nexdom_health",
+      "description": "Genera un resumen de salud local (HAOS, updates, dispositivos, almacenamiento) y lo envía a un webhook central.",
+      "logo": "nexdom_health/logo.png",
+      "background": "dark",
+      "version": "0.1.0"
+    },
+    {
+      "name": "Nexdom Pulse",
+      "slug": "nexdom_pulse",
+      "description": "Envía entidades seleccionadas de Home Assistant hacia Supabase mediante RPC para monitoreo centralizado.",
+      "logo": "nexdom_pulse/logo.png",
+      "background": "dark",
+      "version": "0.1.6"
+    },
+    {
+      "name": "Nexdom AuraShift",
+      "slug": "nexdom_aura_shift",
+      "description": "Ambientación visual dinámica para Home Assistant mediante fondos rotativos totalmente configurables.",
+      "logo": "nexdom_aura_shift/logo.png",
+      "background": "dark",
+      "version": "0.1.6"
+    }
+  ]
+}

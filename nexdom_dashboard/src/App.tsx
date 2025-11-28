@@ -10,6 +10,7 @@ import { Security } from './pages/Security';
 import { Scenes } from './pages/Scenes';
 import { Routines } from './pages/Routines';
 import { VoiceAI } from './pages/VoiceAI';
+import { Debug } from './pages/Debug';
 import { useNexdomStore } from './store/nexdomStore';
 
 // Componentes PWA
@@ -75,24 +76,25 @@ function App() {
 
   return (
     <Router>
-        <div className="min-h-screen bg-[#0a0a0a] text-white overflow-hidden">
-          <Header />
-          <ModuleNav />
-          
-          <main className="transition-all duration-300">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/zones" element={<Zones />} />
-              <Route path="/gadgets" element={<Gadgets />} />
-              <Route path="/energy" element={<Energy />} />
-              <Route path="/security" element={<Security />} />
-              <Route path="/scenes" element={<Scenes />} />
-              <Route path="/routines" element={<Routines />} />
-              <Route path="/voice" element={<VoiceAI />} />
-            </Routes>
-          </main>
-        </div>
-      </Router>
+      <div className="min-h-screen bg-[#0a0a0a] text-white overflow-hidden">
+        <Header />
+        <ModuleNav />
+
+        <main className="transition-all duration-300">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/zones" element={<Zones />} />
+            <Route path="/gadgets" element={<Gadgets />} />
+            <Route path="/energy" element={<Energy />} />
+            <Route path="/security" element={<Security />} />
+            <Route path="/scenes" element={<Scenes />} />
+            <Route path="/routines" element={<Routines />} />
+            <Route path="/voice" element={<VoiceAI />} />
+            <Route path="/debug" element={<Debug />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 
