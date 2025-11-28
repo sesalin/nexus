@@ -11,6 +11,7 @@ export default defineConfig({
     port: 5173,
   },
   build: {
-    sourcemap: true,
+    // Desactivar sourcemaps en build para evitar requests a archivos locales en HA ingress
+    sourcemap: false,
   },
 });
