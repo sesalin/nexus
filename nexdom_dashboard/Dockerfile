@@ -13,8 +13,8 @@ COPY tailwind.config.js ./
 COPY tsconfig*.json ./
 COPY postcss.config.js ./
 
-# Install dependencies and build frontend
-RUN npm ci --only=production && npm run build
+# Install all dependencies for build (including dev deps like Vite)
+RUN npm ci && npm run build
 
 # Stage 2: Setup backend dependencies
 FROM node:20-alpine AS backend-builder

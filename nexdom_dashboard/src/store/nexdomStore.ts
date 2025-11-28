@@ -9,6 +9,13 @@ export interface Device {
   lastUpdate?: string;
 }
 
+export interface Room {
+  id: string;
+  name: string;
+  activeDevices: number;
+  temperature?: number;
+}
+
 export interface Alert {
   id: string;
   type: 'info' | 'warning' | 'error';
@@ -24,6 +31,12 @@ export interface NexdomState {
   addDevice: (device: Device) => void;
   updateDevice: (id: string, updates: Partial<Device>) => void;
   removeDevice: (id: string) => void;
+  
+  // Rooms
+  rooms: Room[];
+  addRoom: (room: Room) => void;
+  updateRoom: (id: string, updates: Partial<Room>) => void;
+  removeRoom: (id: string) => void;
   
   // Alerts
   alerts: Alert[];
@@ -43,6 +56,7 @@ export interface NexdomState {
 export const useNexdomStore = create<NexdomState>((set, get) => ({
   // Initial state
   devices: [],
+  rooms: [],
   alerts: [],
   isLoading: false,
   isConnected: true,
@@ -60,6 +74,21 @@ export const useNexdomStore = create<NexdomState>((set, get) => ({
   
   removeDevice: (id) => set((state) => ({
     devices: state.devices.filter(device => device.id !== id)
+  })),
+  
+  // Room actions
+  addRoom: (room) => set((state) => ({
+    rooms: [...state.rooms, room]
+  })),
+  
+  updateRoom: (id, updates) => set((state) => ({
+    rooms: state.rooms.map(room => 
+      room.id === id ? { ...room, ...updates } : room
+    )
+  })),
+  
+  removeRoom: (id) => set((state) => ({
+    rooms: state.rooms.filter(room => room.id !== id)
   })),
   
   // Alert actions

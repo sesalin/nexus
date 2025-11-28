@@ -4,7 +4,7 @@ import { AlertTriangle, Info, X, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const Alerts: React.FC = () => {
-  const { alerts, markAlertRead } = useNexdomStore();
+  const { alerts, markAlertAsRead } = useNexdomStore();
   const activeAlerts = alerts.filter(a => !a.read);
 
   if (activeAlerts.length === 0) return null;
@@ -57,7 +57,7 @@ export const Alerts: React.FC = () => {
                 </div>
               </div>
               <button 
-                onClick={() => markAlertRead(alert.id)}
+                onClick={() => markAlertAsRead(alert.id)}
                 className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/50 hover:text-white"
               >
                 <X className="w-4 h-4" />
