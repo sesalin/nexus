@@ -4,14 +4,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files for frontend
-COPY package*.json ./
+# Copy project files needed for build (include index.html explicitly)
+COPY package*.json index.html vite.config.ts tailwind.config.js postcss.config.js tsconfig*.json ./
 COPY src/ ./src/
 COPY public/ ./public/
-COPY vite.config.ts ./
-COPY tailwind.config.js ./
-COPY tsconfig*.json ./
-COPY postcss.config.js ./
 
 # Install all dependencies for build (including dev deps like Vite)
 RUN npm ci && npm run build

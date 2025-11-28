@@ -4,7 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const { WebSocketServer } = require('ws');
 const axios = require('axios');
-const RateLimiter = require('rate-limiter-flexible');
+const { RateLimiterMemory } = require('rate-limiter-flexible');
 
 // Configuración
 const SUPERVISOR_URL = process.env.SUPERVISOR_URL || 'http://supervisor';
@@ -47,8 +47,7 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 
 // Rate limiter para prevenir abuso
-const rateLimiter = new RateLimiter({
-  storeClient: new Map(),
+const rateLimiter = new RateLimiterMemory({
   points: 100, // 100 requests
   duration: 60, // per 60 seconds
   blockDuration: 60 // block for 60 seconds if over limit
