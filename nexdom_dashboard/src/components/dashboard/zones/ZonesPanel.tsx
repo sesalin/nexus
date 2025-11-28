@@ -1,50 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GadgetCard, GadgetProps } from '../templates/GadgetCard';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-
-// Mock data for zones - in a real app this would come from a store or API
-const MOCK_ZONES = [
-  {
-    id: 'kitchen',
-    name: 'Cocina',
-    image: '/src/assets/images/kitchen.jpg',
-    gadgets: [
-      { id: 'light-kitchen-1', name: 'Luz Principal', model: 'Philips Hue', type: 'light', status: 'On', value: '100%', iconPath: '', isActive: true },
-      { id: 'sensor-kitchen-1', name: 'Sensor Movimiento', model: 'Aqara', type: 'sensor', status: 'Clear', value: 'No Motion', iconPath: '', isActive: false },
-      { id: 'plug-kitchen-1', name: 'Cafetera', model: 'TP-Link', type: 'switch', status: 'Off', iconPath: '', isActive: false },
-    ]
-  },
-  {
-    id: 'living',
-    name: 'Sala de Estar',
-    image: '/src/assets/images/living.jpg',
-    gadgets: [
-      { id: 'light-living-1', name: 'Lámpara Pie', model: 'Yeelight', type: 'light', status: 'Off', value: '0%', iconPath: '', isActive: false },
-      { id: 'ac-living', name: 'Aire Acondicionado', model: 'Daikin', type: 'thermostat', status: '24°C', value: 'Cooling', iconPath: '', isActive: true },
-      { id: 'tv-living', name: 'TV Samsung', model: 'QLED', type: 'remote', status: 'On', iconPath: '', isActive: true },
-      { id: 'blind-living', name: 'Persiana', model: 'Somfy', type: 'cover', status: 'Open', iconPath: '', isActive: true },
-    ]
-  },
-  {
-    id: 'bedroom',
-    name: 'Dormitorio Principal',
-    image: '/src/assets/images/bedroom.jpg',
-    gadgets: [
-      { id: 'light-bed-1', name: 'Luz Techo', model: 'Philips Hue', type: 'light', status: 'Off', value: '0%', iconPath: '', isActive: false },
-      { id: 'sensor-bed-1', name: 'Sensor Ventana', model: 'Aqara', type: 'sensor', status: 'Closed', value: 'Secure', iconPath: '', isActive: true },
-    ]
-  },
-  {
-    id: 'office',
-    name: 'Oficina',
-    image: '/src/assets/images/office.jpg',
-    gadgets: [
-      { id: 'light-office-1', name: 'Escritorio', model: 'Xiaomi', type: 'light', status: 'On', value: '80%', iconPath: '', isActive: true },
-      { id: 'plug-office-1', name: 'PC', model: 'Smart Plug', type: 'switch', status: 'On', iconPath: '', isActive: true },
-    ]
-  }
-];
+import { ChevronDown } from 'lucide-react';
+import { useNexdomStore } from '../../../store/nexdomStore';
 
 // Helper to get icon path (reusing logic from GadgetGrid)
 const iconModules = import.meta.glob('../../../assets/icons/*.svg', { eager: true, as: 'url' });
@@ -60,11 +18,48 @@ const getIconPath = (type: string): string => {
   };
   const name = map[type] || 'Smart-plug';
   const key = `../../../assets/icons/${name}.svg`;
-  return iconModules[key] || '';
+  const resolved = iconModules[key] as string | undefined;
+  if (resolved) return resolved;
+  
+  // Fallback al path estático del build
+  try {
+    return new URL(`../../../assets/icons/${name}.svg`, import.meta.url).href;
+  } catch {
+    return '';
+  }
 };
 
 export const ZonesPanel: React.FC = () => {
   const [expandedZone, setExpandedZone] = useState<string | null>(null);
+  const { rooms, devices } = useNexdomStore();
+
+  const zones = useMemo(() => {
+    if (!rooms || rooms.length === 0) return [];
+
+    return rooms.map((room) => {
+      const gadgets = devices
+        .filter((d) => d.room === room.id || d.room === room.name)
+        .map((d) => {
+          const domain = d.id.split('.')[0];
+          return {
+            id: d.id,
+            name: d.name,
+            model: d.type || domain,
+            type: d.type,
+            status: d.status === 'offline' ? 'Offline' : d.status,
+            value: d.lastUpdate ? new Date(d.lastUpdate).toLocaleTimeString() : '',
+            iconPath: getIconPath(d.type),
+            isActive: d.status !== 'offline',
+          } as GadgetProps;
+        });
+
+      return {
+        id: room.id,
+        name: room.name,
+        gadgets,
+      };
+    });
+  }, [rooms, devices]);
 
   const toggleZone = (id: string) => {
     setExpandedZone(expandedZone === id ? null : id);
@@ -76,9 +71,15 @@ export const ZonesPanel: React.FC = () => {
         <span className="w-2 h-8 bg-nexdom-lime rounded-full shadow-[0_0_10px_#00FF88]"></span>
         Zonas
       </h2>
-      
+
+      {zones.length === 0 && (
+        <div className="glass-panel rounded-[2rem] p-6 text-gray-300 border border-white/10">
+          No hay áreas configuradas en Home Assistant o aún no se sincronizan dispositivos.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-6">
-        {MOCK_ZONES.map((zone) => (
+        {zones.map((zone) => (
           <motion.div
             key={zone.id}
             layout
@@ -90,20 +91,11 @@ export const ZonesPanel: React.FC = () => {
           >
             {/* Zone Header / Card */}
             <div 
-              className="relative h-48 cursor-pointer group"
+              className="relative h-48 cursor-pointer group overflow-hidden bg-gradient-to-r from-white/5 via-white/0 to-white/5"
               onClick={() => toggleZone(zone.id)}
             >
-              {/* Background Image with Overlay */}
-              <div className="absolute inset-0">
-                <img 
-                  src={zone.image} 
-                  alt={zone.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
 
-              {/* Content */}
               <div className="absolute inset-0 p-6 flex flex-col justify-end">
                 <div className="flex justify-between items-end">
                   <div>

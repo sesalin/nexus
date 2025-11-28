@@ -34,6 +34,12 @@ class HomeAssistantClient {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await response.text();
+      throw new Error(`Unexpected response (states): ${text.slice(0, 120)}`);
+    }
+    
     return response.json();
   }
 
@@ -46,6 +52,12 @@ class HomeAssistantClient {
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await response.text();
+      throw new Error(`Unexpected response (areas): ${text.slice(0, 120)}`);
     }
     
     return response.json();
@@ -61,7 +73,12 @@ class HomeAssistantClient {
     });
     
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Service call failed' }));
+      const isJson = (response.headers.get('content-type') || '').includes('application/json');
+      const errorData = isJson ? await response.json().catch(() => ({ error: 'Service call failed' })) : null;
+      if (!isJson) {
+        const text = await response.text();
+        throw new Error(`Service call failed: ${text.slice(0, 120)}`);
+      }
       throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
     
@@ -81,12 +98,23 @@ class HomeAssistantClient {
       };
       
       this.ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          this.handleWebSocketMessage(message);
-        } catch (error) {
-          console.error('[Nexdom] Error parsing WebSocket message:', error);
-        }
+        const parseMessage = async () => {
+          const raw = event.data;
+          if (raw instanceof Blob) {
+            const text = await raw.text();
+            return JSON.parse(text);
+          }
+          if (typeof raw === 'string') {
+            return JSON.parse(raw);
+          }
+          return raw;
+        };
+
+        parseMessage()
+          .then((message) => this.handleWebSocketMessage(message))
+          .catch((err) => {
+            console.error('[Nexdom] Error parsing WebSocket message:', err);
+          });
       };
       
       this.ws.onclose = (event) => {
