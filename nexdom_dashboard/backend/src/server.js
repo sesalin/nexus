@@ -245,12 +245,25 @@ function connectToSupervisorWebSocket(clientWs) {
   supervisorWs.on('open', () => {
     console.log('[WS] Connected to supervisor');
     reconnectAttempts = 0;
+    // Autenticación inmediata con el token del supervisor
+    supervisorWs.send(JSON.stringify({
+      type: 'auth',
+      access_token: SUPERVISOR_TOKEN
+    }));
   });
   
   supervisorWs.on('message', (message) => {
     try {
       const data = JSON.parse(message);
       console.log('[WS] Supervisor message:', data.type);
+      
+      // Responder autenticación si es requerida
+      if (data.type === 'auth_required') {
+        supervisorWs.send(JSON.stringify({
+          type: 'auth',
+          access_token: SUPERVISOR_TOKEN
+        }));
+      }
       
       // Reenviar mensaje al cliente
       if (clientWs && clientWs.readyState === 1) {
