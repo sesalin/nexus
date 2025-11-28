@@ -105,8 +105,8 @@ app.get('/api/states/:entityId', async (req, res) => {
   }
 });
 
-// GET /config/area_registry - Obtener áreas
-app.get('/config/area_registry', async (req, res) => {
+// GET /api/config/area_registry - Obtener áreas
+app.get('/api/config/area_registry', async (req, res) => {
   try {
     const response = await haClient.get('/config/area_registry');
     res.json(response.data);

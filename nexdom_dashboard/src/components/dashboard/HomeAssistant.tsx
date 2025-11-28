@@ -44,7 +44,7 @@ class HomeAssistantClient {
   }
 
   async getAreas() {
-    const response = await fetch(`${this.basePath}/config/area_registry`, {
+    const response = await fetch(`${this.basePath}/api/config/area_registry`, {
       headers: { 
         'Content-Type': 'application/json'
       }
