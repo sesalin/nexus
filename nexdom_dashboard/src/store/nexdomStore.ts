@@ -29,12 +29,14 @@ export interface NexdomState {
   // Devices
   devices: Device[];
   addDevice: (device: Device) => void;
+  setDevices: (devices: Device[]) => void;
   updateDevice: (id: string, updates: Partial<Device>) => void;
   removeDevice: (id: string) => void;
   
   // Rooms
   rooms: Room[];
   addRoom: (room: Room) => void;
+  setRooms: (rooms: Room[]) => void;
   updateRoom: (id: string, updates: Partial<Room>) => void;
   removeRoom: (id: string) => void;
   
@@ -65,6 +67,10 @@ export const useNexdomStore = create<NexdomState>((set, get) => ({
   addDevice: (device) => set((state) => ({
     devices: [...state.devices, device]
   })),
+
+  setDevices: (devices) => set(() => ({
+    devices
+  })),
   
   updateDevice: (id, updates) => set((state) => ({
     devices: state.devices.map(device => 
@@ -79,6 +85,10 @@ export const useNexdomStore = create<NexdomState>((set, get) => ({
   // Room actions
   addRoom: (room) => set((state) => ({
     rooms: [...state.rooms, room]
+  })),
+
+  setRooms: (rooms) => set(() => ({
+    rooms
   })),
   
   updateRoom: (id, updates) => set((state) => ({
