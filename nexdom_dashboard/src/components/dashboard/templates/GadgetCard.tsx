@@ -37,12 +37,11 @@ export const GadgetCard: React.FC<GadgetProps> = ({
       const [r, g, b] = rgbColor;
       const rgbStr = `rgb(${r}, ${g}, ${b})`;
       const rgbAlpha = `rgba(${r}, ${g}, ${b}, 0.3)`;
-      const rgbAlphaGlow = `rgba(${r}, ${g}, ${b}, 0.2)`;
       return {
         text: 'text-white',
         border: 'border-white/30',
         bg: 'bg-white/10',
-        glow: `shadow-[0_0_20px_${rgbAlphaGlow}]`,
+        glow: '', // Empty, we use inline styles instead
         activeBg: 'bg-white',
         customColor: rgbStr,
         customColorAlpha: rgbAlpha
