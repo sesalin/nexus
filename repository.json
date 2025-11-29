@@ -17,7 +17,7 @@
       "description": "Dashboard web de Nexdom para Home Assistant",
       "logo": "nexdom_aura_shift/logo.png",
       "background": "dark",
-      "version": "0.0.33"
+      "version": "0.0.35"
     },
     {
       "name": "Telegraf Nexdom Collector",

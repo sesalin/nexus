@@ -4,29 +4,23 @@ import { GadgetCard, GadgetProps } from '../templates/GadgetCard';
 import { ChevronDown } from 'lucide-react';
 import { useHomeAssistant } from '../HomeAssistant';
 
-// Helper to get icon path (reusing logic from GadgetGrid)
-const iconModules = import.meta.glob('../../../assets/icons/*.svg', { eager: true, as: 'url' });
-const getIconPath = (type: string): string => {
-  // Simple mapping for mock data
+// Helper to get Icon filename based on domain/type
+const getIconName = (type: string): string => {
   const map: Record<string, string> = {
     'light': 'light',
-    'sensor': 'Sensor-movimiento',
     'switch': 'Smart-plug',
-    'thermostat': 'Temperatura',
-    'remote': 'IR',
-    'cover': 'Persiana'
+    'sensor': 'Sensor-movimiento',
+    'binary_sensor': 'Sensor-puerta',
+    'climate': 'Temperatura',
+    'camera': 'Camara',
+    'lock': 'Smartlock',
+    'cover': 'Persiana',
+    'media_player': 'IR',
+    'fan': 'AC',
+    'vacuum': 'Vibracion', // Fallback
+    'update': 'Nivel-agua' // Fallback
   };
-  const name = map[type] || 'Smart-plug';
-  const key = `../../../assets/icons/${name}.svg`;
-  const resolved = iconModules[key] as string | undefined;
-  if (resolved) return resolved;
-
-  // Fallback al path estático del build
-  try {
-    return new URL(`../../../assets/icons/${name}.svg`, import.meta.url).href;
-  } catch {
-    return '';
-  }
+  return map[type] || 'Smart-plug'; // Default icon
 };
 
 import { DeviceDetailsModal } from '../modals/DeviceDetailsModal';
@@ -73,8 +67,8 @@ export const ZonesPanel: React.FC = () => {
           type: gadgetType,
           status: entity.state,
           value: value,
-          iconPath: getIconPath(gadgetType),
-          isActive: entity.state !== 'off' && entity.state !== 'unavailable' && entity.state !== 'unknown',
+          iconPath: getIconName(domain), // Passing SVG filename
+          isActive: entity.state !== 'off' && entity.state !== 'unavailable' && entity.state !== 'unknown' && entity.state !== 'closed' && entity.state !== 'locked',
           onPrimaryAction: ['light', 'switch', 'lock', 'cover', 'fan', 'input_boolean', 'automation', 'script'].includes(domain) ? () => {
             console.log('[ZonesPanel] Toggling entity:', entity.entity_id);
             toggleEntity(entity.entity_id).catch(err => {

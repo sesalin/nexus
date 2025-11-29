@@ -20,18 +20,18 @@ interface IconProps {
   isHovering?: boolean;
 }
 
-export const Icon: React.FC<IconProps> = ({ 
+export const Icon: React.FC<IconProps> = ({
   lucideIcon,
   svgIcon,
   svgName,
-  size = 'md', 
+  size = 'md',
   className = '',
   isActive = false,
   isHovering = false
 }) => {
   const sizeClasses = {
     sm: 'w-4 h-4',
-    md: 'w-6 h-6', 
+    md: 'w-6 h-6',
     lg: 'w-8 h-8'
   };
 
@@ -61,16 +61,16 @@ export const Icon: React.FC<IconProps> = ({
 
   // Render Lucide React icon
   if (lucideIcon) {
-    const IconComponent = LucideIcons[lucideIcon];
+    const IconComponent = LucideIcons[lucideIcon] as React.ElementType;
     if (IconComponent) {
       return (
-        <IconComponent 
+        <IconComponent
           className={`
             ${sizeClasses[size]} 
             transition-all duration-300 
             ${getColorClasses()}
             ${className}
-          `} 
+          `}
         />
       );
     }
@@ -79,7 +79,7 @@ export const Icon: React.FC<IconProps> = ({
   // Render SVG icon
   if (svgSource) {
     return (
-      <img 
+      <img
         src={svgSource}
         alt={svgIcon || 'icon'}
         className={`
@@ -96,13 +96,13 @@ export const Icon: React.FC<IconProps> = ({
 
   // Render dynamic SVG by name or URL
   if (svgName) {
-    const isAbsolute = svgName.startsWith('http://') || svgName.startsWith('https://') || svgName.startsWith('/');
-    const dynamicSvgSource = isAbsolute || svgName.startsWith('data:')
+    const isAbsolute = svgName.startsWith('http') || svgName.startsWith('/');
+    const dynamicSvgSource = isAbsolute
       ? svgName
-      : `../assets/icons/${svgName}.svg`;  // filename -> asset path
-    
+      : `/icons/${svgName}.svg`; // Default to public/icons if not absolute
+
     return (
-      <div 
+      <div
         className={`
           ${sizeClasses[size]} 
           transition-all duration-300 
@@ -110,10 +110,7 @@ export const Icon: React.FC<IconProps> = ({
           ${className}
         `}
         style={{
-          backgroundImage: `url(${dynamicSvgSource})`,
-          backgroundSize: 'contain',
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'center',
+          backgroundColor: 'currentColor',
           maskImage: `url(${dynamicSvgSource})`,
           maskSize: 'contain',
           maskRepeat: 'no-repeat',
@@ -140,7 +137,7 @@ export const MenuIcon: React.FC<{
 }> = ({ type, name, isActive, isHovering }) => {
   if (type === 'lucide') {
     return (
-      <Icon 
+      <Icon
         lucideIcon={name as keyof typeof LucideIcons}
         isActive={isActive}
         isHovering={isHovering}
@@ -148,7 +145,7 @@ export const MenuIcon: React.FC<{
     );
   } else {
     return (
-      <Icon 
+      <Icon
         svgIcon={name as 'energy' | 'security' | 'voice' | 'gadgets'}
         isActive={isActive}
         isHovering={isHovering}

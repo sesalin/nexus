@@ -331,6 +331,9 @@ export const useHomeAssistant = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [entities, setEntities] = useState<any[]>([]);
   const [zones, setZones] = useState<any[]>([]);
+  const [areaRegistry, setAreaRegistry] = useState<any[]>([]);
+  const [entityRegistry, setEntityRegistry] = useState<any[]>([]);
+  const [deviceRegistry, setDeviceRegistry] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -372,6 +375,7 @@ export const useHomeAssistant = () => {
     haClient.on('area_registry', (areas: any[]) => {
       console.log('[Nexdom] Evento: area_registry recibido');
       loadedAreas = areas;
+      setAreaRegistry(areas);
       tryCreateZones();
     });
 
@@ -379,12 +383,14 @@ export const useHomeAssistant = () => {
     haClient.on('entity_registry', (entityReg: any[]) => {
       console.log('[Nexdom] Evento: entity_registry recibido');
       loadedEntityRegistry = entityReg;
+      setEntityRegistry(entityReg);
       tryCreateZones();
     });
 
     haClient.on('device_registry', (deviceReg: any[]) => {
       console.log('[Nexdom] Evento: device_registry recibido');
       loadedDeviceRegistry = deviceReg;
+      setDeviceRegistry(deviceReg);
       tryCreateZones();
     });
 
@@ -428,6 +434,13 @@ export const useHomeAssistant = () => {
       haClient.disconnect();
     };
   }, []);
+
+  // CRITICAL FIX: Re-calcular zonas cuando las entidades cambian (state_changed)
+  useEffect(() => {
+    if (entities.length > 0 && areaRegistry.length > 0) {
+      createZonesFromEntities(entities, areaRegistry, entityRegistry, deviceRegistry);
+    }
+  }, [entities, areaRegistry, entityRegistry, deviceRegistry]);
 
   const createZonesFromEntities = (states: any[], areas: any[], entityRegistry: any[], deviceRegistry: any[] = []) => {
     console.log('[Nexdom] Creando zonas:', {
