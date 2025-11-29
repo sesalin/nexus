@@ -18,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({ pwaHeader }) => {
     <motion.header
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="flex items-center justify-between px-4 lg:px-8 py-6 sticky top-0 z-50 pointer-events-none"
+      className="flex items-center justify-between px-4 lg:px-8 py-6 relative z-50 pointer-events-none"
     >
       {/* Logo Area */}
       <div
