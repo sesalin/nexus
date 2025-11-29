@@ -16,6 +16,7 @@ export interface GadgetProps {
   rgbColor?: number[]; // RGB color for lights
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
+  onColorChange?: (rgb: number[]) => void; // Callback for color changes
 }
 
 export const GadgetCard: React.FC<GadgetProps> = ({
@@ -28,7 +29,8 @@ export const GadgetCard: React.FC<GadgetProps> = ({
   value,
   rgbColor,
   onPrimaryAction,
-  onSecondaryAction
+  onSecondaryAction,
+  onColorChange
 }) => {
   // Determine color scheme based on type
   const getColorScheme = () => {
@@ -167,8 +169,12 @@ export const GadgetCard: React.FC<GadgetProps> = ({
             <Icon
               svgName={iconPath}
               size="md"
-              className={`transition-colors duration-300 ${isActive ? colors.text : 'text-gray-400 group-hover:text-white'
-                }`}
+              className={`transition-colors duration-300`}
+              style={
+                type === 'light' && isActive && rgbColor && rgbColor.length === 3
+                  ? { color: `rgb(${rgbColor[0]}, ${rgbColor[1]}, ${rgbColor[2]})` }
+                  : {}
+              }
               isActive={isActive}
             />
           </motion.div>
@@ -211,6 +217,30 @@ export const GadgetCard: React.FC<GadgetProps> = ({
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Inline Color Picker for RGB Lights */}
+          {type === 'light' && isActive && rgbColor && rgbColor.length === 3 && onColorChange && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-3 flex items-center gap-2"
+            >
+              <span className="text-xs text-gray-400">Color:</span>
+              <input
+                type="color"
+                value={`#${rgbColor.map(c => Math.min(255, Math.max(0, c)).toString(16).padStart(2, '0')).join('')}`}
+                onChange={(e) => {
+                  const hex = e.target.value;
+                  const r = parseInt(hex.slice(1, 3), 16);
+                  const g = parseInt(hex.slice(3, 5), 16);
+                  const b = parseInt(hex.slice(5, 7), 16);
+                  onColorChange([r, g, b]);
+                }}
+                className="w-10 h-10 rounded-full cursor-pointer border-2 border-white/20 hover:border-white/40 transition-all"
+                style={{ backgroundColor: `rgb(${rgbColor[0]}, ${rgbColor[1]}, ${rgbColor[2]})` }}
+              />
+            </motion.div>
+          )}
         </div>
 
         {/* Actions */}

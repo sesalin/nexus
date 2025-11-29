@@ -16,6 +16,7 @@ interface IconProps {
   svgName?: string;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  style?: React.CSSProperties;
   isActive?: boolean;
   isHovering?: boolean;
 }
@@ -26,6 +27,7 @@ export const Icon: React.FC<IconProps> = ({
   svgName,
   size = 'md',
   className = '',
+  style,
   isActive = false,
   isHovering = false
 }) => {
@@ -121,6 +123,7 @@ export const Icon: React.FC<IconProps> = ({
           WebkitMaskSize: 'contain',
           WebkitMaskRepeat: 'no-repeat',
           WebkitMaskPosition: 'center',
+          ...style, // Merge custom styles
         }}
       />
     );

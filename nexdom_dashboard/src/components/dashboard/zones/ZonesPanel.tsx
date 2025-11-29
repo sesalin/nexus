@@ -80,6 +80,12 @@ export const ZonesPanel: React.FC = () => {
             console.log('[ZonesPanel] Opening settings for:', entity.entity_id);
             setSelectedDeviceId(entity.entity_id);
           },
+          onColorChange: domain === 'light' ? (rgb: number[]) => {
+            console.log('[ZonesPanel] Changing color for:', entity.entity_id, rgb);
+            callService('light', 'turn_on', { entity_id: entity.entity_id, rgb_color: rgb }).catch(err => {
+              console.error('[ZonesPanel] Error changing color:', err);
+            });
+          } : undefined,
         } as GadgetProps;
       });
 
