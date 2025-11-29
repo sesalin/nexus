@@ -1,0 +1,152 @@
+# ============================================================================
+# NEXDOM DASHBOARD - CONFIGURACIÓN DE FILTROS
+# ============================================================================
+# Este archivo controla qué entidades se muestran en el dashboard.
+# Puedes comentar/descomentar líneas según necesites.
+# Los cambios se aplican al recargar el dashboard.
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# REGLA 1: Dominios Permitidos
+# ----------------------------------------------------------------------------
+# Solo se mostrarán entidades de estos tipos (dominios).
+# Comenta los que NO quieras ver.
+allowed_domains:
+  - light              # Luces
+  - switch             # Interruptores
+  - lock               # Cerraduras
+  - cover              # Persianas/cortinas
+  - climate            # Termostatos/AC
+  - camera             # Cámaras
+  - media_player       # Reproductores multimedia
+  - fan                # Ventiladores
+  - sensor           # Sensores (descomentado = oculto)
+  - binary_sensor    # Sensores binarios (descomentado = oculto)
+  - automation       # Automatizaciones
+  # - script           # Scripts
+  # - scene            # Escenas
+  # - input_boolean    # Interruptores virtuales
+  # - vacuum           # Aspiradoras
+  # - alarm_control_panel  # Alarmas
+
+# ----------------------------------------------------------------------------
+# REGLA 2: Patrones de Exclusión (Hide Patterns)
+# ----------------------------------------------------------------------------
+# Oculta entidades cuyo entity_id coincida con estos patrones.
+# Usa * como comodín. Ejemplo: "sensor.temperatura_*" oculta todos los sensores de temperatura.
+hide_patterns:
+  # Sensores técnicos/diagnóstico
+  - "*_battery"                    # Sensores de batería
+  - "*_battery_level"              # Nivel de batería
+  - "*_signal_strength"            # Fuerza de señal
+  - "*_linkquality"                # Calidad de enlace Zigbee
+  - "*_rssi"                       # RSSI WiFi
+  - "*_update_available"           # Updates disponibles
+  - "*_last_seen"                  # Última vez visto
+  - "*_power"                      # Consumo de energía (si no te interesa)
+  - "*_energy"                     # Energía acumulada
+  
+  # Sensores del sistema
+  #- "sensor.sun_*"                 # Sensores del sol
+  #- "sensor.time_*"                # Sensores de tiempo
+  #- "sensor.date_*"                # Sensores de fecha
+  - "update.*"                     # Todas las actualizaciones
+  
+  # Sensores de diagnóstico de dispositivos
+  - "*_device_temperature"         # Temperatura del dispositivo
+  - "*_cpu_*"                      # CPU
+  - "*_memory_*"                   # Memoria
+  - "*_disk_*"                     # Disco
+  
+  # Otros patrones comunes
+  # - "sensor.weather_*"           # Clima (descomenta si no quieres ver)
+  # - "*_humidity"                 # Humedad (descomenta si no quieres ver)
+  # - "*_temperature"              # Temperatura (descomenta si no quieres ver)
+
+# ----------------------------------------------------------------------------
+# REGLA 3: Patrones de Inclusión Forzada (Force Show Patterns)
+# ----------------------------------------------------------------------------
+# Estas entidades se mostrarán SIEMPRE, incluso si no cumplen otras reglas.
+# Útil para excepciones importantes.
+force_show_patterns:
+  # Ejemplo: Mostrar siempre sensores críticos
+  # - "sensor.temperatura_critica"
+  # - "binary_sensor.puerta_principal"
+  # - "sensor.energia_total"
+
+# ----------------------------------------------------------------------------
+# REGLA 4: Lista de Exclusión Específica (Force Hide)
+# ----------------------------------------------------------------------------
+# Estas entidades NUNCA se mostrarán, incluso si cumplen todas las reglas.
+# Útil para ocultar entidades específicas que no quieres ver.
+force_hide:
+  # Ejemplos:
+  # - light.luz_molesta
+  # - switch.interruptor_que_no_uso
+  # - sensor.sensor_roto
+
+# ----------------------------------------------------------------------------
+# REGLA 5: Filtros Adicionales
+# ----------------------------------------------------------------------------
+filter_options:
+  # Mostrar solo entidades principales (oculta entidades auxiliares como battery, signal, etc.)
+  show_main_entities_only: true
+  
+  # Requerir que la entidad tenga un área asignada
+  # Si es true, solo muestra entidades que estén en un área/zona
+  require_area: true
+  
+  # Ocultar entidades deshabilitadas en Home Assistant
+  hide_disabled: true
+  
+  # Ocultar entidades marcadas como "hidden" en Home Assistant
+  hide_hidden: true
+  
+  # Ocultar entidades con estado "unavailable" o "unknown"
+  hide_unavailable: true
+  
+  # Ocultar entidades sin friendly_name (usan entity_id como nombre)
+  hide_without_friendly_name: false
+
+# ----------------------------------------------------------------------------
+# REGLA 6: Filtros por Atributos
+# ----------------------------------------------------------------------------
+# Filtra entidades basándose en sus atributos de Home Assistant
+attribute_filters:
+  # Ocultar entidades con device_class específicos
+  hide_device_classes:
+    - "battery"           # Sensores de batería
+    - "timestamp"         # Timestamps
+    - "update"            # Updates
+    # - "temperature"     # Temperatura (descomenta si no quieres ver)
+    # - "humidity"        # Humedad (descomenta si no quieres ver)
+    # - "motion"          # Movimiento (descomenta si no quieres ver)
+  
+  # Mostrar solo entidades con estos device_class (deja vacío para mostrar todos)
+  show_only_device_classes: []
+    # Ejemplo: Solo mostrar luces y switches
+    # - "light"
+    # - "switch"
+
+# ----------------------------------------------------------------------------
+# REGLA 7: Límites y Ordenamiento
+# ----------------------------------------------------------------------------
+display_options:
+  # Máximo de entidades a mostrar por zona (0 = sin límite)
+  max_entities_per_zone: 0
+  
+  # Ordenar entidades por (options: "name", "state", "last_changed", "domain")
+  sort_by: "name"
+  
+  # Orden ascendente o descendente
+  sort_order: "asc"  # "asc" o "desc"
+
+# ============================================================================
+# NOTAS IMPORTANTES:
+# ============================================================================
+# 1. Los cambios en este archivo requieren recargar el dashboard
+# 2. Los patrones usan * como comodín (ej: "sensor.*" = todos los sensores)
+# 3. Las reglas se aplican en orden: allowed_domains → hide_patterns → force_show → force_hide
+# 4. Si una entidad está en force_hide, NUNCA se mostrará
+# 5. Si una entidad está en force_show, SIEMPRE se mostrará (excepto si está en force_hide)
+# ============================================================================

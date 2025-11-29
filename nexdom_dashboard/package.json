@@ -23,6 +23,7 @@
     "gsap": "^3.13.0",
     "i18next": "^23.10.1",
     "i18next-browser-languagedetector": "^7.2.0",
+    "js-yaml": "^4.1.1",
     "lucide-react": "^0.533.0",
     "matter-js": "^0.20.0",
     "react": "^18.3.1",

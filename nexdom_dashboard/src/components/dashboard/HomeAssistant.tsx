@@ -59,9 +59,100 @@ class HomeAssistantClient {
     return response.json();
   }
 
+  getDeviceRegistry() {
+    return this.deviceRegistry;
+  }
 
-  async callService(domain: string, service: string, serviceData: any = {}) {
-    console.log(`[Nexdom] Calling service via WebSocket: ${domain}.${service}`, serviceData);
+  // Apply entity filters based on configuration
+  public applyEntityFilters(entities: any[], config: any): any[] {
+    if (!config) return entities;
+
+    let filtered = [...entities];
+    console.log(`[Nexdom] Filtering ${filtered.length} entities with config`);
+
+    // Helper: Match pattern with wildcards
+    const matchesPattern = (str: string, pattern: string): boolean => {
+      const regexPattern = pattern
+        .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/\*/g, '.*');
+      return new RegExp(`^${regexPattern}$`, 'i').test(str);
+    };
+
+    // Step 1: Filter by allowed domains
+    if (config.allowed_domains && config.allowed_domains.length > 0) {
+      filtered = filtered.filter(entity => {
+        const domain = entity.entity_id.split('.')[0];
+        return config.allowed_domains.includes(domain);
+      });
+      console.log(`[Nexdom] After domain filter: ${filtered.length} entities`);
+    }
+
+    // Step 2: Apply hide patterns
+    if (config.hide_patterns && config.hide_patterns.length > 0) {
+      filtered = filtered.filter(entity => {
+        return !config.hide_patterns.some((pattern: string) =>
+          matchesPattern(entity.entity_id, pattern)
+        );
+      });
+      console.log(`[Nexdom] After hide patterns: ${filtered.length} entities`);
+    }
+
+    // Step 3: Apply filter options
+    if (config.filter_options) {
+      const opts = config.filter_options;
+
+      // Require area
+      if (opts.require_area) {
+        filtered = filtered.filter(entity => entity.attributes?.area_id);
+        console.log(`[Nexdom] After area requirement: ${filtered.length} entities`);
+      }
+
+      // Hide unavailable
+      if (opts.hide_unavailable) {
+        filtered = filtered.filter(entity =>
+          entity.state !== 'unavailable' && entity.state !== 'unknown'
+        );
+        console.log(`[Nexdom] After unavailable filter: ${filtered.length} entities`);
+      }
+
+      // Hide disabled
+      if (opts.hide_disabled) {
+        filtered = filtered.filter(entity => !entity.attributes?.disabled);
+      }
+
+      // Hide hidden
+      if (opts.hide_hidden) {
+        filtered = filtered.filter(entity => !entity.attributes?.hidden);
+      }
+    }
+
+    // Step 4: Force show patterns
+    if (config.force_show_patterns && config.force_show_patterns.length > 0) {
+      const forceShow = entities.filter(entity =>
+        config.force_show_patterns.some((pattern: string) =>
+          matchesPattern(entity.entity_id, pattern)
+        )
+      );
+      forceShow.forEach(entity => {
+        if (!filtered.find(e => e.entity_id === entity.entity_id)) {
+          filtered.push(entity);
+        }
+      });
+    }
+
+    // Step 5: Force hide
+    if (config.force_hide && config.force_hide.length > 0) {
+      filtered = filtered.filter(entity =>
+        !config.force_hide.includes(entity.entity_id)
+      );
+    }
+
+    console.log(`[Nexdom] Final filtered count: ${filtered.length} entities`);
+    return filtered;
+  }
+
+  async callService(domain: string, service: string, data: any = {}): Promise<any> {
+    console.log(`[Nexdom] Calling service via WebSocket: ${domain}.${service}`, data);
 
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       console.error('[Nexdom] WebSocket not connected, cannot call service');
@@ -73,7 +164,7 @@ class HomeAssistantClient {
     return this.request('call_service', {
       domain,
       service,
-      service_data: serviceData
+      service_data: data
     }).then(result => {
       console.log(`[Nexdom] Service ${domain}.${service} executed successfully`);
       return result;
@@ -339,6 +430,7 @@ export const useHomeAssistant = () => {
   const [entityRegistry, setEntityRegistry] = useState<any[]>([]);
   const [deviceRegistry, setDeviceRegistry] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [filterConfig, setFilterConfig] = useState<any>(null);
 
   useEffect(() => {
     // Usar el path base para las peticiones API
@@ -350,6 +442,22 @@ export const useHomeAssistant = () => {
     let loadedAreas: any[] = [];
     let loadedEntityRegistry: any[] = [];
     let loadedDeviceRegistry: any[] = [];
+
+    // Load filter configuration
+    fetch('/api/config/filter')
+      .then(res => res.json())
+      .then(config => {
+        console.log('[Nexdom] Filter config loaded:', config);
+        setFilterConfig(config);
+      })
+      .catch(err => {
+        console.error('[Nexdom] Error loading filter config:', err);
+        // Use default config if loading fails
+        setFilterConfig({
+          allowed_domains: ['light', 'switch', 'lock', 'cover', 'climate', 'camera', 'media_player', 'fan'],
+          filter_options: { show_main_entities_only: true, hide_unavailable: true }
+        });
+      });
 
     // Función para crear zonas cuando tengamos todos los datos
     const tryCreateZones = () => {
@@ -447,15 +555,15 @@ export const useHomeAssistant = () => {
       console.log('[Nexdom] Recalculating zones due to entity/registry update');
       createZonesFromEntities(entities, areaRegistry, entityRegistry, deviceRegistry);
     }
-  }, [entities, areaRegistry, entityRegistry, deviceRegistry]);
+  }, [entities, areaRegistry, entityRegistry, filterConfig, client, deviceRegistry]); // Added filterConfig, client, deviceRegistry as dependencies
 
+  // Crear zonas desde entidades
   const createZonesFromEntities = (states: any[], areas: any[], entityRegistry: any[], deviceRegistry: any[] = []) => {
-    console.log('[Nexdom] Creando zonas:', {
-      states: states.length,
-      areas: areas.length,
-      entities: entityRegistry.length,
-      devices: deviceRegistry.length
-    });
+    console.log('[Nexdom] Creando zonas:', { states: states.length, areas: areas.length, entities: entityRegistry.length, devices: deviceRegistry.length });
+
+    // CRITICAL: Apply entity filters BEFORE processing
+    const filteredStates = client?.applyEntityFilters(states, filterConfig) || states;
+    console.log(`[Nexdom] Using ${filteredStates.length} entities after filtering (from ${states.length} total)`);
 
     if (!areas || areas.length === 0) {
       console.warn('[Nexdom] No hay áreas disponibles');
@@ -506,7 +614,7 @@ export const useHomeAssistant = () => {
 
       console.log(`[Nexdom] Procesando área: ${areaName} (${areaId})`);
 
-      const areaEntities = states.filter((entity) => {
+      const areaEntities = filteredStates.filter((entity) => {
         const assignedAreaId = getEntityAreaId(entity.entity_id, entity.attributes);
         return assignedAreaId === areaId;
       });
@@ -521,7 +629,7 @@ export const useHomeAssistant = () => {
     });
 
     // 5. Zona Sin Asignar
-    const unassignedEntities = states.filter((entity) => {
+    const unassignedEntities = filteredStates.filter((entity) => {
       const assignedAreaId = getEntityAreaId(entity.entity_id, entity.attributes);
       return !assignedAreaId;
     });

@@ -5,6 +5,8 @@ const morgan = require('morgan');
 const { WebSocketServer } = require('ws');
 const axios = require('axios');
 const { RateLimiterMemory } = require('rate-limiter-flexible');
+const fs = require('fs');
+const yaml = require('js-yaml');
 
 // Configuración
 const SUPERVISOR_URL = process.env.SUPERVISOR_URL || 'http://supervisor';
@@ -169,6 +171,43 @@ app.get('/api/config/entity_registry', async (req, res) => {
       error: 'Failed to fetch entity registry',
       message: error.message,
       details: data
+    });
+  }
+});
+
+// GET /api/config/filter - Get dashboard filter configuration
+app.get('/api/config/filter', async (req, res) => {
+  try {
+    const configPath = '/config/nexdom_dashboard/dashboard_filter.yaml';
+    console.log(`[API] Loading filter config from ${configPath}...`);
+
+    // Check if file exists
+    if (!fs.existsSync(configPath)) {
+      console.log('[API] Filter config not found, returning default config');
+      return res.json({
+        allowed_domains: ['light', 'switch', 'lock', 'cover', 'climate', 'camera', 'media_player', 'fan'],
+        hide_patterns: ['*_battery', '*_signal_strength', '*_linkquality', 'update.*'],
+        filter_options: {
+          show_main_entities_only: true,
+          require_area: false,
+          hide_disabled: true,
+          hide_hidden: true,
+          hide_unavailable: true,
+        }
+      });
+    }
+
+    // Read and parse YAML
+    const fileContents = fs.readFileSync(configPath, 'utf8');
+    const config = yaml.load(fileContents);
+
+    console.log('[API] Filter config loaded successfully');
+    res.json(config);
+  } catch (error) {
+    console.error('[Error] Loading filter config:', error.message);
+    res.status(500).json({
+      error: 'Failed to load filter configuration',
+      message: error.message
     });
   }
 });
