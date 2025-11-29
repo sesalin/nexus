@@ -6,9 +6,9 @@ export const Energy: React.FC = () => {
   const energy = useNexdomStore((state) => state.energy);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto lg:pl-32">
+    <div className="p-6 max-w-[1600px] mx-auto lg:pl-32 lg:pr-6">
       <h2 className="text-3xl font-bold text-white mb-8 tracking-wide">Energy Monitor</h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="glass-panel p-6 rounded-[2rem] relative overflow-hidden group">
           <div className="absolute -right-10 -top-10 w-32 h-32 bg-yellow-500/10 blur-[50px] rounded-full group-hover:bg-yellow-500/20 transition-colors"></div>

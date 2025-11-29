@@ -6,7 +6,7 @@ export const Routines: React.FC = () => {
   const { routines, toggleRoutine } = useNexdomStore();
 
   return (
-    <div className="p-6 max-w-7xl mx-auto lg:pl-32">
+    <div className="p-6 max-w-[1600px] mx-auto lg:pl-32 lg:pr-6">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-3xl font-bold text-white tracking-wide">Automations</h2>
         <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-500/10 text-blue-400 border border-blue-500/30 rounded-full hover:bg-blue-500/20 transition-all shadow-[0_0_15px_rgba(59,130,246,0.1)]">
@@ -37,7 +37,7 @@ export const Routines: React.FC = () => {
               </div>
             </div>
 
-            <button 
+            <button
               onClick={() => toggleRoutine(routine.id)}
               className={`transition-all duration-300 transform hover:scale-110 self-end sm:self-center ${routine.enabled ? 'text-nexdom-lime drop-shadow-[0_0_8px_rgba(0,255,136,0.5)]' : 'text-gray-600'}`}
             >
