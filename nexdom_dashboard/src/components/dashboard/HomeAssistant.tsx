@@ -156,6 +156,8 @@ class HomeAssistantClient {
   }
 
   private handleWebSocketMessage(message: any) {
+    console.log('[Nexdom] WS message received:', message.type);
+
     switch (message.type) {
       case 'auth_required':
         // En el proxy backend, la autenticación ya está manejada
@@ -220,7 +222,9 @@ class HomeAssistantClient {
         break;
 
       case 'event':
+        console.log('[Nexdom] Event received:', message.event?.event_type);
         if (message.event && message.event.event_type === 'state_changed') {
+          console.log('[Nexdom] State changed event:', message.event.data?.entity_id, '→', message.event.data?.new_state?.state);
           this.emit('state_changed', message.event.data);
         }
         break;

@@ -434,13 +434,26 @@ function broadcastToClients(message) {
   let successCount = 0;
   let failCount = 0;
 
+  // Parse to get message type for logging
+  let messageType = 'unknown';
+  try {
+    const parsed = JSON.parse(messageStr);
+    messageType = parsed.type || 'unknown';
+  } catch (e) {
+    // ignore
+  }
+
+  console.log(`[WS] Broadcasting ${messageType} to ${clientConnections.size} clients`);
+
   clientConnections.forEach((clientWs, clientId) => {
     try {
       if (clientWs.readyState === 1) { // OPEN
         clientWs.send(messageStr);
         successCount++;
+        // console.log(`[WS]   -> Sent to ${clientId}`);
       } else {
         failCount++;
+        console.log(`[WS]   -> Client ${clientId} not ready (state: ${clientWs.readyState})`);
       }
     } catch (error) {
       console.error(`[WS] Error sending to client ${clientId}:`, error.message);
@@ -448,9 +461,7 @@ function broadcastToClients(message) {
     }
   });
 
-  if (failCount > 0) {
-    console.log(`[WS] Broadcast complete: ${successCount} success, ${failCount} failed`);
-  }
+  console.log(`[WS] Broadcast complete: ${successCount} success, ${failCount} failed`);
 }
 
 // Schedule reconnect with exponential backoff
