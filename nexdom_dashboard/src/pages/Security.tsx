@@ -40,6 +40,9 @@ export const Security: React.FC = () => {
       }
     });
 
+    console.log('[Security Debug] Found', cameras.length, 'cameras');
+    cameras.forEach(c => console.log('[Security Debug] Camera:', c.id, 'Picture:', c.attributes.entity_picture));
+
     return { cameras, locks, sensors, controls };
   }, [zones]);
 
