@@ -4,7 +4,7 @@ import { Cpu } from 'lucide-react';
 
 export const Gadgets: React.FC = () => {
   return (
-    <div className="p-6 pr-6 mx-auto lg:pl-32">
+    <div className="p-6 max-w-[1600px] mx-auto lg:pl-32">
       <div className="flex items-center gap-3 mb-8">
         <div className="p-2 bg-nexdom-lime/10 rounded-lg border border-nexdom-lime/30">
           <Cpu className="w-6 h-6 text-nexdom-lime" />

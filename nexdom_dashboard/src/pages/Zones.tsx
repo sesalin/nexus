@@ -10,7 +10,7 @@ export const Zones: React.FC = () => {
         <div className="absolute bottom-[-10%] right-[10%] w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[150px]"></div>
       </div>
 
-      <div className="w-full py-6 pl-4 lg:pl-32 pr-4 relative z-10">
+      <div className="max-w-[1600px] mx-auto py-6 px-6 lg:pl-32 lg:pr-6 relative z-10">
         <ZonesPanel />
       </div>
     </div>
