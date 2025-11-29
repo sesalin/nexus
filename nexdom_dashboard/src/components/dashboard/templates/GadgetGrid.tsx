@@ -114,26 +114,43 @@ export const GadgetGrid: React.FC = () => {
   return (
     <div className="space-y-6">
       {Object.entries(groupedGadgets).map(([domain, gadgets]) => (
-        <div key={domain} className="glass-panel overflow-hidden rounded-[2rem] border border-white/5 min-h-[120px]">
-          <button
+        <motion.div
+          key={domain}
+          layout
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`glass-panel rounded-[2rem] overflow-hidden border border-white/5 transition-all duration-500 ${expandedDomain === domain ? 'ring-1 ring-nexdom-lime/30 bg-white/5' : 'hover:bg-white/5'
+            }`}
+        >
+          {/* Domain Header / Card */}
+          <div
+            className="relative h-48 cursor-pointer group overflow-hidden bg-gradient-to-r from-white/5 via-white/0 to-white/5"
             onClick={() => toggleDomain(domain)}
-            className="w-full p-6 flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors"
           >
-            <div className="flex items-center gap-4">
-              <h3 className="text-xl font-bold text-white tracking-wide">
-                {domainTitles[domain] || domain.charAt(0).toUpperCase() + domain.slice(1)}
-              </h3>
-              <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-medium text-gray-400">
-                {gadgets.length}
-              </span>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+
+            <div className="absolute inset-0 p-6 flex flex-col justify-end">
+              <div className="flex justify-between items-end">
+                <div>
+                  <h3 className="text-2xl font-bold text-white mb-1 group-hover:text-nexdom-lime transition-colors">
+                    {domainTitles[domain] || domain.charAt(0).toUpperCase() + domain.slice(1)}
+                  </h3>
+                  <p className="text-gray-400 text-sm flex items-center gap-2">
+                    {gadgets.length} Dispositivos
+                    <span className="w-1 h-1 rounded-full bg-gray-500" />
+                    {gadgets.filter(g => g.isActive).length} Activos
+                  </p>
+                </div>
+                <motion.div
+                  animate={{ rotate: expandedDomain === domain ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="p-2 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white group-hover:bg-nexdom-lime group-hover:text-black transition-colors"
+                >
+                  <ChevronDown className="w-6 h-6" />
+                </motion.div>
+              </div>
             </div>
-            <motion.div
-              animate={{ rotate: expandedDomain === domain ? 180 : 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ChevronDown className="w-6 h-6 text-gray-400" />
-            </motion.div>
-          </button>
+          </div>
 
           <AnimatePresence>
             {expandedDomain === domain && (
@@ -154,7 +171,7 @@ export const GadgetGrid: React.FC = () => {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       ))}
 
       {/* Device Details Modal */}
