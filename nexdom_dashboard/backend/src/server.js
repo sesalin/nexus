@@ -218,7 +218,10 @@ app.get('/health', (req, res) => {
 // Configuración de WebSocket Proxy
 const wss = new WebSocketServer({ noServer: true });
 const clientConnections = new Map(); // Track client connections
-const requestClientMap = new Map(); // Track which client sent which request: requestId → clientId
+// CRITICAL FIX: Map backend IDs to client IDs to avoid id_reuse and collisions
+// Map<backendMsgId, { clientId, clientMsgId }>
+const messageMap = new Map();
+let globalMessageId = 1;
 
 // Manejar upgrade de conexión HTTP a WebSocket
 server.on('upgrade', (req, socket, head) => {
@@ -260,15 +263,23 @@ wss.on('connection', (clientWs, req) => {
       const data = JSON.parse(message.toString());
       console.log('[WS] Client message:', data.type, data.id ? `(id: ${data.id})` : '');
 
-      // Track qué cliente envió este request
-      if (data.id) {
-        requestClientMap.set(data.id, clientId);
-        console.log(`[WS] Tracking request ${data.id} from ${clientId}`);
-      }
-
       if (supervisorWs && supervisorWs.readyState === 1) {
-        // Reenviar mensaje al supervisor
-        supervisorWs.send(JSON.stringify(data));
+        // ID Translation Logic
+        if (data.id) {
+          const backendId = globalMessageId++;
+          messageMap.set(backendId, {
+            clientId: clientId,
+            clientMsgId: data.id
+          });
+
+          // Replace ID with backend ID
+          const proxyData = { ...data, id: backendId };
+          console.log(`[WS] Proxying message client_id=${data.id} -> backend_id=${backendId}`);
+          supervisorWs.send(JSON.stringify(proxyData));
+        } else {
+          // Messages without ID (e.g. auth, though auth is handled separately usually)
+          supervisorWs.send(JSON.stringify(data));
+        }
       } else {
         console.log('[WS] Supervisor not connected, sending error to client');
         clientWs.send(JSON.stringify({
@@ -297,9 +308,9 @@ wss.on('connection', (clientWs, req) => {
     console.log(`[WS] Client disconnected: ${clientId} (Remaining clients: ${clientConnections.size})`);
 
     // Cleanup pending requests from this client
-    for (const [requestId, mappedClientId] of requestClientMap.entries()) {
-      if (mappedClientId === clientId) {
-        requestClientMap.delete(requestId);
+    for (const [backendId, info] of messageMap.entries()) {
+      if (info.clientId === clientId) {
+        messageMap.delete(backendId);
       }
     }
 
@@ -308,6 +319,8 @@ wss.on('connection', (clientWs, req) => {
       console.log('[WS] No clients remaining, closing supervisor connection');
       supervisorWs.close();
       supervisorWs = null;
+      messageMap.clear();
+      globalMessageId = 1;
     }
   });
 
@@ -346,7 +359,7 @@ function connectToSupervisorWebSocket() {
     try {
       const data = JSON.parse(message.toString());
       const logType = data.type === 'event' ? 'event' : data.type;
-      console.log(`[WS] Supervisor message: ${logType}`, data.id ? `(id: ${data.id})` : '');
+      // console.log(`[WS] Supervisor message: ${logType}`, data.id ? `(id: ${data.id})` : '');
 
       // Responder autenticación si es requerida
       if (data.type === 'auth_required') {
@@ -358,34 +371,40 @@ function connectToSupervisorWebSocket() {
       }
 
       // Cuando auth es exitoso, notificar a todos los clientes
-      if (data.type === 'auth_ok') {
+      else if (data.type === 'auth_ok') {
         console.log('[WS] Auth successful, notifying all clients');
         broadcastToClients(message);
       } else if (data.type === 'auth_invalid') {
         console.error('[WS] Auth failed!');
         broadcastToClients(message);
       } else if (data.type === 'result') {
-        // CRITICAL FIX: Enviar result solo al cliente que hizo el request
-        const requestId = data.id;
-        const clientId = requestClientMap.get(requestId);
+        // CRITICAL FIX: Translate ID back to client ID
+        const backendId = data.id;
+        const requestInfo = messageMap.get(backendId);
 
-        if (clientId) {
+        if (requestInfo) {
+          const { clientId, clientMsgId } = requestInfo;
           const clientWs = clientConnections.get(clientId);
+
           if (clientWs && clientWs.readyState === 1) {
-            console.log(`[WS] Sending result (id: ${requestId}) to ${clientId}`);
-            clientWs.send(message);
+            // Replace ID with original client ID
+            const clientData = { ...data, id: clientMsgId };
+            // console.log(`[WS] Forwarding result backend_id=${backendId} -> client_id=${clientMsgId} to ${clientId}`);
+            clientWs.send(JSON.stringify(clientData));
+
             // Cleanup
-            requestClientMap.delete(requestId);
+            messageMap.delete(backendId);
           } else {
-            console.log(`[WS] Client ${clientId} not found or disconnected for result (id: ${requestId})`);
-            requestClientMap.delete(requestId);
+            console.log(`[WS] Client ${clientId} not found or disconnected for result (id: ${backendId})`);
+            messageMap.delete(backendId);
           }
         } else {
-          console.log(`[WS] No client tracked for result (id: ${requestId}), broadcasting to all`);
-          broadcastToClients(message);
+          // Si no encontramos el ID, podría ser un mensaje viejo o broadcast
+          // console.log(`[WS] No mapping found for result (id: ${backendId}), ignoring`);
         }
       } else {
         // Eventos y otros mensajes: broadcast a todos
+        // Los eventos no tienen ID de request, así que se pasan tal cual
         broadcastToClients(message);
       }
     } catch (error) {
