@@ -68,7 +68,7 @@ class HomeAssistantClient {
     if (!config) return entities;
 
     let filtered = [...entities];
-    console.log(`[Nexdom] Filtering ${filtered.length} entities with config`);
+    // console.log(`[Nexdom] Filtering ${filtered.length} entities with config`);
 
     // Helper: Match pattern with wildcards
     const matchesPattern = (str: string, pattern: string): boolean => {
@@ -84,7 +84,7 @@ class HomeAssistantClient {
         const domain = entity.entity_id.split('.')[0];
         return config.allowed_domains.includes(domain);
       });
-      console.log(`[Nexdom] After domain filter: ${filtered.length} entities`);
+      // console.log(`[Nexdom] After domain filter: ${filtered.length} entities`);
     }
 
     // Step 2: Apply hide patterns
@@ -94,7 +94,7 @@ class HomeAssistantClient {
           matchesPattern(entity.entity_id, pattern)
         );
       });
-      console.log(`[Nexdom] After hide patterns: ${filtered.length} entities`);
+      // console.log(`[Nexdom] After hide patterns: ${filtered.length} entities`);
     }
 
     // Step 3: Apply filter options
@@ -104,7 +104,7 @@ class HomeAssistantClient {
       // Require area
       if (opts.require_area) {
         filtered = filtered.filter(entity => entity.attributes?.area_id);
-        console.log(`[Nexdom] After area requirement: ${filtered.length} entities`);
+        // console.log(`[Nexdom] After area requirement: ${filtered.length} entities`);
       }
 
       // Hide unavailable
@@ -112,7 +112,7 @@ class HomeAssistantClient {
         filtered = filtered.filter(entity =>
           entity.state !== 'unavailable' && entity.state !== 'unknown'
         );
-        console.log(`[Nexdom] After unavailable filter: ${filtered.length} entities`);
+        // console.log(`[Nexdom] After unavailable filter: ${filtered.length} entities`);
       }
 
       // Hide disabled
@@ -147,7 +147,7 @@ class HomeAssistantClient {
       );
     }
 
-    console.log(`[Nexdom] Final filtered count: ${filtered.length} entities`);
+    // console.log(`[Nexdom] Final filtered count: ${filtered.length} entities`);
     return filtered;
   }
 
@@ -553,9 +553,9 @@ export const useHomeAssistant = () => {
 
   // CRITICAL FIX: Re-calcular zonas cuando las entidades cambian (state_changed)
   useEffect(() => {
-    console.log('[Nexdom] useEffect triggered by dependency change');
+    // console.log('[Nexdom] useEffect triggered by dependency change');
     if (entities.length > 0 && areaRegistry.length > 0) {
-      console.log('[Nexdom] Recalculating zones due to entity/registry update');
+      // console.log('[Nexdom] Recalculating zones due to entity/registry update');
       createZonesFromEntities(entities, areaRegistry, entityRegistry, deviceRegistry);
     }
   }, [entities, areaRegistry, entityRegistry, filterConfig, client, deviceRegistry]); // Added filterConfig, client, deviceRegistry as dependencies
@@ -566,7 +566,7 @@ export const useHomeAssistant = () => {
     entityRegistry: any[],
     deviceRegistry: any[]
   ): Map<string, { primary: any; secondary: any[] }> => {
-    console.log('[Nexdom] Grouping entities by device...');
+    // console.log('[Nexdom] Grouping entities by device...');
 
     // Auxiliary entity patterns to exclude from primary selection
     const auxiliaryPatterns = [
@@ -613,8 +613,8 @@ export const useHomeAssistant = () => {
       }
     });
 
-    console.log(`[Nexdom] Found ${deviceGroups.size} devices with entities`);
-    console.log(`[Nexdom] Found ${entitiesWithoutDevice.length} entities without device`);
+    // console.log(`[Nexdom] Found ${deviceGroups.size} devices with entities`);
+    // console.log(`[Nexdom] Found ${entitiesWithoutDevice.length} entities without device`);
 
     // For each device, identify primary and secondary entities
     const result = new Map<string, { primary: any; secondary: any[] }>();
@@ -644,7 +644,7 @@ export const useHomeAssistant = () => {
       const secondary = deviceEntities.filter(e => e.entity_id !== primary.entity_id);
 
       result.set(deviceId, { primary, secondary });
-      console.log(`[Nexdom] Device ${deviceId}: primary=${primary.entity_id}, secondary=${secondary.length}`);
+      // console.log(`[Nexdom] Device ${deviceId}: primary=${primary.entity_id}, secondary=${secondary.length}`);
     });
 
     // Add entities without device as individual "devices" (no secondary entities)
@@ -661,7 +661,7 @@ export const useHomeAssistant = () => {
 
     // CRITICAL: Apply entity filters BEFORE processing
     const filteredStates = client?.applyEntityFilters(states, filterConfig) || states;
-    console.log(`[Nexdom] Using ${filteredStates.length} entities after filtering (from ${states.length} total)`);
+    // console.log(`[Nexdom] Using ${filteredStates.length} entities after filtering (from ${states.length} total)`);
 
     if (!areas || areas.length === 0) {
       console.warn('[Nexdom] No hay áreas disponibles');
@@ -671,7 +671,7 @@ export const useHomeAssistant = () => {
 
     // CRITICAL: Group entities by device AFTER filtering
     const deviceGroups = groupEntitiesByDevice(filteredStates, entityRegistry, deviceRegistry);
-    console.log(`[Nexdom] Grouped into ${deviceGroups.size} devices`);
+    // console.log(`[Nexdom] Grouped into ${deviceGroups.size} devices`);
 
     // Extract only primary entities for zone assignment
     const primaryEntities: any[] = [];
@@ -682,7 +682,7 @@ export const useHomeAssistant = () => {
       primaryEntities.push(group.primary);
     });
 
-    console.log(`[Nexdom] Using ${primaryEntities.length} primary entities (from ${filteredStates.length} filtered)`);
+    // console.log(`[Nexdom] Using ${primaryEntities.length} primary entities (from ${filteredStates.length} filtered)`);
 
     // 1. Mapa Device ID -> Area ID
     const deviceAreaMap = new Map<string, string>();
@@ -725,14 +725,14 @@ export const useHomeAssistant = () => {
       const areaId = area.area_id;
       const areaName = area.name || `Área ${areaId}`;
 
-      console.log(`[Nexdom] Procesando área: ${areaName} (${areaId})`);
+      // console.log(`[Nexdom] Procesando área: ${areaName} (${areaId})`);
 
       const areaEntities = primaryEntities.filter((entity) => {
         const assignedAreaId = getEntityAreaId(entity.entity_id, entity.attributes);
         return assignedAreaId === areaId;
       });
 
-      console.log(`[Nexdom]   Área ${areaName}: ${areaEntities.length} entidades`);
+      // console.log(`[Nexdom]   Área ${areaName}: ${areaEntities.length} entidades`);
 
       return {
         id: areaId,
@@ -747,9 +747,9 @@ export const useHomeAssistant = () => {
       return !assignedAreaId;
     });
 
-    console.log(`[Nexdom] Entidades sin asignar: ${unassignedEntities.length}`);
+    // console.log(`[Nexdom] Entidades sin asignar: ${unassignedEntities.length}`);
     if (unassignedEntities.length > 0) {
-      console.log('[Nexdom] Sample unassigned:', unassignedEntities.slice(0, 5).map(e => e.entity_id));
+      // console.log('[Nexdom] Sample unassigned:', unassignedEntities.slice(0, 5).map(e => e.entity_id));
     }
 
     if (unassignedEntities.length > 0) {
@@ -760,8 +760,8 @@ export const useHomeAssistant = () => {
       });
     }
 
-    console.log(`[Nexdom] ✓ ${zonesBuilt.length} zonas creadas con mapeo completo`);
-    console.log('[Nexdom] Resumen de zonas:', zonesBuilt.map(z => ({ name: z.name, entities: z.entities.length })));
+    // console.log(`[Nexdom] ✓ ${zonesBuilt.length} zonas creadas con mapeo completo`);
+    // console.log('[Nexdom] Resumen de zonas:', zonesBuilt.map(z => ({ name: z.name, entities: z.entities.length })));
     setZones(zonesBuilt);
   };
 
