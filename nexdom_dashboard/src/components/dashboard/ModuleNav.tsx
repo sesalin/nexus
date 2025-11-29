@@ -140,7 +140,7 @@ export const ModuleNav: React.FC = () => {
     return (
       <>
         {/* Edge Trigger Area */}
-        <div className="fixed top-0 left-0 w-4 h-full z-30" />
+        <div className="fixed top-0 left-0 w-4 h-full z-30 pointer-events-none" />
 
         <AnimatePresence>
           {isMobileMenuOpen && (
