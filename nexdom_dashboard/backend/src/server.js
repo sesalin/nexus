@@ -218,6 +218,7 @@ app.get('/health', (req, res) => {
 // Configuración de WebSocket Proxy
 const wss = new WebSocketServer({ noServer: true });
 const clientConnections = new Map(); // Track client connections
+const requestClientMap = new Map(); // Track which client sent which request: requestId → clientId
 
 // Manejar upgrade de conexión HTTP a WebSocket
 server.on('upgrade', (req, socket, head) => {
@@ -259,6 +260,12 @@ wss.on('connection', (clientWs, req) => {
       const data = JSON.parse(message.toString());
       console.log('[WS] Client message:', data.type, data.id ? `(id: ${data.id})` : '');
 
+      // Track qué cliente envió este request
+      if (data.id) {
+        requestClientMap.set(data.id, clientId);
+        console.log(`[WS] Tracking request ${data.id} from ${clientId}`);
+      }
+
       if (supervisorWs && supervisorWs.readyState === 1) {
         // Reenviar mensaje al supervisor
         supervisorWs.send(JSON.stringify(data));
@@ -278,8 +285,8 @@ wss.on('connection', (clientWs, req) => {
           type: 'error',
           message: 'Invalid message format'
         }));
-      } catch (e) {
-        console.error('[WS] Error sending error message:', e.message);
+      } catch (sendError) {
+        console.error('[WS] Error sending error message to client:', sendError.message);
       }
     }
   });
@@ -288,6 +295,13 @@ wss.on('connection', (clientWs, req) => {
   clientWs.on('close', () => {
     clientConnections.delete(clientId);
     console.log(`[WS] Client disconnected: ${clientId} (Remaining clients: ${clientConnections.size})`);
+
+    // Cleanup pending requests from this client
+    for (const [requestId, mappedClientId] of requestClientMap.entries()) {
+      if (mappedClientId === clientId) {
+        requestClientMap.delete(requestId);
+      }
+    }
 
     // Si no quedan clientes, desconectar del supervisor
     if (clientConnections.size === 0 && supervisorWs) {
@@ -351,11 +365,27 @@ function connectToSupervisorWebSocket() {
         console.error('[WS] Auth failed!');
         broadcastToClients(message);
       } else if (data.type === 'result') {
-        // DEBUG: Log cuando recibimos resultados para reenviar
-        console.log(`[WS] Broadcasting result (id: ${data.id}) to ${clientConnections.size} client(s)`);
-        broadcastToClients(message);
+        // CRITICAL FIX: Enviar result solo al cliente que hizo el request
+        const requestId = data.id;
+        const clientId = requestClientMap.get(requestId);
+
+        if (clientId) {
+          const clientWs = clientConnections.get(clientId);
+          if (clientWs && clientWs.readyState === 1) {
+            console.log(`[WS] Sending result (id: ${requestId}) to ${clientId}`);
+            clientWs.send(message);
+            // Cleanup
+            requestClientMap.delete(requestId);
+          } else {
+            console.log(`[WS] Client ${clientId} not found or disconnected for result (id: ${requestId})`);
+            requestClientMap.delete(requestId);
+          }
+        } else {
+          console.log(`[WS] No client tracked for result (id: ${requestId}), broadcasting to all`);
+          broadcastToClients(message);
+        }
       } else {
-        // Reenviar mensaje a todos los clientes conectados
+        // Eventos y otros mensajes: broadcast a todos
         broadcastToClients(message);
       }
     } catch (error) {
