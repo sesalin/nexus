@@ -133,7 +133,10 @@ export const ColorWheel: React.FC<ColorWheelProps> = ({
             const constrainedY = centerY + maxRadius * Math.sin(angle);
             setPickerPos({ x: constrainedX, y: constrainedY });
 
-            const hue = (Math.atan2(dy, dx) + Math.PI) / (2 * Math.PI);
+            // Fix: Direct mapping from angle to hue without PI offset
+            let hue = angle / (2 * Math.PI);
+            if (hue < 0) hue += 1;
+
             const sat = 1;
             const rgb = hsvToRgb(hue, sat, 1);
             onChange(rgb);
@@ -141,7 +144,10 @@ export const ColorWheel: React.FC<ColorWheelProps> = ({
             setPickerPos({ x, y });
 
             const angle = Math.atan2(dy, dx);
-            const hue = (angle + Math.PI) / (2 * Math.PI);
+            // Fix: Direct mapping from angle to hue without PI offset
+            let hue = angle / (2 * Math.PI);
+            if (hue < 0) hue += 1;
+
             const sat = distance / maxRadius;
             const rgb = hsvToRgb(hue, sat, 1);
             onChange(rgb);
