@@ -3,23 +3,19 @@ import { useHomeAssistant } from '../components/dashboard/HomeAssistant';
 import { Shield, Lock, Unlock, AlertTriangle, Camera, Eye, ToggleLeft, ToggleRight, Lightbulb } from 'lucide-react';
 
 export const Security: React.FC = () => {
-  const { zones, toggleEntity } = useHomeAssistant();
+  const { zones, states, toggleEntity } = useHomeAssistant();
 
-  // Filter devices from "Security" area
+  // Filter devices globally from all states
   const securityDevices = useMemo(() => {
-    const securityZone = zones.find(zone =>
-      zone.name.toLowerCase().includes('security') ||
-      zone.id.toLowerCase().includes('security')
-    );
-
-    if (!securityZone) return { cameras: [], locks: [], sensors: [], controls: [] };
-
     const cameras: any[] = [];
     const locks: any[] = [];
     const sensors: any[] = [];
     const controls: any[] = [];
 
-    securityZone.entities.forEach(entity => {
+    // If states is not available yet, return empty
+    if (!states) return { cameras, locks, sensors, controls };
+
+    states.forEach(entity => {
       const domain = entity.entity_id.split('.')[0];
       const device = {
         id: entity.entity_id,
@@ -33,18 +29,57 @@ export const Security: React.FC = () => {
         cameras.push(device);
       } else if (domain === 'lock') {
         locks.push(device);
-      } else if (domain === 'binary_sensor' || domain === 'sensor') {
-        sensors.push(device);
-      } else if (domain === 'switch' || domain === 'light' || domain === 'input_boolean') {
-        controls.push(device);
       }
+      // For sensors/controls, we might still want to restrict to "security" related ones
+      // or check if they are in a security area. 
+      // For now, let's include binary_sensors with device_class safety/motion/door/window/lock
+      else if (domain === 'binary_sensor') {
+        const dc = entity.attributes.device_class;
+        if (['motion', 'door', 'window', 'garage_door', 'safety', 'lock', 'tamper', 'smoke', 'gas'].includes(dc)) {
+          sensors.push(device);
+        }
+      }
+      // For controls, we can't easily guess if they are security related without area.
+      // But user specifically asked for cameras.
+      // Let's try to keep the old zone logic for non-cameras if possible, OR
+      // just search for things with "security" or "cam" or "lock" in the name?
+      // To be safe and fix the user's camera issue primarily:
+
+      // If we want to keep the "Security Zone" logic for other things but make cameras global:
+      // But the user said "Security Page" is empty.
+
+      // Let's try to find the security zone for controls/sensors, but keep cameras global.
     });
 
-    console.log('[Security Debug] Found', cameras.length, 'cameras');
+    // Re-implement zone logic for non-camera items to avoid cluttering with all sensors
+    const securityZone = zones.find(zone =>
+      zone.name.toLowerCase().includes('security') ||
+      zone.id.toLowerCase().includes('security')
+    );
+
+    if (securityZone) {
+      securityZone.entities.forEach(entity => {
+        const domain = entity.entity_id.split('.')[0];
+        const device = {
+          id: entity.entity_id,
+          name: entity.attributes.friendly_name || entity.entity_id,
+          state: entity.state,
+          attributes: entity.attributes,
+          domain: domain,
+        };
+
+        // Avoid duplicates if we already added them (e.g. cameras)
+        if (domain === 'lock' && !locks.find(l => l.id === device.id)) locks.push(device);
+        if ((domain === 'binary_sensor' || domain === 'sensor') && !sensors.find(s => s.id === device.id)) sensors.push(device);
+        if ((domain === 'switch' || domain === 'light' || domain === 'input_boolean') && !controls.find(c => c.id === device.id)) controls.push(device);
+      });
+    }
+
+    console.log('[Security Debug] Found', cameras.length, 'cameras globally');
     cameras.forEach(c => console.log('[Security Debug] Camera:', c.id, 'Picture:', c.attributes.entity_picture));
 
     return { cameras, locks, sensors, controls };
-  }, [zones]);
+  }, [zones, states]);
 
   const handleToggle = async (entityId: string) => {
     await toggleEntity(entityId);
