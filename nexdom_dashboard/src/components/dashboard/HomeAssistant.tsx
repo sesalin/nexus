@@ -5,7 +5,9 @@ import { motion } from 'framer-motion';
 class HomeAssistantClient {
   private basePath: string;
   private ws: WebSocket | null = null;
-  private messageId: number = 1;
+  // CRITICAL FIX: Usar timestamp para evitar id_reuse en reconexiones
+  // Home Assistant requiere que los IDs siempre incrementen, incluso después de reconectar
+  private messageId: number = Date.now();
   private listeners: Map<string, Function[]> = new Map();
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
@@ -332,6 +334,18 @@ export const useHomeAssistant = () => {
     const haClient = new HomeAssistantClient(basePath || '');
     setClient(haClient);
 
+    let loadedStates: any[] = [];
+    let loadedAreas: any[] = [];
+    let loadedEntityRegistry: any[] = [];
+
+    // Función para crear zonas cuando tengamos todos los datos
+    const tryCreateZones = () => {
+      if (loadedStates.length > 0 && loadedAreas.length > 0) {
+        console.log('[Nexdom] Todos los datos cargados, creando zonas...');
+        createZonesFromEntities(loadedStates, loadedAreas, loadedEntityRegistry);
+      }
+    };
+
     // Configurar listeners ANTES de conectar WebSocket
     haClient.on('connected', (connected: boolean) => {
       console.log('[Nexdom] Conexión WebSocket:', connected ? 'establecida' : 'perdida');
@@ -341,27 +355,24 @@ export const useHomeAssistant = () => {
     // Cuando llegan los states
     haClient.on('states_loaded', (states: any[]) => {
       console.log('[Nexdom] States cargados, actualizando UI');
+      loadedStates = states;
       setEntities(states);
       setError(null);
+      tryCreateZones();
     });
 
-    // Cuando se cargan los registros de áreas y entidades, crear zonas
+    // Cuando se cargan las áreas
     haClient.on('area_registry', (areas: any[]) => {
       console.log('[Nexdom] Evento: area_registry recibido');
-      const entityRegistry = haClient.getEntityRegistry();
-      // Solo crear zonas si ya tenemos los estados cargados
-      if (entities.length > 0) {
-        createZonesFromEntities(entities, areas, entityRegistry);
-      }
+      loadedAreas = areas;
+      tryCreateZones();
     });
 
-    haClient.on('entity_registry', (entityRegistry: any[]) => {
+    // Cuando se carga el entity registry
+    haClient.on('entity_registry', (entityReg: any[]) => {
       console.log('[Nexdom] Evento: entity_registry recibido');
-      const areas = haClient.getAreaRegistry();
-      // Solo crear zonas si ya tenemos los estados cargados
-      if (entities.length > 0) {
-        createZonesFromEntities(entities, areas, entityRegistry);
-      }
+      loadedEntityRegistry = entityReg;
+      tryCreateZones();
     });
 
     haClient.on('state_changed', (data: any) => {
