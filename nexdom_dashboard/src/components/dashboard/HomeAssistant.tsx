@@ -557,6 +557,101 @@ export const useHomeAssistant = () => {
     }
   }, [entities, areaRegistry, entityRegistry, filterConfig, client, deviceRegistry]); // Added filterConfig, client, deviceRegistry as dependencies
 
+  // Group entities by device and identify primary/secondary entities
+  const groupEntitiesByDevice = (
+    entities: any[],
+    entityRegistry: any[],
+    deviceRegistry: any[]
+  ): Map<string, { primary: any; secondary: any[] }> => {
+    console.log('[Nexdom] Grouping entities by device...');
+
+    // Auxiliary entity patterns to exclude from primary selection
+    const auxiliaryPatterns = [
+      '*_battery*',
+      '*_signal*',
+      '*_linkquality*',
+      '*_rssi*',
+      '*_update*',
+      '*_last_seen*',
+      '*_device_temperature*',
+    ];
+
+    const matchesAuxPattern = (entityId: string): boolean => {
+      return auxiliaryPatterns.some(pattern => {
+        const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$', 'i');
+        return regex.test(entityId);
+      });
+    };
+
+    // Priority order for primary entity selection
+    const primaryDomains = ['light', 'switch', 'lock', 'cover', 'climate', 'fan', 'media_player'];
+
+    // Build entity_id -> device_id map
+    const entityDeviceMap = new Map<string, string>();
+    entityRegistry.forEach((entry: any) => {
+      if (entry.entity_id && entry.device_id) {
+        entityDeviceMap.set(entry.entity_id, entry.device_id);
+      }
+    });
+
+    // Group entities by device_id
+    const deviceGroups = new Map<string, any[]>();
+    const entitiesWithoutDevice: any[] = [];
+
+    entities.forEach(entity => {
+      const deviceId = entityDeviceMap.get(entity.entity_id);
+      if (deviceId) {
+        if (!deviceGroups.has(deviceId)) {
+          deviceGroups.set(deviceId, []);
+        }
+        deviceGroups.get(deviceId)!.push(entity);
+      } else {
+        entitiesWithoutDevice.push(entity);
+      }
+    });
+
+    console.log(`[Nexdom] Found ${deviceGroups.size} devices with entities`);
+    console.log(`[Nexdom] Found ${entitiesWithoutDevice.length} entities without device`);
+
+    // For each device, identify primary and secondary entities
+    const result = new Map<string, { primary: any; secondary: any[] }>();
+
+    deviceGroups.forEach((deviceEntities, deviceId) => {
+      // Filter out auxiliary entities from primary selection
+      const nonAuxiliary = deviceEntities.filter(e => !matchesAuxPattern(e.entity_id));
+
+      // Find primary entity (highest priority domain)
+      let primary = null;
+      for (const domain of primaryDomains) {
+        primary = nonAuxiliary.find(e => e.entity_id.startsWith(domain + '.'));
+        if (primary) break;
+      }
+
+      // If no primary found in priority domains, use first non-auxiliary entity
+      if (!primary && nonAuxiliary.length > 0) {
+        primary = nonAuxiliary[0];
+      }
+
+      // If still no primary, use first entity (even if auxiliary)
+      if (!primary) {
+        primary = deviceEntities[0];
+      }
+
+      // All other entities are secondary
+      const secondary = deviceEntities.filter(e => e.entity_id !== primary.entity_id);
+
+      result.set(deviceId, { primary, secondary });
+      console.log(`[Nexdom] Device ${deviceId}: primary=${primary.entity_id}, secondary=${secondary.length}`);
+    });
+
+    // Add entities without device as individual "devices" (no secondary entities)
+    entitiesWithoutDevice.forEach(entity => {
+      result.set(`no_device_${entity.entity_id}`, { primary: entity, secondary: [] });
+    });
+
+    return result;
+  };
+
   // Crear zonas desde entidades
   const createZonesFromEntities = (states: any[], areas: any[], entityRegistry: any[], deviceRegistry: any[] = []) => {
     console.log('[Nexdom] Creando zonas:', { states: states.length, areas: areas.length, entities: entityRegistry.length, devices: deviceRegistry.length });
@@ -570,6 +665,21 @@ export const useHomeAssistant = () => {
       setZones([]);
       return;
     }
+
+    // CRITICAL: Group entities by device AFTER filtering
+    const deviceGroups = groupEntitiesByDevice(filteredStates, entityRegistry, deviceRegistry);
+    console.log(`[Nexdom] Grouped into ${deviceGroups.size} devices`);
+
+    // Extract only primary entities for zone assignment
+    const primaryEntities: any[] = [];
+    deviceGroups.forEach((group, deviceId) => {
+      // Add device_id and secondary_entities to primary entity for later use
+      group.primary._device_id = deviceId;
+      group.primary._secondary_entities = group.secondary;
+      primaryEntities.push(group.primary);
+    });
+
+    console.log(`[Nexdom] Using ${primaryEntities.length} primary entities (from ${filteredStates.length} filtered)`);
 
     // 1. Mapa Device ID -> Area ID
     const deviceAreaMap = new Map<string, string>();
@@ -607,14 +717,14 @@ export const useHomeAssistant = () => {
       return null;
     };
 
-    // 4. Crear zonas
+    // 4. Crear zonas usando SOLO entidades primarias
     const zonesBuilt = areas.map((area: any) => {
       const areaId = area.area_id;
       const areaName = area.name || `Área ${areaId}`;
 
       console.log(`[Nexdom] Procesando área: ${areaName} (${areaId})`);
 
-      const areaEntities = filteredStates.filter((entity) => {
+      const areaEntities = primaryEntities.filter((entity) => {
         const assignedAreaId = getEntityAreaId(entity.entity_id, entity.attributes);
         return assignedAreaId === areaId;
       });
@@ -628,8 +738,8 @@ export const useHomeAssistant = () => {
       };
     });
 
-    // 5. Zona Sin Asignar
-    const unassignedEntities = filteredStates.filter((entity) => {
+    // 5. Zona Sin Asignar (solo entidades primarias)
+    const unassignedEntities = primaryEntities.filter((entity) => {
       const assignedAreaId = getEntityAreaId(entity.entity_id, entity.attributes);
       return !assignedAreaId;
     });

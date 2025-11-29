@@ -81,17 +81,26 @@ export const Icon: React.FC<IconProps> = ({
   // Render SVG icon
   if (svgSource) {
     return (
-      <img
-        src={svgSource}
-        alt={svgIcon || 'icon'}
+      <div
         className={`
           ${sizeClasses[size]} 
           z-10 
           transition-all duration-300 
-          object-contain
           ${getColorClasses()}
           ${className}
         `}
+        style={{
+          backgroundColor: 'currentColor',
+          maskImage: `url(${svgSource})`,
+          maskSize: 'contain',
+          maskRepeat: 'no-repeat',
+          maskPosition: 'center',
+          WebkitMaskImage: `url(${svgSource})`,
+          WebkitMaskSize: 'contain',
+          WebkitMaskRepeat: 'no-repeat',
+          WebkitMaskPosition: 'center',
+          ...style,
+        }}
       />
     );
   }

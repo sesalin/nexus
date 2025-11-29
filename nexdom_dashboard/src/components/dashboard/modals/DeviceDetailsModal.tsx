@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sun, Thermometer, Lock, Power } from 'lucide-react';
 import { useHomeAssistant } from '../HomeAssistant';
+import { ColorWheel } from '../../ColorWheel';
 
 interface DeviceDetailsModalProps {
     entityId: string | null;
@@ -116,29 +117,20 @@ export const DeviceDetailsModal: React.FC<DeviceDetailsModalProps> = ({ entityId
                                             />
                                         </div>
 
-                                        {/* RGB Color Picker (if supported) - Circular Wheel */}
+                                        {/* RGB Color Picker (if supported) - Custom Color Wheel */}
                                         {entity.attributes.rgb_color && (
                                             <div className="space-y-2">
                                                 <div className="flex justify-between text-sm text-gray-400">
                                                     <span>Color</span>
                                                 </div>
                                                 <div className="flex justify-center py-4">
-                                                    <div className="relative">
-                                                        <input
-                                                            type="color"
-                                                            defaultValue={rgbToHex(entity.attributes.rgb_color)}
-                                                            onChange={(e) => {
-                                                                const rgb = hexToRgb(e.target.value);
-                                                                callService('light', 'turn_on', { entity_id: entityId, rgb_color: rgb });
-                                                            }}
-                                                            className="w-48 h-48 rounded-full cursor-pointer border-4 border-white/10 hover:border-white/20 transition-all shadow-2xl"
-                                                            style={{
-                                                                appearance: 'none',
-                                                                WebkitAppearance: 'none',
-                                                                MozAppearance: 'none',
-                                                            }}
-                                                        />
-                                                    </div>
+                                                    <ColorWheel
+                                                        initialColor={entity.attributes.rgb_color}
+                                                        onChange={(rgb) => {
+                                                            callService('light', 'turn_on', { entity_id: entityId, rgb_color: rgb });
+                                                        }}
+                                                        size={192}
+                                                    />
                                                 </div>
                                             </div>
                                         )}
@@ -194,6 +186,55 @@ export const DeviceDetailsModal: React.FC<DeviceDetailsModalProps> = ({ entityId
 
                             </div>
                         </div>
+
+                        {/* Related Entities Section */}
+                        {entity._secondary_entities && entity._secondary_entities.length > 0 && (
+                            <div className="mt-6 pt-6 border-t border-white/10">
+                                <h3 className="text-sm font-semibold text-gray-400 mb-3">Related Entities</h3>
+                                <div className="space-y-2">
+                                    {entity._secondary_entities.map((secondaryEntity: any) => {
+                                        const secDomain = secondaryEntity.entity_id.split('.')[0];
+                                        const secName = secondaryEntity.attributes.friendly_name || secondaryEntity.entity_id;
+                                        const secState = secondaryEntity.state;
+
+                                        // Format state value
+                                        let displayValue = secState;
+                                        if (secondaryEntity.attributes.unit_of_measurement) {
+                                            displayValue = `${secState} ${secondaryEntity.attributes.unit_of_measurement}`;
+                                        }
+
+                                        // Get icon based on domain
+                                        let icon = '📊';
+                                        if (secDomain === 'sensor') {
+                                            if (secondaryEntity.entity_id.includes('battery')) icon = '🔋';
+                                            else if (secondaryEntity.entity_id.includes('signal') || secondaryEntity.entity_id.includes('linkquality')) icon = '📶';
+                                            else if (secondaryEntity.entity_id.includes('temperature')) icon = '🌡️';
+                                            else if (secondaryEntity.entity_id.includes('humidity')) icon = '💧';
+                                        } else if (secDomain === 'binary_sensor') {
+                                            icon = secState === 'on' ? '✅' : '⭕';
+                                        }
+
+                                        return (
+                                            <div
+                                                key={secondaryEntity.entity_id}
+                                                className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-xl">{icon}</span>
+                                                    <div>
+                                                        <div className="text-sm text-white">{secName}</div>
+                                                        <div className="text-xs text-gray-500">{secondaryEntity.entity_id}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="text-sm font-mono text-gray-300">
+                                                    {displayValue}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </motion.div>
                 </>
             )}
