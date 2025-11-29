@@ -25,19 +25,12 @@ echo "  Has Token: $([ -n "$HASSIO_TOKEN" ] && echo 'yes' || echo 'no')"
 
 # Verificar conexión con Home Assistant Supervisor
 echo "[Nexdom OS] Verificando conexión con Home Assistant Supervisor..."
-max_retries=10
-retry_count=0
-
-while [ $retry_count -lt $max_retries ]; do
-    # API correcto del supervisor: /api (no /core/api)
-    if curl -f -H "Authorization: Bearer $HASSIO_TOKEN" "$SUPERVISOR_URL/api/" >/dev/null 2>&1; then
-        echo "[Nexdom OS] Conexión con Home Assistant exitosa"
-        break
-    fi
-    retry_count=$((retry_count + 1))
-    echo "[Nexdom OS] Reintentando conexión... ($retry_count/$max_retries)"
-    sleep 3
-done
+# Intentamos solo una vez para no bloquear el inicio
+if curl -f -H "Authorization: Bearer $HASSIO_TOKEN" "$SUPERVISOR_URL/api/" >/dev/null 2>&1; then
+    echo "[Nexdom OS] Conexión con Home Assistant exitosa"
+else
+    echo "[Nexdom OS] No se pudo verificar conexión (puede que el Supervisor esté ocupado), continuando..."
+fi
 
 if [ $retry_count -eq $max_retries ]; then
     echo "[Error] No se pudo conectar con Home Assistant después de $max_retries intentos"

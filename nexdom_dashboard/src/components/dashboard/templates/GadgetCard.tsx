@@ -31,15 +31,15 @@ export const GadgetCard: React.FC<GadgetProps> = ({
   // Determine color scheme based on type
   const getColorScheme = () => {
     switch (type) {
-      case 'sensor': 
+      case 'sensor':
       case 'thermostat':
         return {
-        text: 'text-nexdom-gold',
-        border: 'border-nexdom-gold/30',
-        bg: 'bg-nexdom-gold/10',
-        glow: 'shadow-[0_0_20px_rgba(230,195,106,0.2)]',
-        activeBg: 'bg-nexdom-gold'
-      };
+          text: 'text-nexdom-gold',
+          border: 'border-nexdom-gold/30',
+          bg: 'bg-nexdom-gold/10',
+          glow: 'shadow-[0_0_20px_rgba(230,195,106,0.2)]',
+          activeBg: 'bg-nexdom-gold'
+        };
       case 'camera': return {
         text: 'text-blue-400',
         border: 'border-blue-500/30',
@@ -47,26 +47,26 @@ export const GadgetCard: React.FC<GadgetProps> = ({
         glow: 'shadow-[0_0_20px_rgba(59,130,246,0.2)]',
         activeBg: 'bg-blue-500'
       };
-      case 'actuator': 
+      case 'actuator':
       case 'cover':
       case 'remote':
         return {
-        text: 'text-orange-400',
-        border: 'border-orange-500/30',
-        bg: 'bg-orange-500/10',
-        glow: 'shadow-[0_0_20px_rgba(249,115,22,0.2)]',
-        activeBg: 'bg-orange-500'
-      };
-      case 'switch': 
+          text: 'text-orange-400',
+          border: 'border-orange-500/30',
+          bg: 'bg-orange-500/10',
+          glow: 'shadow-[0_0_20px_rgba(249,115,22,0.2)]',
+          activeBg: 'bg-orange-500'
+        };
+      case 'switch':
       case 'dimmer':
       case 'button':
         return {
-        text: 'text-nexdom-lime',
-        border: 'border-nexdom-lime/30',
-        bg: 'bg-nexdom-lime/10',
-        glow: 'shadow-[0_0_20px_rgba(0,255,136,0.2)]',
-        activeBg: 'bg-nexdom-lime'
-      };
+          text: 'text-nexdom-lime',
+          border: 'border-nexdom-lime/30',
+          bg: 'bg-nexdom-lime/10',
+          glow: 'shadow-[0_0_20px_rgba(0,255,136,0.2)]',
+          activeBg: 'bg-nexdom-lime'
+        };
       case 'light': return {
         text: 'text-yellow-300',
         border: 'border-yellow-400/30',
@@ -74,15 +74,15 @@ export const GadgetCard: React.FC<GadgetProps> = ({
         glow: 'shadow-[0_0_20px_rgba(250,204,21,0.2)]',
         activeBg: 'bg-yellow-400'
       };
-      case 'security': 
+      case 'security':
       case 'lock':
         return {
-        text: 'text-red-400',
-        border: 'border-red-500/30',
-        bg: 'bg-red-500/10',
-        glow: 'shadow-[0_0_20px_rgba(239,68,68,0.2)]',
-        activeBg: 'bg-red-500'
-      };
+          text: 'text-red-400',
+          border: 'border-red-500/30',
+          bg: 'bg-red-500/10',
+          glow: 'shadow-[0_0_20px_rgba(239,68,68,0.2)]',
+          activeBg: 'bg-red-500'
+        };
       case 'patio': return {
         text: 'text-green-400',
         border: 'border-green-500/30',
@@ -108,7 +108,7 @@ export const GadgetCard: React.FC<GadgetProps> = ({
   };
 
   const colors = getColorScheme();
-  
+
   return (
     <motion.div
       layout
@@ -120,7 +120,7 @@ export const GadgetCard: React.FC<GadgetProps> = ({
       `}
     >
       {/* Animated Background Gradient */}
-      <motion.div 
+      <motion.div
         className={`absolute -right-20 -top-20 w-64 h-64 rounded-full blur-[80px] transition-opacity duration-700 pointer-events-none
           ${isActive ? 'opacity-30' : 'opacity-0 group-hover:opacity-10'}
           ${colors.activeBg}
@@ -130,24 +130,23 @@ export const GadgetCard: React.FC<GadgetProps> = ({
       <div className="relative z-10 flex flex-col h-full justify-between">
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
-          <motion.div 
+          <motion.div
             whileHover={{ rotate: 15, scale: 1.1 }}
             className={`p-3 rounded-xl backdrop-blur-md transition-colors duration-300 ${isActive ? `${colors.bg}` : 'bg-white/5'}`}
           >
             <Icon
               svgName={iconPath}
               size="md"
-              className={`transition-colors duration-300 ${
-                isActive ? colors.text : 'text-gray-400 group-hover:text-white'
-              }`}
+              className={`transition-colors duration-300 ${isActive ? colors.text : 'text-gray-400 group-hover:text-white'
+                }`}
               isActive={isActive}
             />
           </motion.div>
-          
+
           <div className="flex gap-2">
-            <motion.div 
+            <motion.div
               initial={false}
-              animate={{ 
+              animate={{
                 backgroundColor: isActive ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)',
                 borderColor: isActive ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)'
               }}
@@ -169,10 +168,10 @@ export const GadgetCard: React.FC<GadgetProps> = ({
           <p className="text-xs text-gray-500 font-mono truncate group-hover:text-gray-400 transition-colors">
             {model}
           </p>
-          
+
           <AnimatePresence>
             {value && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
@@ -186,24 +185,28 @@ export const GadgetCard: React.FC<GadgetProps> = ({
 
         {/* Actions */}
         <div className="grid grid-cols-4 gap-3 mt-auto">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onPrimaryAction?.();
-            }}
-            className={`
-              col-span-3 py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all duration-300
-              ${isActive 
-                ? `${colors.activeBg} text-black shadow-lg shadow-${colors.activeBg}/20` 
-                : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10 hover:text-white'
-              }
-            `}
-          >
-            <Power className={`w-4 h-4 ${isActive ? 'fill-current' : ''}`} />
-            <span>{isActive ? 'Active' : 'Activate'}</span>
-          </motion.button>
+          {onPrimaryAction ? (
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onPrimaryAction();
+              }}
+              className={`
+                col-span-3 py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all duration-300
+                ${isActive
+                  ? `${colors.activeBg} text-black shadow-lg shadow-${colors.activeBg}/20`
+                  : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10 hover:text-white'
+                }
+              `}
+            >
+              <Power className={`w-4 h-4 ${isActive ? 'fill-current' : ''}`} />
+              <span>{isActive ? 'ON' : 'OFF'}</span>
+            </motion.button>
+          ) : (
+            <div className="col-span-3"></div>
+          )}
 
           <motion.button
             whileHover={{ scale: 1.05, rotate: 90 }}

@@ -542,9 +542,36 @@ export const useHomeAssistant = () => {
     if (!entity) return;
 
     const domain = entity.entity_id.split('.')[0];
-    const action = entity.state === 'off' ? 'turn_on' : 'turn_off';
+    let service = '';
+    let serviceData: any = { entity_id: entityId };
 
-    await callService(domain, action, { entity_id: entityId });
+    switch (domain) {
+      case 'lock':
+        service = entity.state === 'locked' ? 'unlock' : 'lock';
+        break;
+      case 'cover':
+        // Si está abierto o abriendo -> cerrar, si no -> abrir
+        service = ['open', 'opening'].includes(entity.state) ? 'close_cover' : 'open_cover';
+        break;
+      case 'button':
+      case 'input_button':
+        service = 'press';
+        break;
+      case 'scene':
+        service = 'turn_on';
+        break;
+      case 'script':
+        service = 'turn_on'; // Scripts se ejecutan con turn_on
+        break;
+      case 'media_player':
+        service = entity.state === 'playing' ? 'media_pause' : 'media_play';
+        break;
+      default:
+        // Para luces, switches, fans, etc.
+        service = entity.state === 'off' ? 'turn_on' : 'turn_off';
+    }
+
+    await callService(domain, service, serviceData);
   };
 
   return {

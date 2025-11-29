@@ -29,8 +29,11 @@ const getIconPath = (type: string): string => {
   }
 };
 
+import { DeviceDetailsModal } from '../modals/DeviceDetailsModal';
+
 export const ZonesPanel: React.FC = () => {
   const [expandedZone, setExpandedZone] = useState<string | null>(null);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const { zones, isConnected, error, toggleEntity } = useHomeAssistant();
 
   const zonesWithGadgets = useMemo(() => {
@@ -72,17 +75,15 @@ export const ZonesPanel: React.FC = () => {
           value: value,
           iconPath: getIconPath(gadgetType),
           isActive: entity.state !== 'off' && entity.state !== 'unavailable' && entity.state !== 'unknown',
-          onPrimaryAction: () => {
+          onPrimaryAction: ['light', 'switch', 'lock', 'cover', 'fan', 'input_boolean', 'automation', 'script'].includes(domain) ? () => {
             console.log('[ZonesPanel] Toggling entity:', entity.entity_id);
             toggleEntity(entity.entity_id).catch(err => {
               console.error('[ZonesPanel] Error toggling entity:', err);
             });
-          },
+          } : undefined,
           onSecondaryAction: () => {
             console.log('[ZonesPanel] Opening settings for:', entity.entity_id);
-            // TODO: Implementar modal de detalles/propiedades
-            // Por ahora solo logueamos, pero aquí iría la lógica para abrir el modal
-            // de color picker, termostato, etc.
+            setSelectedDeviceId(entity.entity_id);
           },
         } as GadgetProps;
       });
@@ -194,6 +195,13 @@ export const ZonesPanel: React.FC = () => {
           </motion.div>
         ))}
       </div>
-    </div>
+
+
+      {/* Device Details Modal */}
+      <DeviceDetailsModal
+        entityId={selectedDeviceId}
+        onClose={() => setSelectedDeviceId(null)}
+      />
+    </div >
   );
 };
