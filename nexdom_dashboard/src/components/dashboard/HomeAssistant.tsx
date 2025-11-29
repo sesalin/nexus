@@ -819,6 +819,7 @@ export const useHomeAssistant = () => {
     client,
     isConnected,
     entities,
+    states: entities, // Alias entities as states for compatibility
     zones,
     error,
     callService,
