@@ -148,12 +148,11 @@ export const ModuleNav: React.FC = () => {
               {/* Overlay */}
               <motion.div
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                animate={{ opacity: 1, pointerEvents: 'auto' as any }}
+                exit={{ opacity: 0, pointerEvents: 'none' as any }}
                 transition={{ duration: 0.15 }}
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
                 onClick={() => setMobileMenuOpen(false)}
-                style={{ pointerEvents: 'auto' }}
               />
 
               {/* Drawer */}
