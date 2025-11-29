@@ -12,7 +12,13 @@ export const Energy: React.FC = () => {
       zone.id.toLowerCase().includes('consumo')
     );
 
-    if (!consumosZone) return [];
+    if (!consumosZone) {
+      console.log('[Energy Debug] Consumos zone not found. Available zones:', zones.map(z => z.name));
+      return [];
+    }
+
+    console.log('[Energy Debug] Consumos zone found:', consumosZone.name, 'Entities:', consumosZone.entities.length);
+    consumosZone.entities.forEach(e => console.log('[Energy Debug]  -', e.entity_id, e.state, e.attributes.unit_of_measurement));
 
     return consumosZone.entities.map(entity => {
       const domain = entity.entity_id.split('.')[0];
@@ -139,10 +145,10 @@ export const Energy: React.FC = () => {
                     <div className="relative h-3 bg-gray-700/50 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${gaugeColor === 'red'
-                            ? 'bg-red-500 shadow-[0_0_10px_#ef4444]'
-                            : gaugeColor === 'yellow'
-                              ? 'bg-yellow-500 shadow-[0_0_10px_#eab308]'
-                              : 'bg-green-500 shadow-[0_0_10px_#22c55e]'
+                          ? 'bg-red-500 shadow-[0_0_10px_#ef4444]'
+                          : gaugeColor === 'yellow'
+                            ? 'bg-yellow-500 shadow-[0_0_10px_#eab308]'
+                            : 'bg-green-500 shadow-[0_0_10px_#22c55e]'
                           }`}
                         style={{ width: `${gaugePercent}%` }}
                       />

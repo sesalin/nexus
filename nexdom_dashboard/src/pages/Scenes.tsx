@@ -36,7 +36,6 @@ export const Scenes: React.FC = () => {
         });
 
         const sceneEntities = states.filter(s => s.entity_id.startsWith('scene.'));
-        console.log('[Scenes Debug] Found', sceneEntities.length, 'scenes:', sceneEntities.map(s => s.entity_id));
         setScenes(sceneEntities);
         setLoading(false);
       } catch (error) {

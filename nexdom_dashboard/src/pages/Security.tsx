@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useHomeAssistant } from '../components/dashboard/HomeAssistant';
-import { Shield, Lock, Unlock, AlertTriangle, Camera, Eye } from 'lucide-react';
+import { Shield, Lock, Unlock, AlertTriangle, Camera, Eye, ToggleLeft, ToggleRight, Lightbulb } from 'lucide-react';
 
 export const Security: React.FC = () => {
   const { zones, toggleEntity } = useHomeAssistant();
@@ -12,18 +12,12 @@ export const Security: React.FC = () => {
       zone.id.toLowerCase().includes('security')
     );
 
-    console.log('[Security Debug] Security zone found:', securityZone?.name, 'Entities:', securityZone?.entities.length);
-    if (securityZone) {
-      securityZone.entities.forEach(e => {
-        console.log('[Security Debug]  -', e.entity_id, '(domain:', e.entity_id.split('.')[0], ')');
-      });
-    }
-
-    if (!securityZone) return { cameras: [], locks: [], sensors: [] };
+    if (!securityZone) return { cameras: [], locks: [], sensors: [], controls: [] };
 
     const cameras: any[] = [];
     const locks: any[] = [];
     const sensors: any[] = [];
+    const controls: any[] = [];
 
     securityZone.entities.forEach(entity => {
       const domain = entity.entity_id.split('.')[0];
@@ -41,13 +35,15 @@ export const Security: React.FC = () => {
         locks.push(device);
       } else if (domain === 'binary_sensor' || domain === 'sensor') {
         sensors.push(device);
+      } else if (domain === 'switch' || domain === 'light' || domain === 'input_boolean') {
+        controls.push(device);
       }
     });
 
-    return { cameras, locks, sensors };
+    return { cameras, locks, sensors, controls };
   }, [zones]);
 
-  const handleToggleLock = async (entityId: string) => {
+  const handleToggle = async (entityId: string) => {
     await toggleEntity(entityId);
   };
 
@@ -72,7 +68,7 @@ export const Security: React.FC = () => {
             ) : (
               securityDevices.cameras.map(camera => (
                 <div key={camera.id} className="bg-black rounded-[2rem] overflow-hidden aspect-video relative group border border-white/10 shadow-2xl">
-                  {/* Camera stream placeholder - can be integrated with actual stream URL */}
+                  {/* Camera stream placeholder */}
                   <div className="absolute inset-0 flex items-center justify-center text-white/30 bg-gray-900">
                     <div className="text-center">
                       <Camera className="w-12 h-12 mx-auto mb-2 opacity-30" />
@@ -106,8 +102,9 @@ export const Security: React.FC = () => {
           </div>
         </div>
 
-        {/* Controls */}
+        {/* Controls Column */}
         <div className="space-y-8">
+
           {/* Locks */}
           <div>
             <h3 className="font-semibold text-gray-400 uppercase tracking-wider text-sm mb-4">Access Control</h3>
@@ -121,8 +118,8 @@ export const Security: React.FC = () => {
                   <div key={lock.id} className="glass-panel p-5 rounded-[1.5rem] flex items-center justify-between group hover:bg-white/5 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className={`p-3 rounded-full ${lock.state === 'locked'
-                        ? 'bg-nexdom-lime/10 text-nexdom-lime'
-                        : 'bg-red-500/10 text-red-500'
+                          ? 'bg-nexdom-lime/10 text-nexdom-lime'
+                          : 'bg-red-500/10 text-red-500'
                         }`}>
                         {lock.state === 'locked' ? <Lock className="w-6 h-6" /> : <Unlock className="w-6 h-6" />}
                       </div>
@@ -132,10 +129,10 @@ export const Security: React.FC = () => {
                       </div>
                     </div>
                     <button
-                      onClick={() => handleToggleLock(lock.id)}
+                      onClick={() => handleToggle(lock.id)}
                       className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${lock.state === 'locked'
-                        ? 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20'
-                        : 'bg-nexdom-lime/10 text-nexdom-lime border border-nexdom-lime/30 hover:bg-nexdom-lime/20'
+                          ? 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20'
+                          : 'bg-nexdom-lime/10 text-nexdom-lime border border-nexdom-lime/30 hover:bg-nexdom-lime/20'
                         }`}
                     >
                       {lock.state === 'locked' ? 'Unlock' : 'Lock'}
@@ -145,6 +142,40 @@ export const Security: React.FC = () => {
               )}
             </div>
           </div>
+
+          {/* Security Controls (Switches/Lights) */}
+          {securityDevices.controls.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-gray-400 uppercase tracking-wider text-sm mb-4">Security Controls</h3>
+              <div className="space-y-4">
+                {securityDevices.controls.map(device => (
+                  <div key={device.id} className="glass-panel p-5 rounded-[1.5rem] flex items-center justify-between group hover:bg-white/5 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-full ${device.state === 'on'
+                          ? 'bg-blue-500/10 text-blue-400'
+                          : 'bg-white/5 text-gray-400'
+                        }`}>
+                        {device.domain === 'light' ? <Lightbulb className="w-6 h-6" /> : <ToggleRight className="w-6 h-6" />}
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-white text-lg">{device.name}</h4>
+                        <p className="text-sm text-gray-500 capitalize">{device.domain}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleToggle(device.id)}
+                      className={`transition-all duration-300 transform hover:scale-110 ${device.state === 'on'
+                          ? 'text-nexdom-lime drop-shadow-[0_0_8px_rgba(0,255,136,0.5)]'
+                          : 'text-gray-600'
+                        }`}
+                    >
+                      {device.state === 'on' ? <ToggleRight className="w-10 h-10" /> : <ToggleLeft className="w-10 h-10" />}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Sensors */}
           <div>
@@ -158,8 +189,8 @@ export const Security: React.FC = () => {
                 securityDevices.sensors.map(sensor => (
                   <div key={sensor.id} className="glass-panel p-4 rounded-[1.5rem] flex items-center gap-4">
                     <div className={`p-2 rounded-full ${sensor.state === 'on' || sensor.state === 'detected' || sensor.state === 'open'
-                      ? 'bg-red-500/10 text-red-400'
-                      : 'bg-purple-500/10 text-purple-400'
+                        ? 'bg-red-500/10 text-red-400'
+                        : 'bg-purple-500/10 text-purple-400'
                       }`}>
                       <AlertTriangle className="w-5 h-5" />
                     </div>

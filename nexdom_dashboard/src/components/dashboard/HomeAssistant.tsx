@@ -247,7 +247,7 @@ class HomeAssistantClient {
   }
 
   private handleWebSocketMessage(message: any) {
-    console.log('[Nexdom] WS message received:', message.type);
+    // console.log('[Nexdom] WS message received:', message.type);
 
     switch (message.type) {
       case 'auth_required':
