@@ -165,6 +165,11 @@ export const ModuleNav: React.FC = () => {
                 className="fixed top-0 left-0 h-full w-24 z-50 p-4"
               >
                 <NavContent />
+                <div className="mt-auto pb-4 px-4">
+                  <div className="text-xs text-gray-600 text-center">
+                    v0.0.72
+                  </div>
+                </div>
               </motion.nav>
             </>
           )}

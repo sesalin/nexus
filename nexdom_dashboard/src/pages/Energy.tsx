@@ -3,6 +3,7 @@ import { useHomeAssistant } from '../components/dashboard/HomeAssistant';
 import { Zap, Activity, TrendingUp } from 'lucide-react';
 
 export const Energy: React.FC = () => {
+  console.log('[Energy Debug] Component rendering');
   const { zones } = useHomeAssistant();
 
   // Filter devices from "Consumos" area

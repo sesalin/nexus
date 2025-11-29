@@ -8,11 +8,13 @@ export const Routines: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('[Automations Debug] Component mounted');
     // Fetch automations from Home Assistant
     const fetchAutomations = async () => {
       try {
         const ws = (window as any).haWebSocket;
         if (!ws) {
+          console.log('[Automations Debug] No WebSocket found on window object');
           setLoading(false);
           return;
         }

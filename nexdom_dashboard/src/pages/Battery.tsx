@@ -3,6 +3,7 @@ import { useHomeAssistant } from '../components/dashboard/HomeAssistant';
 import { Battery as BatteryIcon, BatteryCharging, BatteryLow, BatteryWarning } from 'lucide-react';
 
 export const Battery: React.FC = () => {
+    console.log('[Battery Debug] Component rendering');
     const { zones } = useHomeAssistant();
 
     // Extract all devices with battery attribute

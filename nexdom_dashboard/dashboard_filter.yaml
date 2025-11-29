@@ -24,10 +24,10 @@ allowed_domains:
   - binary_sensor    # Sensores binarios (descomentado = oculto)
   - automation       # Automatizaciones
   # - script           # Scripts
-  # - scene            # Escenas
+  - scene            # Escenas
   # - input_boolean    # Interruptores virtuales
   # - vacuum           # Aspiradoras
-  # - alarm_control_panel  # Alarmas
+  - alarm_control_panel  # Alarmas
 
 # ----------------------------------------------------------------------------
 # REGLA 2: Patrones de Exclusión (Hide Patterns)
@@ -36,15 +36,15 @@ allowed_domains:
 # Usa * como comodín. Ejemplo: "sensor.temperatura_*" oculta todos los sensores de temperatura.
 hide_patterns:
   # Sensores técnicos/diagnóstico
-  - "*_battery"                    # Sensores de batería
-  - "*_battery_level"              # Nivel de batería
+  #- "*_battery"                    # Sensores de batería
+  #- "*_battery_level"              # Nivel de batería
   - "*_signal_strength"            # Fuerza de señal
   - "*_linkquality"                # Calidad de enlace Zigbee
   - "*_rssi"                       # RSSI WiFi
   - "*_update_available"           # Updates disponibles
   - "*_last_seen"                  # Última vez visto
-  - "*_power"                      # Consumo de energía (si no te interesa)
-  - "*_energy"                     # Energía acumulada
+  #- "*_power"                      # Consumo de energía (si no te interesa)
+  #- "*_energy"                     # Energía acumulada
   
   # Sensores del sistema
   #- "sensor.sun_*"                 # Sensores del sol
@@ -115,7 +115,7 @@ filter_options:
 attribute_filters:
   # Ocultar entidades con device_class específicos
   hide_device_classes:
-    - "battery"           # Sensores de batería
+    #- "battery"           # Sensores de batería
     - "timestamp"         # Timestamps
     - "update"            # Updates
     # - "temperature"     # Temperatura (descomenta si no quieres ver)
