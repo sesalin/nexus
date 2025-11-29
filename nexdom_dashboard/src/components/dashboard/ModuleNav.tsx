@@ -142,7 +142,7 @@ export const ModuleNav: React.FC = () => {
         {/* Edge Trigger Area */}
         <div className="fixed top-0 left-0 w-4 h-full z-30 pointer-events-none" />
 
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {isMobileMenuOpen && (
             <>
               {/* Overlay */}
@@ -150,8 +150,10 @@ export const ModuleNav: React.FC = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
                 className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
                 onClick={() => setMobileMenuOpen(false)}
+                style={{ pointerEvents: 'auto' }}
               />
 
               {/* Drawer */}
@@ -159,7 +161,7 @@ export const ModuleNav: React.FC = () => {
                 initial={{ x: '-100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '-100%' }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300, duration: 0.2 }}
                 className="fixed top-0 left-0 h-full w-24 z-50 p-4"
               >
                 <NavContent />
