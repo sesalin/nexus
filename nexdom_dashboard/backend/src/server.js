@@ -359,7 +359,7 @@ function connectToSupervisorWebSocket() {
     try {
       const data = JSON.parse(message.toString());
       const logType = data.type === 'event' ? 'event' : data.type;
-      // console.log(`[WS] Supervisor message: ${logType}`, data.id ? `(id: ${data.id})` : '');
+      console.log(`[WS] Supervisor message: ${logType}`, data.id ? `(id: ${data.id})` : '');
 
       // Responder autenticación si es requerida
       if (data.type === 'auth_required') {
