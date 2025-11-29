@@ -350,6 +350,10 @@ function connectToSupervisorWebSocket() {
       } else if (data.type === 'auth_invalid') {
         console.error('[WS] Auth failed!');
         broadcastToClients(message);
+      } else if (data.type === 'result') {
+        // DEBUG: Log cuando recibimos resultados para reenviar
+        console.log(`[WS] Broadcasting result (id: ${data.id}) to ${clientConnections.size} client(s)`);
+        broadcastToClients(message);
       } else {
         // Reenviar mensaje a todos los clientes conectados
         broadcastToClients(message);
