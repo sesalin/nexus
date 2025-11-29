@@ -167,7 +167,7 @@ export const ModuleNav: React.FC = () => {
                 <NavContent />
                 <div className="mt-auto pb-4 px-4">
                   <div className="text-xs text-gray-600 text-center">
-                    v0.0.73
+                    v0.0.74
                   </div>      </div>
               </div>
             </motion.nav>
