@@ -26,7 +26,7 @@ const getIconName = (type: string): string => {
 
 export const GadgetGrid: React.FC = () => {
   const { zones, toggleEntity, callService } = useHomeAssistant();
-  const [expandedDomain, setExpandedDomain] = useState<string | null>('light');
+  const [expandedDomain, setExpandedDomain] = useState<string | null>(null); // All closed by default
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
   // Flatten all entities from zones and group by domain
@@ -114,7 +114,7 @@ export const GadgetGrid: React.FC = () => {
   return (
     <div className="space-y-6">
       {Object.entries(groupedGadgets).map(([domain, gadgets]) => (
-        <div key={domain} className="glass-panel overflow-hidden rounded-[2rem] border border-white/5">
+        <div key={domain} className="glass-panel overflow-hidden rounded-[2rem] border border-white/5 min-h-[120px]">
           <button
             onClick={() => toggleDomain(domain)}
             className="w-full p-6 flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors"
