@@ -15,6 +15,7 @@ class HomeAssistantClient {
   private pendingRequests: Map<number, { resolve: (data: any) => void; reject: (err: any) => void }> = new Map();
   private areaRegistry: any[] = [];
   private entityRegistry: any[] = [];
+  private deviceRegistry: any[] = [];
 
   constructor(basePath: string) {
     // basePath debe incluir el prefijo de ingress (/api/hassio_ingress/...) para no saltarse el proxy
@@ -207,6 +208,15 @@ class HomeAssistantClient {
             console.error('[Nexdom] Error cargando entity_registry:', err);
             this.entityRegistry = [];
           });
+
+        // NUEVO: Cargar device_registry para mapear entidades a áreas vía dispositivos
+        this.request('config/device_registry/list')
+          .then((result: any) => {
+            this.deviceRegistry = Array.isArray(result) ? result : (result as any)?.devices || [];
+            console.log(`[Nexdom] ✓ ${this.deviceRegistry.length} dispositivos en registry`);
+            this.emit('device_registry', this.deviceRegistry);
+          })
+          .catch((err) => console.error('[Nexdom] Error cargando device_registry:', err));
         break;
 
       case 'auth_invalid':
@@ -337,12 +347,14 @@ export const useHomeAssistant = () => {
     let loadedStates: any[] = [];
     let loadedAreas: any[] = [];
     let loadedEntityRegistry: any[] = [];
+    let loadedDeviceRegistry: any[] = [];
 
     // Función para crear zonas cuando tengamos todos los datos
     const tryCreateZones = () => {
       if (loadedStates.length > 0 && loadedAreas.length > 0) {
-        console.log('[Nexdom] Todos los datos cargados, creando zonas...');
-        createZonesFromEntities(loadedStates, loadedAreas, loadedEntityRegistry);
+        // Esperamos a tener device_registry también, pero si tarda mucho o falla, procedemos
+        // Idealmente deberíamos esperar a los 4, pero para no bloquear UI usamos lo que tengamos
+        createZonesFromEntities(loadedStates, loadedAreas, loadedEntityRegistry, loadedDeviceRegistry);
       }
     };
 
@@ -372,6 +384,12 @@ export const useHomeAssistant = () => {
     haClient.on('entity_registry', (entityReg: any[]) => {
       console.log('[Nexdom] Evento: entity_registry recibido');
       loadedEntityRegistry = entityReg;
+      tryCreateZones();
+    });
+
+    haClient.on('device_registry', (deviceReg: any[]) => {
+      console.log('[Nexdom] Evento: device_registry recibido');
+      loadedDeviceRegistry = deviceReg;
       tryCreateZones();
     });
 
@@ -416,8 +434,13 @@ export const useHomeAssistant = () => {
     };
   }, []);
 
-  const createZonesFromEntities = (states: any[], areas: any[], entityRegistry: any[]) => {
-    console.log('[Nexdom] Creando zonas:', { states: states.length, areas: areas.length, registry: entityRegistry.length });
+  const createZonesFromEntities = (states: any[], areas: any[], entityRegistry: any[], deviceRegistry: any[] = []) => {
+    console.log('[Nexdom] Creando zonas:', {
+      states: states.length,
+      areas: areas.length,
+      entities: entityRegistry.length,
+      devices: deviceRegistry.length
+    });
 
     if (!areas || areas.length === 0) {
       console.warn('[Nexdom] No hay áreas disponibles');
@@ -425,41 +448,52 @@ export const useHomeAssistant = () => {
       return;
     }
 
-    // Mapear entity_id → area_id desde entity_registry
-    const entityAreaMap = new Map<string, string>();
-    entityRegistry?.forEach((entry: any) => {
-      if (entry?.entity_id && entry?.area_id) {
-        entityAreaMap.set(entry.entity_id, entry.area_id);
+    // 1. Mapa Device ID -> Area ID
+    const deviceAreaMap = new Map<string, string>();
+    deviceRegistry.forEach((device: any) => {
+      if (device.id && device.area_id) {
+        deviceAreaMap.set(device.id, device.area_id);
       }
     });
 
-    console.log('[Nexdom] Entity Registry Map size:', entityAreaMap.size);
-    console.log('[Nexdom] Sample entity registry entries:',
-      Array.from(entityAreaMap.entries()).slice(0, 5).map(([eid, aid]) => ({ entity_id: eid, area_id: aid }))
-    );
+    // 2. Mapa Entity ID -> Device ID y Entity ID -> Area ID (directo)
+    const entityDeviceMap = new Map<string, string>();
+    const entityDirectAreaMap = new Map<string, string>();
 
-    // IMPORTANTE: Crear UNA zona por cada área, con o sin entidades
-    // Esto asegura que se muestren las 9 áreas aunque algunas estén vacías
+    entityRegistry.forEach((entry: any) => {
+      if (entry.entity_id) {
+        if (entry.device_id) entityDeviceMap.set(entry.entity_id, entry.device_id);
+        if (entry.area_id) entityDirectAreaMap.set(entry.entity_id, entry.area_id);
+      }
+    });
+
+    // 3. Función helper para obtener el área de una entidad
+    const getEntityAreaId = (entityId: string, attributes: any): string | null => {
+      // Prioridad 1: Asignación directa en entity_registry
+      if (entityDirectAreaMap.has(entityId)) return entityDirectAreaMap.get(entityId)!;
+
+      // Prioridad 2: Asignación en atributos del estado (raro pero posible)
+      if (attributes?.area_id) return attributes.area_id;
+
+      // Prioridad 3: A través del dispositivo
+      const deviceId = entityDeviceMap.get(entityId);
+      if (deviceId && deviceAreaMap.has(deviceId)) {
+        return deviceAreaMap.get(deviceId)!;
+      }
+
+      return null;
+    };
+
+    // 4. Crear zonas
     const zonesBuilt = areas.map((area: any) => {
       const areaId = area.area_id;
       const areaName = area.name || `Área ${areaId}`;
 
       console.log(`[Nexdom] Procesando área: ${areaName} (${areaId})`);
 
-      // Filtrar entidades que pertenecen a esta área
       const areaEntities = states.filter((entity) => {
-        // Buscar el area_id en entity_registry
-        const registryAreaId = entityAreaMap.get(entity.entity_id);
-        // También revisar si la entidad tiene area_id en sus attributes
-        const attributeAreaId = entity.attributes?.area_id;
-
-        const matches = registryAreaId === areaId || attributeAreaId === areaId;
-
-        if (matches) {
-          console.log(`  ✓ ${entity.entity_id} → ${areaName}`);
-        }
-
-        return matches;
+        const assignedAreaId = getEntityAreaId(entity.entity_id, entity.attributes);
+        return assignedAreaId === areaId;
       });
 
       console.log(`[Nexdom]   Área ${areaName}: ${areaEntities.length} entidades`);
@@ -471,11 +505,10 @@ export const useHomeAssistant = () => {
       };
     });
 
-    // Añadir zona "Sin Asignar" para entidades sin área
+    // 5. Zona Sin Asignar
     const unassignedEntities = states.filter((entity) => {
-      const registryAreaId = entityAreaMap.get(entity.entity_id);
-      const attributeAreaId = entity.attributes?.area_id;
-      return !registryAreaId && !attributeAreaId;
+      const assignedAreaId = getEntityAreaId(entity.entity_id, entity.attributes);
+      return !assignedAreaId;
     });
 
     console.log(`[Nexdom] Entidades sin asignar: ${unassignedEntities.length}`);
@@ -491,7 +524,7 @@ export const useHomeAssistant = () => {
       });
     }
 
-    console.log(`[Nexdom] ✓ ${zonesBuilt.length} zonas creadas`);
+    console.log(`[Nexdom] ✓ ${zonesBuilt.length} zonas creadas con mapeo completo`);
     console.log('[Nexdom] Resumen de zonas:', zonesBuilt.map(z => ({ name: z.name, entities: z.entities.length })));
     setZones(zonesBuilt);
   };
