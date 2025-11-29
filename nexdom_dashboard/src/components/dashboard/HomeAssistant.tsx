@@ -433,11 +433,18 @@ export const useHomeAssistant = () => {
       }
     });
 
+    console.log('[Nexdom] Entity Registry Map size:', entityAreaMap.size);
+    console.log('[Nexdom] Sample entity registry entries:',
+      Array.from(entityAreaMap.entries()).slice(0, 5).map(([eid, aid]) => ({ entity_id: eid, area_id: aid }))
+    );
+
     // IMPORTANTE: Crear UNA zona por cada área, con o sin entidades
     // Esto asegura que se muestren las 9 áreas aunque algunas estén vacías
     const zonesBuilt = areas.map((area: any) => {
       const areaId = area.area_id;
       const areaName = area.name || `Área ${areaId}`;
+
+      console.log(`[Nexdom] Procesando área: ${areaName} (${areaId})`);
 
       // Filtrar entidades que pertenecen a esta área
       const areaEntities = states.filter((entity) => {
@@ -446,8 +453,16 @@ export const useHomeAssistant = () => {
         // También revisar si la entidad tiene area_id en sus attributes
         const attributeAreaId = entity.attributes?.area_id;
 
-        return registryAreaId === areaId || attributeAreaId === areaId;
+        const matches = registryAreaId === areaId || attributeAreaId === areaId;
+
+        if (matches) {
+          console.log(`  ✓ ${entity.entity_id} → ${areaName}`);
+        }
+
+        return matches;
       });
+
+      console.log(`[Nexdom]   Área ${areaName}: ${areaEntities.length} entidades`);
 
       return {
         id: areaId,
@@ -463,6 +478,11 @@ export const useHomeAssistant = () => {
       return !registryAreaId && !attributeAreaId;
     });
 
+    console.log(`[Nexdom] Entidades sin asignar: ${unassignedEntities.length}`);
+    if (unassignedEntities.length > 0) {
+      console.log('[Nexdom] Sample unassigned:', unassignedEntities.slice(0, 5).map(e => e.entity_id));
+    }
+
     if (unassignedEntities.length > 0) {
       zonesBuilt.push({
         id: 'unassigned',
@@ -472,6 +492,7 @@ export const useHomeAssistant = () => {
     }
 
     console.log(`[Nexdom] ✓ ${zonesBuilt.length} zonas creadas`);
+    console.log('[Nexdom] Resumen de zonas:', zonesBuilt.map(z => ({ name: z.name, entities: z.entities.length })));
     setZones(zonesBuilt);
   };
 

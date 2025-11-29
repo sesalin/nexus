@@ -41,7 +41,7 @@ export const ModuleNav: React.FC = () => {
     if (!isMobile) return;
 
     let touchStartX = 0;
-    
+
     const handleTouchStart = (e: TouchEvent) => {
       touchStartX = e.touches[0].clientX;
     };
@@ -71,7 +71,7 @@ export const ModuleNav: React.FC = () => {
 
   const navItems = [
     { path: '/', iconType: 'lucide' as const, iconName: 'Home', label: 'Overview' },
-    { path: '/zones', iconType: 'svg' as const, iconName: 'zones', label: 'Zonas' },
+    { path: '/zones', iconType: 'lucide' as const, iconName: 'MapPin', label: 'Zonas' },
     { path: '/gadgets', iconType: 'svg' as const, iconName: 'gadgets', label: 'Gadgets' },
     { path: '/energy', iconType: 'svg' as const, iconName: 'energy', label: 'Energy' },
     { path: '/security', iconType: 'svg' as const, iconName: 'security', label: 'Security' },
@@ -81,7 +81,7 @@ export const ModuleNav: React.FC = () => {
   ];
 
   const NavContent = () => (
-    <div 
+    <div
       className="glass-panel rounded-3xl w-full h-full flex flex-col items-center py-8 gap-6 overflow-y-auto scrollbar-hide"
       onClick={(e) => e.stopPropagation()} // Prevent click through
       onTouchStart={resetAutoCloseTimer} // Reset timer on interaction
@@ -99,14 +99,13 @@ export const ModuleNav: React.FC = () => {
         >
           {({ isActive }) => (
             <>
-              <div className={`absolute inset-0 rounded-xl transition-all duration-500 ${
-                isActive 
-                  ? 'bg-nexdom-lime/10 shadow-[0_0_20px_rgba(0,255,136,0.2)]' 
+              <div className={`absolute inset-0 rounded-xl transition-all duration-500 ${isActive
+                  ? 'bg-nexdom-lime/10 shadow-[0_0_20px_rgba(0,255,136,0.2)]'
                   : 'group-hover:bg-white/5'
-              }`}></div>
-              
+                }`}></div>
+
               {isActive && (
-                <motion.div 
+                <motion.div
                   layoutId="activeNavIndicator"
                   className="absolute -left-3 w-1 h-8 bg-nexdom-lime rounded-full shadow-[0_0_10px_#00FF88]"
                 />
@@ -118,14 +117,14 @@ export const ModuleNav: React.FC = () => {
                 isActive={isActive}
                 isHovering={hoveredItem === item.path}
               />
-              
+
               {/* Tooltip (Desktop only) */}
               {!isMobile && (
                 <div className="absolute left-14 px-3 py-1 bg-nexdom-panel border border-white/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
                   <span className="text-xs font-medium text-white">{item.label}</span>
                 </div>
               )}
-              
+
               {/* Label (Mobile only) */}
               {isMobile && (
                 <span className={`text-[10px] mt-1 ${isActive ? 'text-nexdom-lime' : 'text-gray-500'}`}>{item.label}</span>
