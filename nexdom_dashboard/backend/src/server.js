@@ -430,7 +430,17 @@ function connectToSupervisorWebSocket() {
 
 // Broadcast message to all connected clients
 function broadcastToClients(message) {
-  const messageStr = typeof message === 'string' ? message : JSON.stringify(message);
+  // CRITICAL FIX: Convert Buffer to string FIRST
+  // Node.js WebSocket sends Buffer objects, but browser clients need strings
+  let messageStr;
+  if (typeof message === 'string') {
+    messageStr = message;
+  } else if (Buffer.isBuffer(message)) {
+    messageStr = message.toString();
+  } else {
+    messageStr = JSON.stringify(message);
+  }
+
   let successCount = 0;
   let failCount = 0;
 
