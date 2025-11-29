@@ -31,6 +31,21 @@ export interface EnergyState {
   batteryLevel: number;
 }
 
+export interface Scene {
+  id: string;
+  name: string;
+  icon: string;
+  isActive: boolean;
+}
+
+export interface Routine {
+  id: string;
+  name: string;
+  trigger: string;
+  nextRun?: string;
+  enabled: boolean;
+}
+
 export interface NexdomState {
   // Devices
   devices: Device[];
@@ -45,6 +60,14 @@ export interface NexdomState {
   setRooms: (rooms: Room[]) => void;
   updateRoom: (id: string, updates: Partial<Room>) => void;
   removeRoom: (id: string) => void;
+
+  // Scenes
+  scenes: Scene[];
+  activateScene: (id: string) => void;
+
+  // Routines
+  routines: Routine[];
+  toggleRoutine: (id: string) => void;
 
   // Energy
   energy: EnergyState;
@@ -72,6 +95,15 @@ export const useNexdomStore = create<NexdomState>((set, get) => ({
   // Initial state
   devices: [],
   rooms: [],
+  scenes: [
+    { id: '1', name: 'Movie Night', icon: 'Film', isActive: false },
+    { id: '2', name: 'Good Morning', icon: 'Sun', isActive: true },
+    { id: '3', name: 'Away', icon: 'LogOut', isActive: false },
+  ],
+  routines: [
+    { id: '1', name: 'Turn on porch lights', trigger: 'Sunset', nextRun: '18:45', enabled: true },
+    { id: '2', name: 'Vacuum living room', trigger: 'Mon, Wed, Fri at 10:00', nextRun: 'Wed 10:00', enabled: false },
+  ],
   alerts: [],
   energy: {
     currentUsage: 0,
@@ -80,6 +112,21 @@ export const useNexdomStore = create<NexdomState>((set, get) => ({
   },
   isLoading: false,
   isConnected: true,
+
+  // Scene actions
+  activateScene: (id) => set((state) => ({
+    scenes: state.scenes.map(scene => ({
+      ...scene,
+      isActive: scene.id === id
+    }))
+  })),
+
+  // Routine actions
+  toggleRoutine: (id) => set((state) => ({
+    routines: state.routines.map(routine =>
+      routine.id === id ? { ...routine, enabled: !routine.enabled } : routine
+    )
+  })),
 
   // Energy actions
   setEnergy: (energy) => set({ energy }),

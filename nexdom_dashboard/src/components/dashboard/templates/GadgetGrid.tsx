@@ -1,114 +1,172 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { GadgetCard, GadgetProps } from './GadgetCard';
+import { useHomeAssistant } from '../HomeAssistant';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
+import { DeviceDetailsModal } from '../modals/DeviceDetailsModal';
 
-// Helper to get icon path by name
-const getIconPath = (name: string): string => {
-  return name; // Just return the filename, Icon component handles the path
-};
-
-const GADGET_IDS = [
-  'AC', 'Asistente-voz', 'Calidad-aire', 'Camara', 'Dimmer', 'Energia', 'Gate',
-  'Humedad', 'Interruptores-inteligentes-on', 'IR', 'Irrigation', 'Leds', 'light',
-  'Nivel-agua', 'Persiana', 'PTZ', 'Sensor-co2', 'Sensor-humo', 'Sensor-movimiento',
-  'Sensor-puerta', 'Sensor-ventana', 'Smartlock', 'Smart-plug', 'Temperatura',
-  'Timbre', 'Vibracion'
-];
-
-const inferGadgetType = (id: string): Partial<GadgetProps> => {
-  const lowerId = id.toLowerCase();
-
-  if (lowerId.includes('ac') || lowerId.includes('temperatura')) return { type: 'thermostat', category: 'Climate', status: '24°C', value: 'Cooling' };
-  if (lowerId.includes('voz')) return { type: 'voice', category: 'System', status: 'Listening' };
-  if (lowerId.includes('calidad') || lowerId.includes('co2')) return { type: 'sensor', category: 'Climate', status: 'Good', value: '420ppm' };
-  if (lowerId.includes('camara') || lowerId.includes('ptz')) return { type: 'camera', category: 'Security', status: 'Live' };
-  if (lowerId.includes('dimmer')) return { type: 'dimmer', category: 'Lighting', status: '50%', value: 'Dimmed' };
-  if (lowerId.includes('energia')) return { type: 'sensor', category: 'Energy', status: 'Monitoring', value: '1.2kW' };
-  if (lowerId.includes('gate') || lowerId.includes('lock')) return { type: 'lock', category: 'Security', status: 'Locked' };
-  if (lowerId.includes('humedad')) return { type: 'sensor', category: 'Climate', status: '45%', value: 'Humid' };
-  if (lowerId.includes('interruptor') || lowerId.includes('plug')) return { type: 'switch', category: 'Lighting', status: 'Off' };
-  if (lowerId.includes('ir')) return { type: 'remote', category: 'Media', status: 'Ready' };
-  if (lowerId.includes('irrigation')) return { type: 'switch', category: 'Outdoor', status: 'Scheduled' };
-  if (lowerId.includes('led') || lowerId.includes('light')) return { type: 'light', category: 'Lighting', status: 'On', value: '80%' };
-  if (lowerId.includes('agua')) return { type: 'sensor', category: 'Utility', status: '80%', value: '800L' };
-  if (lowerId.includes('persiana')) return { type: 'cover', category: 'Comfort', status: 'Closed' };
-  if (lowerId.includes('humo') || lowerId.includes('movimiento') || lowerId.includes('puerta') || lowerId.includes('ventana') || lowerId.includes('vibracion')) return { type: 'sensor', category: 'Security', status: 'Secure', value: 'Clear' };
-  if (lowerId.includes('timbre')) return { type: 'button', category: 'Security', status: 'Idle' };
-
-  return { type: 'accessory', category: 'Other', status: 'Online' };
+// Helper to get Icon filename based on domain/type
+const getIconName = (type: string): string => {
+  const map: Record<string, string> = {
+    'light': 'light',
+    'switch': 'Smart-plug',
+    'sensor': 'Sensor-movimiento',
+    'binary_sensor': 'Sensor-puerta',
+    'climate': 'Temperatura',
+    'camera': 'Camara',
+    'lock': 'Smartlock',
+    'cover': 'Persiana',
+    'media_player': 'IR',
+    'fan': 'AC',
+    'vacuum': 'Vibracion',
+    'update': 'Nivel-agua'
+  };
+  return map[type] || 'Smart-plug';
 };
 
 export const GadgetGrid: React.FC = () => {
-  const [gadgets, setGadgets] = useState<GadgetProps[]>([]);
+  const { zones, toggleEntity, callService } = useHomeAssistant();
+  const [expandedDomain, setExpandedDomain] = useState<string | null>('light');
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const generatedGadgets: GadgetProps[] = GADGET_IDS.map(id => {
-      const config = inferGadgetType(id);
-      return {
-        id,
-        name: id.replace(/-/g, ' '),
-        model: 'Nexdom Smart Device',
-        type: config.type as any,
-        category: config.category,
-        iconPath: getIconPath(id),
-        status: config.status || 'Online',
-        isActive: ['light', 'switch', 'lock', 'camera'].includes(config.type || '') ? false : true,
-        value: config.value,
-      };
+  // Flatten all entities from zones and group by domain
+  const groupedGadgets = useMemo(() => {
+    const allGadgets: GadgetProps[] = [];
+    const processedIds = new Set<string>();
+
+    zones.forEach(zone => {
+      zone.entities.forEach(entity => {
+        if (processedIds.has(entity.entity_id)) return;
+        processedIds.add(entity.entity_id);
+
+        const domain = entity.entity_id.split('.')[0];
+
+        // Determine status string
+        let status = entity.state;
+        if (domain === 'light' || domain === 'switch') status = entity.state === 'on' ? 'On' : 'Off';
+        else if (domain === 'lock') status = entity.state === 'locked' ? 'Locked' : 'Unlocked';
+        else if (domain === 'cover') status = entity.state === 'open' ? 'Open' : 'Closed';
+        else if (domain === 'camera') status = entity.state === 'idle' ? 'Idle' : 'Live';
+        else if (entity.attributes.unit_of_measurement) status = `${entity.state} ${entity.attributes.unit_of_measurement}`;
+
+        // Determine value string
+        let value = undefined;
+        if (domain === 'light' && entity.attributes.brightness) {
+          value = `${Math.round((entity.attributes.brightness / 255) * 100)}%`;
+        } else if (domain === 'climate' && entity.attributes.temperature) {
+          value = `${entity.attributes.temperature}°C`;
+        }
+
+        allGadgets.push({
+          id: entity.entity_id,
+          name: entity.attributes.friendly_name || entity.entity_id,
+          model: domain,
+          type: domain as any,
+          category: domain, // Use domain as category for grouping
+          iconPath: getIconName(domain),
+          status: status,
+          value: value,
+          rgbColor: domain === 'light' ? entity.attributes.rgb_color : undefined,
+          isActive: entity.state !== 'off' && entity.state !== 'unavailable' && entity.state !== 'unknown' && entity.state !== 'closed' && entity.state !== 'locked',
+          onPrimaryAction: ['light', 'switch', 'lock', 'cover', 'fan', 'input_boolean', 'automation', 'script'].includes(domain) ? () => {
+            toggleEntity(entity.entity_id);
+          } : undefined,
+          onSecondaryAction: () => {
+            setSelectedDeviceId(entity.entity_id);
+          },
+          onColorChange: domain === 'light' ? (rgb: number[]) => {
+            callService('light', 'turn_on', { entity_id: entity.entity_id, rgb_color: rgb });
+          } : undefined,
+        });
+      });
     });
-    setGadgets(generatedGadgets);
-  }, []);
 
-  const handleToggle = (id: string) => {
-    setGadgets(prev => prev.map(gadget => {
-      if (gadget.id === id) {
-        const newActive = !gadget.isActive;
-        let newStatus = gadget.status;
+    // Group by domain
+    return allGadgets.reduce((acc, gadget) => {
+      const domain = gadget.type;
+      if (!acc[domain]) acc[domain] = [];
+      acc[domain].push(gadget);
+      return acc;
+    }, {} as Record<string, GadgetProps[]>);
+  }, [zones, toggleEntity, callService]);
 
-        if (gadget.type === 'lock') newStatus = newActive ? 'Locked' : 'Unlocked';
-        else if (gadget.type === 'camera') newStatus = newActive ? 'Live' : 'Standby';
-        else if (gadget.type === 'cover') newStatus = newActive ? 'Open' : 'Closed';
-        else if (gadget.type === 'switch' || gadget.type === 'light') newStatus = newActive ? 'On' : 'Off';
-
-        return { ...gadget, isActive: newActive, status: newStatus };
-      }
-      return gadget;
-    }));
+  const toggleDomain = (domain: string) => {
+    setExpandedDomain(expandedDomain === domain ? null : domain);
   };
 
-  // Group by category
-  const groupedGadgets = gadgets.reduce((acc, gadget) => {
-    const cat = gadget.category || 'Other';
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(gadget);
-    return acc;
-  }, {} as Record<string, GadgetProps[]>);
-
-  const categories = ['Security', 'Climate', 'Lighting', 'Energy', 'System', 'Media', 'Outdoor', 'Utility', 'Comfort', 'Other'];
+  const domainTitles: Record<string, string> = {
+    'light': 'Lights',
+    'switch': 'Switches',
+    'sensor': 'Sensors',
+    'binary_sensor': 'Binary Sensors',
+    'camera': 'Cameras',
+    'lock': 'Locks',
+    'cover': 'Covers',
+    'climate': 'Climate',
+    'media_player': 'Media',
+    'fan': 'Fans',
+    'vacuum': 'Vacuums',
+    'automation': 'Automations',
+    'script': 'Scripts',
+    'input_boolean': 'Helpers'
+  };
 
   return (
-    <div className="space-y-12">
-      {categories.map(category => {
-        const categoryGadgets = groupedGadgets[category];
-        if (!categoryGadgets?.length) return null;
-
-        return (
-          <div key={category}>
-            <h3 className="text-xl font-bold text-white/50 uppercase tracking-widest mb-6 pl-2 border-l-4 border-nexdom-lime/20">
-              {category}
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {categoryGadgets.map((gadget) => (
-                <GadgetCard
-                  key={gadget.id}
-                  {...gadget}
-                  onPrimaryAction={() => handleToggle(gadget.id)}
-                  onSecondaryAction={() => console.log(`Settings for ${gadget.name}`)}
-                />
-              ))}
+    <div className="space-y-6">
+      {Object.entries(groupedGadgets).map(([domain, gadgets]) => (
+        <div key={domain} className="glass-panel overflow-hidden rounded-[2rem] border border-white/5">
+          <button
+            onClick={() => toggleDomain(domain)}
+            className="w-full p-6 flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors"
+          >
+            <div className="flex items-center gap-4">
+              <h3 className="text-xl font-bold text-white tracking-wide">
+                {domainTitles[domain] || domain.charAt(0).toUpperCase() + domain.slice(1)}
+              </h3>
+              <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-medium text-gray-400">
+                {gadgets.length}
+              </span>
             </div>
-          </div>
-        );
-      })}
+            <motion.div
+              animate={{ rotate: expandedDomain === domain ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ChevronDown className="w-6 h-6 text-gray-400" />
+            </motion.div>
+          </button>
+
+          <AnimatePresence>
+            {expandedDomain === domain && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+              >
+                <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 border-t border-white/5">
+                  {gadgets.map((gadget) => (
+                    <GadgetCard
+                      key={gadget.id}
+                      {...gadget}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      ))}
+
+      {/* Device Details Modal */}
+      <AnimatePresence>
+        {selectedDeviceId && (
+          <DeviceDetailsModal
+            deviceId={selectedDeviceId}
+            isOpen={!!selectedDeviceId}
+            onClose={() => setSelectedDeviceId(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
