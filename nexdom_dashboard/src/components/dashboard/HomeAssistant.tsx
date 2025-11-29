@@ -444,8 +444,11 @@ export const useHomeAssistant = () => {
     let loadedDeviceRegistry: any[] = [];
 
     // Load filter configuration
-    fetch('/api/config/filter')
-      .then(res => res.json())
+    fetch('api/config/filter')
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+      })
       .then(config => {
         console.log('[Nexdom] Filter config loaded:', config);
         setFilterConfig(config);

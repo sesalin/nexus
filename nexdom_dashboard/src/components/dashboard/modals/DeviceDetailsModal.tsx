@@ -225,7 +225,8 @@ export const DeviceDetailsModal: React.FC<DeviceDetailsModalProps> = ({ entityId
                                             <motion.div
                                                 key={secondaryEntity.entity_id}
                                                 whileTap={isControllable ? { scale: 0.98 } : {}}
-                                                onClick={() => {
+                                                onClick={(e) => {
+                                                    e.stopPropagation(); // Prevent modal from closing
                                                     if (isControllable) {
                                                         callService('homeassistant', 'toggle', { entity_id: secondaryEntity.entity_id });
                                                     }
