@@ -68,6 +68,7 @@ export const ZonesPanel: React.FC = () => {
           status: entity.state,
           value: value,
           iconPath: getIconName(domain), // Passing SVG filename
+          rgbColor: domain === 'light' ? entity.attributes.rgb_color : undefined, // Pass RGB color for lights
           isActive: entity.state !== 'off' && entity.state !== 'unavailable' && entity.state !== 'unknown' && entity.state !== 'closed' && entity.state !== 'locked',
           onPrimaryAction: ['light', 'switch', 'lock', 'cover', 'fan', 'input_boolean', 'automation', 'script'].includes(domain) ? () => {
             console.log('[ZonesPanel] Toggling entity:', entity.entity_id);

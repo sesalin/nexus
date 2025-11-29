@@ -8,6 +8,21 @@ interface DeviceDetailsModalProps {
     onClose: () => void;
 }
 
+// Helper functions for RGB <-> Hex conversion
+const rgbToHex = (rgb: number[]): string => {
+    if (!rgb || rgb.length !== 3) return '#ffffff';
+    return '#' + rgb.map(c => Math.min(255, Math.max(0, c)).toString(16).padStart(2, '0')).join('');
+};
+
+const hexToRgb = (hex: string): number[] => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16)
+    ] : [255, 255, 255];
+};
+
 export const DeviceDetailsModal: React.FC<DeviceDetailsModalProps> = ({ entityId, onClose }) => {
     const { entities, callService } = useHomeAssistant();
     const entity = entities.find(e => e.entity_id === entityId);
@@ -75,8 +90,8 @@ export const DeviceDetailsModal: React.FC<DeviceDetailsModalProps> = ({ entityId
                                 <div className="flex items-center justify-between p-4 rounded-xl bg-white/5">
                                     <span className="text-gray-300">Estado</span>
                                     <span className={`px-3 py-1 rounded-full text-sm font-bold uppercase ${state === 'on' || state === 'unlocked' || state === 'open'
-                                            ? 'bg-nexdom-lime/20 text-nexdom-lime'
-                                            : 'bg-white/10 text-gray-400'
+                                        ? 'bg-nexdom-lime/20 text-nexdom-lime'
+                                        : 'bg-white/10 text-gray-400'
                                         }`}>
                                         {state}
                                     </span>
@@ -100,6 +115,24 @@ export const DeviceDetailsModal: React.FC<DeviceDetailsModalProps> = ({ entityId
                                                 className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-nexdom-lime"
                                             />
                                         </div>
+
+                                        {/* RGB Color Picker (if supported) */}
+                                        {entity.attributes.rgb_color && (
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between text-sm text-gray-400">
+                                                    <span>Color</span>
+                                                </div>
+                                                <input
+                                                    type="color"
+                                                    defaultValue={rgbToHex(entity.attributes.rgb_color)}
+                                                    onChange={(e) => {
+                                                        const rgb = hexToRgb(e.target.value);
+                                                        callService('light', 'turn_on', { entity_id: entityId, rgb_color: rgb });
+                                                    }}
+                                                    className="w-full h-12 rounded-lg cursor-pointer border-2 border-white/10 bg-transparent"
+                                                />
+                                            </div>
+                                        )}
 
                                         {/* Color Temp (if supported) */}
                                         {entity.attributes.min_mireds && (

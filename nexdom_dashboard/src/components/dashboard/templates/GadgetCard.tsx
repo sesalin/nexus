@@ -13,6 +13,7 @@ export interface GadgetProps {
   isActive?: boolean;
   value?: string;
   category?: string;
+  rgbColor?: number[]; // RGB color for lights
   onPrimaryAction?: () => void;
   onSecondaryAction?: () => void;
 }
@@ -25,11 +26,29 @@ export const GadgetCard: React.FC<GadgetProps> = ({
   status,
   isActive = false,
   value,
+  rgbColor,
   onPrimaryAction,
   onSecondaryAction
 }) => {
   // Determine color scheme based on type
   const getColorScheme = () => {
+    // Special handling for lights with RGB color
+    if (type === 'light' && isActive && rgbColor && rgbColor.length === 3) {
+      const [r, g, b] = rgbColor;
+      const rgbStr = `rgb(${r}, ${g}, ${b})`;
+      const rgbAlpha = `rgba(${r}, ${g}, ${b}, 0.3)`;
+      const rgbAlphaGlow = `rgba(${r}, ${g}, ${b}, 0.2)`;
+      return {
+        text: 'text-white',
+        border: 'border-white/30',
+        bg: 'bg-white/10',
+        glow: `shadow-[0_0_20px_${rgbAlphaGlow}]`,
+        activeBg: 'bg-white',
+        customColor: rgbStr,
+        customColorAlpha: rgbAlpha
+      };
+    }
+
     switch (type) {
       case 'sensor':
       case 'thermostat':
@@ -116,15 +135,27 @@ export const GadgetCard: React.FC<GadgetProps> = ({
       whileTap={{ scale: 0.98 }}
       className={`
         relative p-5 rounded-[1.5rem] glass-panel transition-all duration-500 group overflow-hidden
-        ${isActive ? `${colors.border} ${colors.glow} bg-white/5` : 'border-white/5 hover:border-white/20'}
+        ${isActive ? `${colors.glow} bg-white/5` : 'border-white/5 hover:border-white/20'}
       `}
+      style={
+        isActive && (colors as any).customColor
+          ? {
+            borderColor: (colors as any).customColorAlpha,
+            boxShadow: `0 0 20px ${(colors as any).customColorAlpha}`,
+          }
+          : {}
+      }
     >
       {/* Animated Background Gradient */}
       <motion.div
         className={`absolute -right-20 -top-20 w-64 h-64 rounded-full blur-[80px] transition-opacity duration-700 pointer-events-none
           ${isActive ? 'opacity-30' : 'opacity-0 group-hover:opacity-10'}
-          ${colors.activeBg}
         `}
+        style={
+          (colors as any).customColor
+            ? { backgroundColor: (colors as any).customColor }
+            : {}
+        }
       />
 
       <div className="relative z-10 flex flex-col h-full justify-between">
