@@ -69,12 +69,26 @@ export const Security: React.FC = () => {
               securityDevices.cameras.map(camera => (
                 <div key={camera.id} className="bg-black rounded-[2rem] overflow-hidden aspect-video relative group border border-white/10 shadow-2xl">
                   {/* Camera stream placeholder */}
-                  <div className="absolute inset-0 flex items-center justify-center text-white/30 bg-gray-900">
+                  {/* Camera Stream */}
+                  {camera.attributes.entity_picture ? (
+                    <img
+                      src={camera.attributes.entity_picture}
+                      alt={camera.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.parentElement?.querySelector('.placeholder')?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+
+                  {/* Placeholder / Fallback */}
+                  <div className={`placeholder absolute inset-0 flex items-center justify-center text-white/30 bg-gray-900 ${camera.attributes.entity_picture ? 'hidden' : ''}`}>
                     <div className="text-center">
                       <Camera className="w-12 h-12 mx-auto mb-2 opacity-30" />
                       <span className="flex items-center gap-2 text-sm">
                         <Eye className="w-4 h-4" />
-                        Stream: {camera.attributes.entity_picture ? 'Available' : 'Configuring...'}
+                        {camera.attributes.entity_picture ? 'Stream Error' : 'No Stream Available'}
                       </span>
                     </div>
                   </div>
@@ -118,8 +132,8 @@ export const Security: React.FC = () => {
                   <div key={lock.id} className="glass-panel p-5 rounded-[1.5rem] flex items-center justify-between group hover:bg-white/5 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className={`p-3 rounded-full ${lock.state === 'locked'
-                          ? 'bg-nexdom-lime/10 text-nexdom-lime'
-                          : 'bg-red-500/10 text-red-500'
+                        ? 'bg-nexdom-lime/10 text-nexdom-lime'
+                        : 'bg-red-500/10 text-red-500'
                         }`}>
                         {lock.state === 'locked' ? <Lock className="w-6 h-6" /> : <Unlock className="w-6 h-6" />}
                       </div>
@@ -131,8 +145,8 @@ export const Security: React.FC = () => {
                     <button
                       onClick={() => handleToggle(lock.id)}
                       className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${lock.state === 'locked'
-                          ? 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20'
-                          : 'bg-nexdom-lime/10 text-nexdom-lime border border-nexdom-lime/30 hover:bg-nexdom-lime/20'
+                        ? 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20'
+                        : 'bg-nexdom-lime/10 text-nexdom-lime border border-nexdom-lime/30 hover:bg-nexdom-lime/20'
                         }`}
                     >
                       {lock.state === 'locked' ? 'Unlock' : 'Lock'}
@@ -152,8 +166,8 @@ export const Security: React.FC = () => {
                   <div key={device.id} className="glass-panel p-5 rounded-[1.5rem] flex items-center justify-between group hover:bg-white/5 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className={`p-3 rounded-full ${device.state === 'on'
-                          ? 'bg-blue-500/10 text-blue-400'
-                          : 'bg-white/5 text-gray-400'
+                        ? 'bg-blue-500/10 text-blue-400'
+                        : 'bg-white/5 text-gray-400'
                         }`}>
                         {device.domain === 'light' ? <Lightbulb className="w-6 h-6" /> : <ToggleRight className="w-6 h-6" />}
                       </div>
@@ -165,8 +179,8 @@ export const Security: React.FC = () => {
                     <button
                       onClick={() => handleToggle(device.id)}
                       className={`transition-all duration-300 transform hover:scale-110 ${device.state === 'on'
-                          ? 'text-nexdom-lime drop-shadow-[0_0_8px_rgba(0,255,136,0.5)]'
-                          : 'text-gray-600'
+                        ? 'text-nexdom-lime drop-shadow-[0_0_8px_rgba(0,255,136,0.5)]'
+                        : 'text-gray-600'
                         }`}
                     >
                       {device.state === 'on' ? <ToggleRight className="w-10 h-10" /> : <ToggleLeft className="w-10 h-10" />}
@@ -189,8 +203,8 @@ export const Security: React.FC = () => {
                 securityDevices.sensors.map(sensor => (
                   <div key={sensor.id} className="glass-panel p-4 rounded-[1.5rem] flex items-center gap-4">
                     <div className={`p-2 rounded-full ${sensor.state === 'on' || sensor.state === 'detected' || sensor.state === 'open'
-                        ? 'bg-red-500/10 text-red-400'
-                        : 'bg-purple-500/10 text-purple-400'
+                      ? 'bg-red-500/10 text-red-400'
+                      : 'bg-purple-500/10 text-purple-400'
                       }`}>
                       <AlertTriangle className="w-5 h-5" />
                     </div>
