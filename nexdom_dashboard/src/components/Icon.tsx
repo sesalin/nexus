@@ -97,9 +97,11 @@ export const Icon: React.FC<IconProps> = ({
   // Render dynamic SVG by name or URL
   if (svgName) {
     const isAbsolute = svgName.startsWith('http') || svgName.startsWith('/');
+    // CRITICAL FIX: Use relative path './icons/' to support HA Ingress
+    // Ingress serves the app at a subpath, so '/icons/' (absolute) fails.
     const dynamicSvgSource = isAbsolute
       ? svgName
-      : `/icons/${svgName}.svg`; // Default to public/icons if not absolute
+      : `./icons/${svgName}.svg`;
 
     return (
       <div

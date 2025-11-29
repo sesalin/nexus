@@ -399,13 +399,14 @@ export const useHomeAssistant = () => {
       if (!new_state) return;
 
       // Actualizar entidades
-      setEntities(prev =>
-        prev.map(entity =>
+      setEntities(prev => {
+        // console.log(`[Nexdom] Updating state for ${entity_id}: ${new_state.state}`);
+        return prev.map(entity =>
           entity.entity_id === entity_id
             ? { ...entity, ...new_state, attributes: { ...entity.attributes, ...new_state.attributes } }
             : entity
-        )
-      );
+        );
+      });
 
       // Disparar evento para notificaciones PWA
       window.dispatchEvent(new CustomEvent('homeassistant:state_changed', {
@@ -437,7 +438,9 @@ export const useHomeAssistant = () => {
 
   // CRITICAL FIX: Re-calcular zonas cuando las entidades cambian (state_changed)
   useEffect(() => {
+    // console.log('[Nexdom] useEffect triggered by dependency change');
     if (entities.length > 0 && areaRegistry.length > 0) {
+      // console.log('[Nexdom] Recalculating zones due to entity/registry update');
       createZonesFromEntities(entities, areaRegistry, entityRegistry, deviceRegistry);
     }
   }, [entities, areaRegistry, entityRegistry, deviceRegistry]);

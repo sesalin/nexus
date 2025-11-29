@@ -8250,7 +8250,7 @@ Error generating stack: `+u.message+`
           object-contain
           ${m()}
           ${l}
-        `});if(r){const x=r.startsWith("http")||r.startsWith("/")?r:`/icons/${r}.svg`;return k.jsx("div",{className:`
+        `});if(r){const x=r.startsWith("http")||r.startsWith("/")?r:`./icons/${r}.svg`;return k.jsx("div",{className:`
           ${y[s]} 
           transition-all duration-300 
           ${m()}
