@@ -1,5 +1,5 @@
 name: "Nexdom Dashboard"
-version: "0.0.23"
+version: "0.0.24"
 slug: "nexdom_dashboard"
 description: "Dashboard web de Nexdom para Home Assistant"
 logo: "nexdom_aura_shift/logo.png"

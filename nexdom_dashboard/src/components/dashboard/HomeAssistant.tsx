@@ -419,7 +419,13 @@ export const useHomeAssistant = () => {
   const createZonesFromEntities = (states: any[], areas: any[], entityRegistry: any[]) => {
     console.log('[Nexdom] Creando zonas:', { states: states.length, areas: areas.length, registry: entityRegistry.length });
 
-    // Construir mapa de entity_id -> area_id desde entity_registry
+    if (!areas || areas.length === 0) {
+      console.warn('[Nexdom] No hay áreas disponibles');
+      setZones([]);
+      return;
+    }
+
+    // Mapear entity_id → area_id desde entity_registry
     const entityAreaMap = new Map<string, string>();
     entityRegistry?.forEach((entry: any) => {
       if (entry?.entity_id && entry?.area_id) {
@@ -427,30 +433,43 @@ export const useHomeAssistant = () => {
       }
     });
 
-    // Mapa de area_id -> nombre
-    const areaNameMap = new Map<string, string>();
-    areas?.forEach((area: any) => {
-      if (area?.area_id && area?.name) {
-        areaNameMap.set(area.area_id, area.name);
-      }
+    // IMPORTANTE: Crear UNA zona por cada área, con o sin entidades
+    // Esto asegura que se muestren las 9 áreas aunque algunas estén vacías
+    const zonesBuilt = areas.map((area: any) => {
+      const areaId = area.area_id;
+      const areaName = area.name || `Área ${areaId}`;
+
+      // Filtrar entidades que pertenecen a esta área
+      const areaEntities = states.filter((entity) => {
+        // Buscar el area_id en entity_registry
+        const registryAreaId = entityAreaMap.get(entity.entity_id);
+        // También revisar si la entidad tiene area_id en sus attributes
+        const attributeAreaId = entity.attributes?.area_id;
+
+        return registryAreaId === areaId || attributeAreaId === areaId;
+      });
+
+      return {
+        id: areaId,
+        name: areaName,
+        entities: areaEntities,
+      };
     });
 
-    // Agrupar entidades por área
-    const grouped: Record<string, any[]> = {};
-    states.forEach((entity) => {
-      const areaIdFromRegistry = entityAreaMap.get(entity.entity_id);
-      const areaId = areaIdFromRegistry || entity.attributes?.area_id || 'unassigned';
-      if (!grouped[areaId]) {
-        grouped[areaId] = [];
-      }
-      grouped[areaId].push(entity);
+    // Añadir zona "Sin Asignar" para entidades sin área
+    const unassignedEntities = states.filter((entity) => {
+      const registryAreaId = entityAreaMap.get(entity.entity_id);
+      const attributeAreaId = entity.attributes?.area_id;
+      return !registryAreaId && !attributeAreaId;
     });
 
-    const zonesBuilt = Object.entries(grouped).map(([id, ents]) => ({
-      id,
-      name: areaNameMap.get(id) || (id === 'unassigned' ? 'Sin Asignar' : `Área ${id}`),
-      entities: ents,
-    }));
+    if (unassignedEntities.length > 0) {
+      zonesBuilt.push({
+        id: 'unassigned',
+        name: 'Sin Asignar',
+        entities: unassignedEntities,
+      });
+    }
 
     console.log(`[Nexdom] ✓ ${zonesBuilt.length} zonas creadas`);
     setZones(zonesBuilt);
