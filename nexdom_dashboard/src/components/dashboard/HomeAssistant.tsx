@@ -60,32 +60,27 @@ class HomeAssistantClient {
   }
 
 
-  async callService(domain: string, service: string, data: any) {
-    // Usar path directo sin basePath para evitar duplicación
-    const url = `/api/services/${domain}/${service}`;
+  async callService(domain: string, service: string, serviceData: any = {}) {
+    console.log(`[Nexdom] Calling service via WebSocket: ${domain}.${service}`, serviceData);
 
-    console.log(`[HomeAssistant] Calling service: ${domain}.${service}`, data);
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    });
-
-    if (!response.ok) {
-      const isJson = (response.headers.get('content-type') || '').includes('application/json');
-      const errorData = isJson ? await response.json().catch(() => ({ error: 'Service call failed' })) : null;
-      if (!isJson) {
-        const text = await response.text();
-        console.error('[HomeAssistant] Service call failed:', text.slice(0, 120));
-        throw new Error(`Service call failed: ${text.slice(0, 120)}`);
-      }
-      console.error('[HomeAssistant] Service error:', errorData);
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      console.error('[Nexdom] WebSocket not connected, cannot call service');
+      throw new Error('WebSocket not connected');
     }
 
-    return response.json();
+    // Usar el comando 'call_service' del WebSocket API
+    // https://developers.home-assistant.io/docs/api/websocket/#calling-a-service
+    return this.request('call_service', {
+      domain,
+      service,
+      service_data: serviceData
+    }).then(result => {
+      console.log(`[Nexdom] Service ${domain}.${service} executed successfully`);
+      return result;
+    }).catch(error => {
+      console.error(`[Nexdom] Service ${domain}.${service} failed:`, error);
+      throw error;
+    });
   }
 
   async connectWebSocket(): Promise<void> {

@@ -78,6 +78,12 @@ export const ZonesPanel: React.FC = () => {
               console.error('[ZonesPanel] Error toggling entity:', err);
             });
           },
+          onSecondaryAction: () => {
+            console.log('[ZonesPanel] Opening settings for:', entity.entity_id);
+            // TODO: Implementar modal de detalles/propiedades
+            // Por ahora solo logueamos, pero aquí iría la lógica para abrir el modal
+            // de color picker, termostato, etc.
+          },
         } as GadgetProps;
       });
 
