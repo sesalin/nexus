@@ -116,21 +116,30 @@ export const DeviceDetailsModal: React.FC<DeviceDetailsModalProps> = ({ entityId
                                             />
                                         </div>
 
-                                        {/* RGB Color Picker (if supported) */}
+                                        {/* RGB Color Picker (if supported) - Circular Wheel */}
                                         {entity.attributes.rgb_color && (
                                             <div className="space-y-2">
                                                 <div className="flex justify-between text-sm text-gray-400">
                                                     <span>Color</span>
                                                 </div>
-                                                <input
-                                                    type="color"
-                                                    defaultValue={rgbToHex(entity.attributes.rgb_color)}
-                                                    onChange={(e) => {
-                                                        const rgb = hexToRgb(e.target.value);
-                                                        callService('light', 'turn_on', { entity_id: entityId, rgb_color: rgb });
-                                                    }}
-                                                    className="w-full h-12 rounded-lg cursor-pointer border-2 border-white/10 bg-transparent"
-                                                />
+                                                <div className="flex justify-center py-4">
+                                                    <div className="relative">
+                                                        <input
+                                                            type="color"
+                                                            defaultValue={rgbToHex(entity.attributes.rgb_color)}
+                                                            onChange={(e) => {
+                                                                const rgb = hexToRgb(e.target.value);
+                                                                callService('light', 'turn_on', { entity_id: entityId, rgb_color: rgb });
+                                                            }}
+                                                            className="w-48 h-48 rounded-full cursor-pointer border-4 border-white/10 hover:border-white/20 transition-all shadow-2xl"
+                                                            style={{
+                                                                appearance: 'none',
+                                                                WebkitAppearance: 'none',
+                                                                MozAppearance: 'none',
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
                                         )}
 
