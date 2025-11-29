@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, Layers, Calendar } from 'lucide-react';
+import { Home, Layers, Calendar, MapPin, Cpu, Zap, ShieldCheck, Mic } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMedia } from 'react-use';
 import { useNexdomStore } from '../../store/nexdomStore';
@@ -72,12 +72,12 @@ export const ModuleNav: React.FC = () => {
   const navItems = [
     { path: '/', iconType: 'lucide' as const, iconName: 'Home', label: 'Overview' },
     { path: '/zones', iconType: 'lucide' as const, iconName: 'MapPin', label: 'Zonas' },
-    { path: '/gadgets', iconType: 'svg' as const, iconName: 'gadgets', label: 'Gadgets' },
-    { path: '/energy', iconType: 'svg' as const, iconName: 'energy', label: 'Energy' },
-    { path: '/security', iconType: 'svg' as const, iconName: 'security', label: 'Security' },
+    { path: '/gadgets', iconType: 'lucide' as const, iconName: 'Cpu', label: 'Gadgets' },
+    { path: '/energy', iconType: 'lucide' as const, iconName: 'Zap', label: 'Energy' },
+    { path: '/security', iconType: 'lucide' as const, iconName: 'ShieldCheck', label: 'Security' },
     { path: '/scenes', iconType: 'lucide' as const, iconName: 'Layers', label: 'Scenes' },
     { path: '/routines', iconType: 'lucide' as const, iconName: 'Calendar', label: 'Routines' },
-    { path: '/voice', iconType: 'svg' as const, iconName: 'voice', label: 'Voice/AI' },
+    { path: '/voice', iconType: 'lucide' as const, iconName: 'Mic', label: 'Voice/AI' },
   ];
 
   const NavContent = () => (
@@ -100,8 +100,8 @@ export const ModuleNav: React.FC = () => {
           {({ isActive }) => (
             <>
               <div className={`absolute inset-0 rounded-xl transition-all duration-500 ${isActive
-                  ? 'bg-nexdom-lime/10 shadow-[0_0_20px_rgba(0,255,136,0.2)]'
-                  : 'group-hover:bg-white/5'
+                ? 'bg-nexdom-lime/10 shadow-[0_0_20px_rgba(0,255,136,0.2)]'
+                : 'group-hover:bg-white/5'
                 }`}></div>
 
               {isActive && (

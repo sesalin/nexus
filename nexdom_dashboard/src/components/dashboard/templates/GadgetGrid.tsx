@@ -1,26 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { GadgetCard, GadgetProps } from './GadgetCard';
 
-// Import all SVGs from assets/icons
-const iconModules = import.meta.glob('../../../assets/icons/*.svg', { eager: true, as: 'url' });
-
 // Helper to get icon path by name
 const getIconPath = (name: string): string => {
-  const key = `../../../assets/icons/${name}.svg`;
-  return iconModules[key] || iconModules['../../../assets/icons/Smart-plug.svg'] || ''; // Fallback
+  return name; // Just return the filename, Icon component handles the path
 };
 
 const GADGET_IDS = [
-  'AC', 'Asistente-voz', 'Calidad-aire', 'Camara', 'Dimmer', 'Energia', 'Gate', 
-  'Humedad', 'Interruptores-inteligentes-on', 'IR', 'Irrigation', 'Leds', 'light', 
-  'Nivel-agua', 'Persiana', 'PTZ', 'Sensor-co2', 'Sensor-humo', 'Sensor-movimiento', 
-  'Sensor-puerta', 'Sensor-ventana', 'Smartlock', 'Smart-plug', 'Temperatura', 
+  'AC', 'Asistente-voz', 'Calidad-aire', 'Camara', 'Dimmer', 'Energia', 'Gate',
+  'Humedad', 'Interruptores-inteligentes-on', 'IR', 'Irrigation', 'Leds', 'light',
+  'Nivel-agua', 'Persiana', 'PTZ', 'Sensor-co2', 'Sensor-humo', 'Sensor-movimiento',
+  'Sensor-puerta', 'Sensor-ventana', 'Smartlock', 'Smart-plug', 'Temperatura',
   'Timbre', 'Vibracion'
 ];
 
 const inferGadgetType = (id: string): Partial<GadgetProps> => {
   const lowerId = id.toLowerCase();
-  
+
   if (lowerId.includes('ac') || lowerId.includes('temperatura')) return { type: 'thermostat', category: 'Climate', status: '24°C', value: 'Cooling' };
   if (lowerId.includes('voz')) return { type: 'voice', category: 'System', status: 'Listening' };
   if (lowerId.includes('calidad') || lowerId.includes('co2')) return { type: 'sensor', category: 'Climate', status: 'Good', value: '420ppm' };
@@ -37,7 +33,7 @@ const inferGadgetType = (id: string): Partial<GadgetProps> => {
   if (lowerId.includes('persiana')) return { type: 'cover', category: 'Comfort', status: 'Closed' };
   if (lowerId.includes('humo') || lowerId.includes('movimiento') || lowerId.includes('puerta') || lowerId.includes('ventana') || lowerId.includes('vibracion')) return { type: 'sensor', category: 'Security', status: 'Secure', value: 'Clear' };
   if (lowerId.includes('timbre')) return { type: 'button', category: 'Security', status: 'Idle' };
-  
+
   return { type: 'accessory', category: 'Other', status: 'Online' };
 };
 
@@ -67,7 +63,7 @@ export const GadgetGrid: React.FC = () => {
       if (gadget.id === id) {
         const newActive = !gadget.isActive;
         let newStatus = gadget.status;
-        
+
         if (gadget.type === 'lock') newStatus = newActive ? 'Locked' : 'Unlocked';
         else if (gadget.type === 'camera') newStatus = newActive ? 'Live' : 'Standby';
         else if (gadget.type === 'cover') newStatus = newActive ? 'Open' : 'Closed';

@@ -25,6 +25,12 @@ export interface Alert {
   read: boolean;
 }
 
+export interface EnergyState {
+  currentUsage: number;
+  solarGeneration: number;
+  batteryLevel: number;
+}
+
 export interface NexdomState {
   // Devices
   devices: Device[];
@@ -39,6 +45,10 @@ export interface NexdomState {
   setRooms: (rooms: Room[]) => void;
   updateRoom: (id: string, updates: Partial<Room>) => void;
   removeRoom: (id: string) => void;
+
+  // Energy
+  energy: EnergyState;
+  setEnergy: (energy: EnergyState) => void;
 
   // Alerts
   alerts: Alert[];
@@ -63,8 +73,16 @@ export const useNexdomStore = create<NexdomState>((set, get) => ({
   devices: [],
   rooms: [],
   alerts: [],
+  energy: {
+    currentUsage: 0,
+    solarGeneration: 0,
+    batteryLevel: 0,
+  },
   isLoading: false,
   isConnected: true,
+
+  // Energy actions
+  setEnergy: (energy) => set({ energy }),
 
   // Device actions
   addDevice: (device) => set((state) => ({

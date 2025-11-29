@@ -196,6 +196,8 @@ export const DeviceDetailsModal: React.FC<DeviceDetailsModalProps> = ({ entityId
                                         const secDomain = secondaryEntity.entity_id.split('.')[0];
                                         const secName = secondaryEntity.attributes.friendly_name || secondaryEntity.entity_id;
                                         const secState = secondaryEntity.state;
+                                        const isControllable = ['switch', 'light', 'input_boolean', 'automation', 'script', 'lock', 'fan', 'cover'].includes(secDomain);
+                                        const isActive = secState === 'on' || secState === 'open' || secState === 'unlocked';
 
                                         // Format state value
                                         let displayValue = secState;
@@ -210,26 +212,50 @@ export const DeviceDetailsModal: React.FC<DeviceDetailsModalProps> = ({ entityId
                                             else if (secondaryEntity.entity_id.includes('signal') || secondaryEntity.entity_id.includes('linkquality')) icon = '📶';
                                             else if (secondaryEntity.entity_id.includes('temperature')) icon = '🌡️';
                                             else if (secondaryEntity.entity_id.includes('humidity')) icon = '💧';
+                                            else if (secondaryEntity.entity_id.includes('power')) icon = '⚡';
                                         } else if (secDomain === 'binary_sensor') {
-                                            icon = secState === 'on' ? '✅' : '⭕';
+                                            icon = isActive ? '✅' : '⭕';
+                                        } else if (secDomain === 'switch') {
+                                            icon = isActive ? '🔌' : '🔌';
+                                        } else if (secDomain === 'light') {
+                                            icon = isActive ? '💡' : '💡';
                                         }
 
                                         return (
-                                            <div
+                                            <motion.div
                                                 key={secondaryEntity.entity_id}
-                                                className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                                                whileTap={isControllable ? { scale: 0.98 } : {}}
+                                                onClick={() => {
+                                                    if (isControllable) {
+                                                        callService('homeassistant', 'toggle', { entity_id: secondaryEntity.entity_id });
+                                                    }
+                                                }}
+                                                className={`
+                                                    flex items-center justify-between p-3 rounded-lg transition-all duration-200
+                                                    ${isControllable ? 'cursor-pointer hover:bg-white/10 active:bg-white/15' : 'bg-white/5'}
+                                                    ${isActive && isControllable ? 'bg-nexdom-lime/10 border border-nexdom-lime/20' : 'bg-white/5 border border-transparent'}
+                                                `}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <span className="text-xl">{icon}</span>
+                                                    <div className={`
+                                                        w-8 h-8 rounded-full flex items-center justify-center text-lg
+                                                        ${isActive && isControllable ? 'bg-nexdom-lime/20 text-nexdom-lime' : 'bg-white/10 text-gray-400'}
+                                                    `}>
+                                                        {icon}
+                                                    </div>
                                                     <div>
-                                                        <div className="text-sm text-white">{secName}</div>
-                                                        <div className="text-xs text-gray-500">{secondaryEntity.entity_id}</div>
+                                                        <div className={`text-sm font-medium ${isActive && isControllable ? 'text-white' : 'text-gray-300'}`}>
+                                                            {secName}
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-500 font-mono truncate max-w-[180px]">
+                                                            {secondaryEntity.entity_id}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="text-sm font-mono text-gray-300">
-                                                    {displayValue}
+                                                <div className={`text-xs font-bold px-2 py-1 rounded-md ${isActive && isControllable ? 'bg-nexdom-lime text-black' : 'text-gray-400 bg-black/20'}`}>
+                                                    {displayValue.toUpperCase()}
                                                 </div>
-                                            </div>
+                                            </motion.div>
                                         );
                                     })}
                                 </div>
