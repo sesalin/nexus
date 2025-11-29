@@ -36,6 +36,7 @@ export const Routines: React.FC = () => {
         });
 
         const automationEntities = states.filter(s => s.entity_id.startsWith('automation.'));
+        console.log('[Automations Debug] Found', automationEntities.length, 'automations:', automationEntities.map(a => a.entity_id));
         setAutomations(automationEntities);
         setLoading(false);
       } catch (error) {
@@ -105,8 +106,8 @@ export const Routines: React.FC = () => {
               >
                 <div className="flex items-start sm:items-center gap-6 flex-1">
                   <div className={`p-4 rounded-full shrink-0 ${enabled
-                      ? 'bg-blue-500/20 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
-                      : 'bg-white/5 text-gray-500'
+                    ? 'bg-blue-500/20 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
+                    : 'bg-white/5 text-gray-500'
                     }`}>
                     <Clock className="w-6 h-6" />
                   </div>
@@ -132,8 +133,8 @@ export const Routines: React.FC = () => {
                 <button
                   onClick={() => handleToggle(automation.entity_id, automation.state)}
                   className={`transition-all duration-300 transform hover:scale-110 self-end sm:self-center ${enabled
-                      ? 'text-nexdom-lime drop-shadow-[0_0_8px_rgba(0,255,136,0.5)]'
-                      : 'text-gray-600'
+                    ? 'text-nexdom-lime drop-shadow-[0_0_8px_rgba(0,255,136,0.5)]'
+                    : 'text-gray-600'
                     }`}
                 >
                   {enabled ? <ToggleRight className="w-12 h-12" /> : <ToggleLeft className="w-12 h-12" />}

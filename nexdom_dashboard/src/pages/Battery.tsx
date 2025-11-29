@@ -25,9 +25,15 @@ export const Battery: React.FC = () => {
                     entity.attributes['Battery'] ||
                     (entity.entity_id.includes('battery') && entity.state && !isNaN(Number(entity.state)) ? Number(entity.state) : undefined);
 
+                // Debug log for entities with 'battery' in name but no battery found
+                if (entity.entity_id.includes('battery') && battery === undefined) {
+                    console.log('[Battery Debug] Entity with battery in name but no value:', entity.entity_id, 'state:', entity.state, 'attrs:', Object.keys(entity.attributes));
+                }
+
                 if (battery !== undefined) {
                     const batteryValue = Number(battery);
                     if (!isNaN(batteryValue) && batteryValue >= 0 && batteryValue <= 100) {
+                        console.log('[Battery Debug] Found battery device:', entity.entity_id, '=', batteryValue + '%');
                         devices.push({
                             id: entity.entity_id,
                             name: entity.attributes.friendly_name || entity.entity_id,
@@ -118,12 +124,12 @@ export const Battery: React.FC = () => {
                                     <div className="w-full bg-gray-700/50 rounded-full h-2 overflow-hidden">
                                         <div
                                             className={`h-full rounded-full transition-all ${device.battery <= 10
-                                                    ? 'bg-red-500 shadow-[0_0_10px_#ef4444]'
-                                                    : device.battery <= 20
-                                                        ? 'bg-orange-500 shadow-[0_0_10px_#f97316]'
-                                                        : device.battery <= 50
-                                                            ? 'bg-yellow-500 shadow-[0_0_10px_#eab308]'
-                                                            : 'bg-green-500 shadow-[0_0_10px_#22c55e]'
+                                                ? 'bg-red-500 shadow-[0_0_10px_#ef4444]'
+                                                : device.battery <= 20
+                                                    ? 'bg-orange-500 shadow-[0_0_10px_#f97316]'
+                                                    : device.battery <= 50
+                                                        ? 'bg-yellow-500 shadow-[0_0_10px_#eab308]'
+                                                        : 'bg-green-500 shadow-[0_0_10px_#22c55e]'
                                                 }`}
                                             style={{ width: `${device.battery}%` }}
                                         />
