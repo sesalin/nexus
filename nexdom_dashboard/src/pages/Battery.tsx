@@ -4,9 +4,9 @@ import { Battery as BatteryIcon, BatteryCharging, BatteryLow, BatteryWarning } f
 
 export const Battery: React.FC = () => {
     console.log('[Battery Debug] Component rendering');
-    const { zones } = useHomeAssistant();
+    const { zones, states } = useHomeAssistant();
 
-    // Extract all devices with battery attribute
+    // Extract all devices with battery attribute from ALL states
     const batteryDevices = useMemo(() => {
         const devices: Array<{
             id: string;
@@ -16,40 +16,38 @@ export const Battery: React.FC = () => {
             domain: string;
         }> = [];
 
-        zones.forEach(zone => {
-            zone.entities.forEach(entity => {
-                // Try multiple battery attribute names
-                let battery =
-                    entity.attributes.battery_level ||
-                    entity.attributes.battery ||
-                    entity.attributes['Battery Level'] ||
-                    entity.attributes['Battery'] ||
-                    (entity.entity_id.includes('battery') && entity.state && !isNaN(Number(entity.state)) ? Number(entity.state) : undefined);
+        states.forEach(entity => {
+            // Try multiple battery attribute names
+            let battery =
+                entity.attributes.battery_level ||
+                entity.attributes.battery ||
+                entity.attributes['Battery Level'] ||
+                entity.attributes['Battery'] ||
+                (entity.entity_id.includes('battery') && entity.state && !isNaN(Number(entity.state)) ? Number(entity.state) : undefined);
 
-                // Debug log for entities with 'battery' in name but no battery found
-                if (entity.entity_id.includes('battery') && battery === undefined) {
-                    console.log('[Battery Debug] Entity with battery in name but no value:', entity.entity_id, 'state:', entity.state, 'attrs:', Object.keys(entity.attributes));
-                }
+            // Debug log for entities with 'battery' in name but no battery found
+            // if (entity.entity_id.includes('battery') && battery === undefined) {
+            //     console.log('[Battery Debug] Entity with battery in name but no value:', entity.entity_id, 'state:', entity.state, 'attrs:', Object.keys(entity.attributes));
+            // }
 
-                if (battery !== undefined) {
-                    const batteryValue = Number(battery);
-                    if (!isNaN(batteryValue) && batteryValue >= 0 && batteryValue <= 100) {
-                        console.log('[Battery Debug] Found battery device:', entity.entity_id, '=', batteryValue + '%');
-                        devices.push({
-                            id: entity.entity_id,
-                            name: entity.attributes.friendly_name || entity.entity_id,
-                            battery: batteryValue,
-                            isCharging: entity.attributes.battery_charging === true || entity.attributes.charging === true,
-                            domain: entity.entity_id.split('.')[0],
-                        });
-                    }
+            if (battery !== undefined) {
+                const batteryValue = Number(battery);
+                if (!isNaN(batteryValue) && batteryValue >= 0 && batteryValue <= 100) {
+                    // console.log('[Battery Debug] Found battery device:', entity.entity_id, '=', batteryValue + '%');
+                    devices.push({
+                        id: entity.entity_id,
+                        name: entity.attributes.friendly_name || entity.entity_id,
+                        battery: batteryValue,
+                        isCharging: entity.attributes.battery_charging === true || entity.attributes.charging === true,
+                        domain: entity.entity_id.split('.')[0],
+                    });
                 }
-            });
+            }
         });
 
         // Sort by battery level (lowest first)
         return devices.sort((a, b) => a.battery - b.battery);
-    }, [zones]);
+    }, [states]);
 
     const getBatteryIcon = (level: number, isCharging?: boolean) => {
         if (isCharging) return BatteryCharging;

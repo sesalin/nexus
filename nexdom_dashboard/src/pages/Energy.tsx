@@ -4,24 +4,35 @@ import { Zap, Activity, TrendingUp } from 'lucide-react';
 
 export const Energy: React.FC = () => {
   console.log('[Energy Debug] Component rendering');
-  const { zones } = useHomeAssistant();
+  const { zones, states } = useHomeAssistant();
 
-  // Filter devices from "Consumos" area
+  // Filter energy devices from ALL states, not just Consumos zone
   const consumptionDevices = useMemo(() => {
-    const consumosZone = zones.find(zone =>
-      zone.name.toLowerCase().includes('consumo') ||
-      zone.id.toLowerCase().includes('consumo')
-    );
+    console.log('[Energy Debug] Filtering energy devices from', states.length, 'total states');
 
-    if (!consumosZone) {
-      console.log('[Energy Debug] Consumos zone not found. Available zones:', zones.map(z => z.name));
-      return [];
+    // 1. Find devices with device_class: energy or power
+    // 2. OR unit_of_measurement in kW, W, kWh, Wh
+    const energyEntities = states.filter(entity => {
+      const attrs = entity.attributes || {};
+      const deviceClass = attrs.device_class;
+      const unit = attrs.unit_of_measurement;
+
+      const isEnergy = deviceClass === 'energy' || deviceClass === 'power';
+      const hasEnergyUnit = ['W', 'kW', 'Wh', 'kWh'].includes(unit);
+
+      // Filter out 0 values if desired, or keep them. 
+      // Also filter out non-numeric states
+      const hasValue = !isNaN(parseFloat(entity.state));
+
+      return (isEnergy || hasEnergyUnit) && hasValue;
+    });
+
+    console.log('[Energy Debug] Found', energyEntities.length, 'energy entities globally');
+    if (energyEntities.length > 0) {
+      energyEntities.forEach(e => console.log('[Energy Debug]   -', e.entity_id, e.state, e.attributes.unit_of_measurement));
     }
 
-    console.log('[Energy Debug] Consumos zone found:', consumosZone.name, 'Entities:', consumosZone.entities.length);
-    consumosZone.entities.forEach(e => console.log('[Energy Debug]  -', e.entity_id, e.state, e.attributes.unit_of_measurement));
-
-    return consumosZone.entities.map(entity => {
+    return energyEntities.map(entity => {
       const domain = entity.entity_id.split('.')[0];
       const state = parseFloat(entity.state) || 0;
       const unit = entity.attributes.unit_of_measurement || 'W';
@@ -36,7 +47,7 @@ export const Energy: React.FC = () => {
         device_class: entity.attributes.device_class,
       };
     });
-  }, [zones]);
+  }, [states]);
 
   // Calculate total consumption
   const totalConsumption = useMemo(() => {
