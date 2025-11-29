@@ -165,23 +165,18 @@ export const ModuleNav: React.FC = () => {
                 className="fixed top-0 left-0 h-full w-24 z-50 p-4"
               >
                 <NavContent />
-                <div className="mt-auto pb-4 px-4">
-                  <div className="text-xs text-gray-600 text-center">
-                    v0.0.76
-                  </div>      </div>
-              </div>
-            </motion.nav>
-        </>
+              </motion.nav>
+            </>
           )}
-      </AnimatePresence >
+        </AnimatePresence>
       </>
     );
   }
 
-// Desktop View
-return (
-  <nav className="w-24 h-[calc(100vh-120px)] fixed left-6 top-28 flex flex-col items-center z-40">
-    <NavContent />
-  </nav>
-);
+  // Desktop View
+  return (
+    <nav className="w-24 h-[calc(100vh-120px)] fixed left-6 top-28 flex flex-col items-center z-40">
+      <NavContent />
+    </nav>
+  );
 };
