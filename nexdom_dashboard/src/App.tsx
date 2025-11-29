@@ -9,6 +9,7 @@ import { Energy } from './pages/Energy';
 import { Security } from './pages/Security';
 import { Scenes } from './pages/Scenes';
 import { Routines } from './pages/Routines';
+import { Battery } from './pages/Battery';
 import { VoiceAI } from './pages/VoiceAI';
 import { Debug } from './pages/Debug';
 import { useNexdomStore } from './store/nexdomStore';
@@ -89,6 +90,7 @@ function App() {
             <Route path="/security" element={<Security />} />
             <Route path="/scenes" element={<Scenes />} />
             <Route path="/routines" element={<Routines />} />
+            <Route path="/battery" element={<Battery />} />
             <Route path="/voice" element={<VoiceAI />} />
             <Route path="/debug" element={<Debug />} />
           </Routes>

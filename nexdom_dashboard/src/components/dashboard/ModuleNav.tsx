@@ -77,6 +77,7 @@ export const ModuleNav: React.FC = () => {
     { path: '/security', iconType: 'lucide' as const, iconName: 'ShieldCheck', label: 'Security' },
     { path: '/scenes', iconType: 'lucide' as const, iconName: 'Layers', label: 'Scenes' },
     { path: '/routines', iconType: 'lucide' as const, iconName: 'Calendar', label: 'Routines' },
+    { path: '/battery', iconType: 'lucide' as const, iconName: 'Battery', label: 'Battery' },
     { path: '/voice', iconType: 'lucide' as const, iconName: 'Mic', label: 'Voice/AI' },
   ];
 
