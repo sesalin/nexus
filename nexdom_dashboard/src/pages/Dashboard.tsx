@@ -11,7 +11,7 @@ export const Dashboard: React.FC = () => {
         <div className="absolute bottom-[-10%] right-[10%] w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[150px]"></div>
       </div>
 
-      <div className="w-full py-6 px-4 lg:px-8 lg:pl-32 relative z-10">
+      <div className="w-full py-6 pl-4 lg:pl-32 pr-4 relative z-10">
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Main Content Area */}
           <div className="xl:col-span-2 space-y-8">

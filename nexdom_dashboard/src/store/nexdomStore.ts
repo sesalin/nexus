@@ -51,6 +51,7 @@ export interface NexdomState {
   setLoading: (loading: boolean) => void;
   isMobileMenuOpen: boolean;
   setMobileMenuOpen: (open: boolean) => void;
+  toggleMobileMenu: () => void;
 
   // Connection Status
   isConnected: boolean;
@@ -132,6 +133,7 @@ export const useNexdomStore = create<NexdomState>((set, get) => ({
   // Mobile Menu
   isMobileMenuOpen: false,
   setMobileMenuOpen: (open) => set({ isMobileMenuOpen: open }),
+  toggleMobileMenu: () => set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
 
   // Connection actions
   setConnected: (connected) => set({ isConnected: connected }),
