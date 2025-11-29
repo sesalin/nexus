@@ -17,15 +17,25 @@ export const Battery: React.FC = () => {
 
         zones.forEach(zone => {
             zone.entities.forEach(entity => {
-                const battery = entity.attributes.battery_level || entity.attributes.battery;
+                // Try multiple battery attribute names
+                let battery =
+                    entity.attributes.battery_level ||
+                    entity.attributes.battery ||
+                    entity.attributes['Battery Level'] ||
+                    entity.attributes['Battery'] ||
+                    (entity.entity_id.includes('battery') && entity.state && !isNaN(Number(entity.state)) ? Number(entity.state) : undefined);
+
                 if (battery !== undefined) {
-                    devices.push({
-                        id: entity.entity_id,
-                        name: entity.attributes.friendly_name || entity.entity_id,
-                        battery: Number(battery),
-                        isCharging: entity.attributes.battery_charging === true,
-                        domain: entity.entity_id.split('.')[0],
-                    });
+                    const batteryValue = Number(battery);
+                    if (!isNaN(batteryValue) && batteryValue >= 0 && batteryValue <= 100) {
+                        devices.push({
+                            id: entity.entity_id,
+                            name: entity.attributes.friendly_name || entity.entity_id,
+                            battery: batteryValue,
+                            isCharging: entity.attributes.battery_charging === true || entity.attributes.charging === true,
+                            domain: entity.entity_id.split('.')[0],
+                        });
+                    }
                 }
             });
         });
@@ -60,6 +70,9 @@ export const Battery: React.FC = () => {
             {batteryDevices.length === 0 ? (
                 <div className="glass-panel rounded-[2rem] p-8 text-center border border-white/5">
                     <p className="text-gray-400">No devices with battery found</p>
+                    <p className="text-sm text-gray-500 mt-2">
+                        Searching for entities with: battery_level, battery attributes, or battery in entity_id
+                    </p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
