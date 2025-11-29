@@ -2,8 +2,14 @@ import React, { useMemo } from 'react';
 import { useHomeAssistant } from '../components/dashboard/HomeAssistant';
 import { Shield, Lock, Unlock, AlertTriangle, Camera, Eye, ToggleLeft, ToggleRight, Lightbulb } from 'lucide-react';
 
+import React, { useMemo, useState } from 'react';
+import { useHomeAssistant } from '../components/dashboard/HomeAssistant';
+import { Shield, Lock, Unlock, AlertTriangle, Camera, Eye, ToggleLeft, ToggleRight, Lightbulb, X, Maximize2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
 export const Security: React.FC = () => {
   const { zones, states, toggleEntity } = useHomeAssistant();
+  const [selectedCamera, setSelectedCamera] = useState<any>(null);
 
   // Filter devices globally from all states
   const securityDevices = useMemo(() => {
@@ -104,55 +110,130 @@ export const Security: React.FC = () => {
                 <p className="text-gray-400">No cameras found in Security area</p>
               </div>
             ) : (
-              securityDevices.cameras.map(camera => (
-                <div key={camera.id} className="bg-black rounded-[2rem] overflow-hidden aspect-video relative group border border-white/10 shadow-2xl">
-                  {/* Camera stream placeholder */}
-                  {/* Camera Stream */}
-                  {camera.attributes.entity_picture ? (
-                    <img
-                      src={camera.attributes.entity_picture}
-                      alt={camera.name}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.parentElement?.querySelector('.placeholder')?.classList.remove('hidden');
-                      }}
-                    />
-                  ) : null}
+              securityDevices.cameras.map(camera => {
+                // Convert entity_picture (snapshot) to stream URL if possible
+                // Usually replacing 'camera_proxy' with 'camera_proxy_stream' gives the MJPEG stream
+                const streamUrl = camera.attributes.entity_picture
+                  ? camera.attributes.entity_picture.replace('camera_proxy', 'camera_proxy_stream')
+                  : null;
 
-                  {/* Placeholder / Fallback */}
-                  <div className={`placeholder absolute inset-0 flex items-center justify-center text-white/30 bg-gray-900 ${camera.attributes.entity_picture ? 'hidden' : ''}`}>
-                    <div className="text-center">
-                      <Camera className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                      <span className="flex items-center gap-2 text-sm">
-                        <Eye className="w-4 h-4" />
-                        {camera.attributes.entity_picture ? 'Stream Error' : 'No Stream Available'}
+                return (
+                  <motion.div
+                    key={camera.id}
+                    layoutId={`camera-${camera.id}`}
+                    className="bg-black rounded-[2rem] overflow-hidden aspect-video relative group border border-white/10 shadow-2xl cursor-pointer"
+                    onClick={() => setSelectedCamera({ ...camera, streamUrl })}
+                  >
+                    {/* Camera stream placeholder */}
+                    {/* Camera Stream */}
+                    {streamUrl ? (
+                      <img
+                        src={streamUrl}
+                        alt={camera.name}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback to snapshot if stream fails
+                          if (camera.attributes.entity_picture && e.currentTarget.src !== camera.attributes.entity_picture) {
+                            e.currentTarget.src = camera.attributes.entity_picture;
+                          } else {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.parentElement?.querySelector('.placeholder')?.classList.remove('hidden');
+                          }
+                        }}
+                      />
+                    ) : null}
+
+                    {/* Placeholder / Fallback */}
+                    <div className={`placeholder absolute inset-0 flex items-center justify-center text-white/30 bg-gray-900 ${streamUrl ? 'hidden' : ''}`}>
+                      <div className="text-center">
+                        <Camera className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                        <span className="flex items-center gap-2 text-sm">
+                          <Eye className="w-4 h-4" />
+                          {streamUrl ? 'Stream Error' : 'No Stream Available'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Camera UI Overlay */}
+                    <div className="absolute top-4 left-4 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                      <span className="text-xs font-medium text-white">LIVE</span>
+                    </div>
+
+                    <div className="absolute top-4 right-4 p-2 bg-black/50 backdrop-blur-md rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Maximize2 className="w-4 h-4 text-white" />
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent text-white flex justify-between items-end">
+                      <div>
+                        <span className="font-medium text-lg block">{camera.name}</span>
+                        <span className="text-xs text-gray-400">
+                          {camera.state === 'idle' ? 'Idle' : camera.state === 'recording' ? 'Recording' : 'Streaming'}
+                        </span>
+                      </div>
+                      <span className="text-xs bg-nexdom-lime/20 text-nexdom-lime border border-nexdom-lime/30 px-3 py-1 rounded-full backdrop-blur-md">
+                        {camera.state.toUpperCase()}
                       </span>
                     </div>
-                  </div>
-
-                  {/* Camera UI Overlay */}
-                  <div className="absolute top-4 left-4 px-3 py-1 bg-black/50 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                    <span className="text-xs font-medium text-white">REC</span>
-                  </div>
-
-                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent text-white flex justify-between items-end">
-                    <div>
-                      <span className="font-medium text-lg block">{camera.name}</span>
-                      <span className="text-xs text-gray-400">
-                        {camera.state === 'idle' ? 'Idle' : camera.state === 'recording' ? 'Recording' : 'Live'}
-                      </span>
-                    </div>
-                    <span className="text-xs bg-nexdom-lime/20 text-nexdom-lime border border-nexdom-lime/30 px-3 py-1 rounded-full backdrop-blur-md">
-                      {camera.state.toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-              ))
+                  </motion.div>
+                );
+              })
             )}
           </div>
         </div>
+
+        {/* Fullscreen Camera Modal */}
+        <AnimatePresence>
+          {selectedCamera && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 lg:p-12"
+              onClick={() => setSelectedCamera(null)}
+            >
+              <motion.div
+                layoutId={`camera-${selectedCamera.id}`}
+                className="relative w-full max-w-7xl aspect-video bg-black rounded-3xl overflow-hidden border border-white/10 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {selectedCamera.streamUrl ? (
+                  <img
+                    src={selectedCamera.streamUrl}
+                    alt={selectedCamera.name}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-white/50">
+                    No stream available
+                  </div>
+                )}
+
+                <div className="absolute top-6 right-6 z-10">
+                  <button
+                    onClick={() => setSelectedCamera(null)}
+                    className="p-3 bg-black/50 hover:bg-white/20 rounded-full backdrop-blur-md transition-colors"
+                  >
+                    <X className="w-6 h-6 text-white" />
+                  </button>
+                </div>
+
+                <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+                  <h2 className="text-3xl font-bold text-white mb-2">{selectedCamera.name}</h2>
+                  <div className="flex items-center gap-4">
+                    <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-medium border border-red-500/30 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                      LIVE FEED
+                    </span>
+                    <span className="text-gray-400 text-sm">
+                      State: {selectedCamera.state}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Controls Column */}
         <div className="space-y-8">
