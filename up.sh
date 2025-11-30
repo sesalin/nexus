@@ -6,7 +6,7 @@ DASH_DIR="nexdom_dashboard"
 IMAGE_TAG="nexdom-dashboard:latest"
 COMMIT_MSG="${1:-3}"   # Puedes pasar mensaje como argumento: ./deploy.sh "mi mensaje"
 
-echo "==> Entrando a $DASH_DIR"
+echo "==> Entrando a $DASH_DIR" 
 cd "$DASH_DIR"
 
 echo "==> npm run build"
