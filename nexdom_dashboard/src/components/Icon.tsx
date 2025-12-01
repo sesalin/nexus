@@ -112,13 +112,21 @@ export const Icon: React.FC<IconProps> = ({
   // Render dynamic SVG by name or URL
   if (svgName) {
     // Try to find in our map first
-    const mappedSource = iconMap[svgName];
+    let finalSource = iconMap[svgName];
 
-    // Fallback to direct path if not found (though map should cover it)
-    // Use relative path './icons/' to support HA Ingress as a last resort
-    const dynamicSvgSource = mappedSource || (svgName.startsWith('http') || svgName.startsWith('/')
-      ? svgName
-      : `./icons/${svgName}.svg`);
+    // Fallback to direct path if not found
+    if (!finalSource) {
+      finalSource = (svgName.startsWith('http') || svgName.startsWith('/')
+        ? svgName
+        : `./icons/${svgName}.svg`);
+    }
+
+    // CRITICAL FIX: Ensure path is relative for Ingress
+    // If path starts with '/', prepend '.' to make it relative to current location
+    // e.g. '/assets/icons/foo.svg' -> './assets/icons/foo.svg'
+    if (finalSource && finalSource.startsWith('/')) {
+      finalSource = `.${finalSource}`;
+    }
 
     return (
       <div
@@ -130,11 +138,11 @@ export const Icon: React.FC<IconProps> = ({
         `}
         style={{
           backgroundColor: 'currentColor',
-          maskImage: `url(${dynamicSvgSource})`,
+          maskImage: `url(${finalSource})`,
           maskSize: 'contain',
           maskRepeat: 'no-repeat',
           maskPosition: 'center',
-          WebkitMaskImage: `url(${dynamicSvgSource})`,
+          WebkitMaskImage: `url(${finalSource})`,
           WebkitMaskSize: 'contain',
           WebkitMaskRepeat: 'no-repeat',
           WebkitMaskPosition: 'center',
