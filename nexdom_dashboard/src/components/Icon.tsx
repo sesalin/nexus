@@ -121,32 +121,27 @@ export const Icon: React.FC<IconProps> = ({
         : `./icons/${svgName}.svg`);
     }
 
-    // CRITICAL FIX: Ensure path is relative for Ingress
-    // If path starts with '/', prepend '.' to make it relative to current location
-    // e.g. '/assets/icons/foo.svg' -> './assets/icons/foo.svg'
+    // Ensure path is relative for Ingress
     if (finalSource && finalSource.startsWith('/')) {
       finalSource = `.${finalSource}`;
     }
 
+    // Use img tag with filter for color if active
+    // This is more robust than mask-image for path resolution
     return (
-      <div
+      <img
+        src={finalSource}
+        alt={svgName}
         className={`
           ${sizeClasses[size]} 
           transition-all duration-300 
-          ${getColorClasses()}
+          object-contain
           ${className}
+          ${isActive ? 'brightness-[1000%] sepia-[100%] hue-rotate-[90deg] saturate-[500%]' : 'opacity-60'} 
         `}
         style={{
-          backgroundColor: 'currentColor',
-          maskImage: `url(${finalSource})`,
-          maskSize: 'contain',
-          maskRepeat: 'no-repeat',
-          maskPosition: 'center',
-          WebkitMaskImage: `url(${finalSource})`,
-          WebkitMaskSize: 'contain',
-          WebkitMaskRepeat: 'no-repeat',
-          WebkitMaskPosition: 'center',
-          ...style, // Merge custom styles
+          filter: isActive ? 'drop-shadow(0 0 2px rgba(0,255,136,0.8))' : 'none',
+          ...style
         }}
       />
     );

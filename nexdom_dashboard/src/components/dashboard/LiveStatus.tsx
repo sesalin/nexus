@@ -3,9 +3,12 @@ import { useHomeAssistant } from './HomeAssistant';
 import { GadgetCard } from './templates/GadgetCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { mapEntityToGadget } from './zones/ZonesPanel';
+import { DeviceDetailsModal } from './modals/DeviceDetailsModal';
+import { useState } from 'react';
 
 export const LiveStatus: React.FC = () => {
-  const { states, favorites, toggleEntity } = useHomeAssistant();
+  const { states, favorites, toggleEntity, toggleFavorite } = useHomeAssistant();
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
   // Filter entities that are in favorites
   const favoriteEntities = states?.filter(entity => favorites.includes(entity.entity_id)) || [];
@@ -49,6 +52,7 @@ export const LiveStatus: React.FC = () => {
                   <GadgetCard
                     {...gadget}
                     onPrimaryAction={() => toggleEntity(entity.entity_id)}
+                    onSecondaryAction={() => setSelectedDeviceId(entity.entity_id)}
                   />
                 </motion.div>
               );
@@ -56,6 +60,13 @@ export const LiveStatus: React.FC = () => {
           </AnimatePresence>
         </div>
       )}
+
+      <DeviceDetailsModal
+        entityId={selectedDeviceId}
+        onClose={() => setSelectedDeviceId(null)}
+        isFavorite={selectedDeviceId ? favorites.includes(selectedDeviceId) : false}
+        onToggleFavorite={selectedDeviceId ? () => toggleFavorite(selectedDeviceId) : undefined}
+      />
     </div>
   );
 };
