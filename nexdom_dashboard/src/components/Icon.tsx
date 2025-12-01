@@ -7,6 +7,19 @@ import securityIcon from '../assets/icons/Camara.svg';
 import voiceIcon from '../assets/icons/Asistente-voz.svg';
 import gadgetsIcon from '../assets/icons/Smart-plug.svg';
 
+// Dynamic import of all icons in assets/icons
+const iconModules = import.meta.glob('../assets/icons/*.svg', { eager: true });
+const iconMap: Record<string, string> = {};
+
+// Build the map: 'light' -> '/assets/icons/light.svg'
+for (const path in iconModules) {
+  const filename = path.split('/').pop()?.replace('.svg', '');
+  if (filename) {
+    // @ts-ignore
+    iconMap[filename] = iconModules[path].default;
+  }
+}
+
 interface IconProps {
   // For Lucide React icons
   lucideIcon?: keyof typeof LucideIcons;
@@ -98,12 +111,14 @@ export const Icon: React.FC<IconProps> = ({
 
   // Render dynamic SVG by name or URL
   if (svgName) {
-    const isAbsolute = svgName.startsWith('http') || svgName.startsWith('/');
-    // CRITICAL FIX: Use relative path './icons/' to support HA Ingress
-    // Ingress serves the app at a subpath, so '/icons/' (absolute) fails.
-    const dynamicSvgSource = isAbsolute
+    // Try to find in our map first
+    const mappedSource = iconMap[svgName];
+
+    // Fallback to direct path if not found (though map should cover it)
+    // Use relative path './icons/' to support HA Ingress as a last resort
+    const dynamicSvgSource = mappedSource || (svgName.startsWith('http') || svgName.startsWith('/')
       ? svgName
-      : `./icons/${svgName}.svg`;
+      : `./icons/${svgName}.svg`);
 
     return (
       <div
