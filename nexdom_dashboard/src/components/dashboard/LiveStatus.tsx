@@ -1,11 +1,14 @@
 import React from 'react';
-import { useNexdomStore } from '../../store/nexdomStore';
-import { DeviceCard } from './DeviceCard';
-import { motion } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
+import { useHomeAssistant } from './HomeAssistant';
+import { GadgetCard } from './templates/GadgetCard';
+import { motion, AnimatePresence } from 'framer-motion';
+import { mapEntityToGadget } from './zones/ZonesPanel';
 
 export const LiveStatus: React.FC = () => {
-  const { rooms, devices } = useNexdomStore();
+  const { states, favorites, toggleEntity } = useHomeAssistant();
+
+  // Filter entities that are in favorites
+  const favoriteEntities = states?.filter(entity => favorites.includes(entity.entity_id)) || [];
 
   return (
     <div className="relative z-10">
@@ -23,59 +26,36 @@ export const LiveStatus: React.FC = () => {
         </div>
       </div>
 
-      {/* Devices Grid - Asymmetric Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        {devices.map((device, index) => (
-          <motion.div
-            key={device.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-            className={index === 0 ? 'sm:col-span-2 sm:row-span-2' : ''}
-          >
-            <DeviceCard device={device} />
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Rooms Section - Futuristic Chips */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4 px-2">
-          <h3 className="text-lg font-semibold text-white/80">Active Zones</h3>
-          <button className="text-xs text-nexdom-gold hover:text-white transition-colors flex items-center gap-1">
-            View All <ChevronRight className="w-3 h-3" />
-          </button>
+      {/* Favorites Grid */}
+      {favoriteEntities.length === 0 ? (
+        <div className="text-center py-12 bg-white/5 rounded-[2rem] border border-white/5 mb-10">
+          <p className="text-gray-400 mb-2">No favorites added yet</p>
+          <p className="text-xs text-gray-600">Click on any device card to add it to favorites</p>
         </div>
-        
-        <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide px-2">
-          {rooms.map((room, index) => (
-            <motion.div 
-              key={room.id}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 + index * 0.05 }}
-              whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.1)' }}
-              className="min-w-[160px] p-4 bg-white/5 backdrop-blur-md border border-white/10 rounded-[1.5rem] cursor-pointer group relative overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-              
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-medium text-white">{room.name}</h4>
-                <div className="w-2 h-2 rounded-full bg-nexdom-lime shadow-[0_0_5px_#00FF88]"></div>
-              </div>
-              
-              <div className="flex items-end justify-between">
-                <div className="text-xs text-gray-400">
-                  <p>{room.activeDevices} Devices</p>
-                </div>
-                {room.temperature && (
-                  <p className="text-lg font-light text-white">{room.temperature}°</p>
-                )}
-              </div>
-            </motion.div>
-          ))}
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          <AnimatePresence>
+            {favoriteEntities.map((entity) => {
+              const gadget = mapEntityToGadget(entity);
+              return (
+                <motion.div
+                  key={entity.entity_id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <GadgetCard
+                    {...gadget}
+                    onPrimaryAction={() => toggleEntity(entity.entity_id)}
+                  />
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </div>
-      </div>
+      )}
     </div>
   );
 };

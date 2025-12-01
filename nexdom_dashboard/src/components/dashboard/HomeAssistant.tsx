@@ -432,6 +432,36 @@ export const useHomeAssistant = () => {
   const [error, setError] = useState<string | null>(null);
   const [filterConfig, setFilterConfig] = useState<any>(null);
 
+  // Favorites State
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('nexdom_favorites');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error('[Nexdom] Error loading favorites:', e);
+      return [];
+    }
+  });
+
+  // Save favorites when changed
+  useEffect(() => {
+    try {
+      localStorage.setItem('nexdom_favorites', JSON.stringify(favorites));
+    } catch (e) {
+      console.error('[Nexdom] Error saving favorites:', e);
+    }
+  }, [favorites]);
+
+  const toggleFavorite = (entityId: string) => {
+    setFavorites(prev => {
+      if (prev.includes(entityId)) {
+        return prev.filter(id => id !== entityId);
+      } else {
+        return [...prev, entityId];
+      }
+    });
+  };
+
   useEffect(() => {
     // Usar el path base para las peticiones API
     const basePath = window.location.pathname.replace(/\/$/, '');
@@ -823,7 +853,9 @@ export const useHomeAssistant = () => {
     zones,
     error,
     callService,
-    toggleEntity
+    toggleEntity,
+    favorites,
+    toggleFavorite
   };
 };
 

@@ -23,54 +23,63 @@ const getIconName = (type: string): string => {
   return map[type] || 'Smart-plug'; // Default icon
 };
 
+// Helper to map HA entity to GadgetProps
+export const mapEntityToGadget = (entity: any): GadgetProps => {
+  const domain = entity.entity_id.split('.')[0];
+
+  // Mapear dominio a tipo de gadget
+  const typeMap: Record<string, any> = {
+    'light': 'light',
+    'switch': 'switch',
+    'sensor': 'sensor',
+    'binary_sensor': 'sensor',
+    'climate': 'thermostat',
+    'camera': 'camera',
+    'lock': 'lock',
+    'cover': 'cover',
+    'media_player': 'remote',
+  };
+
+  const gadgetType = typeMap[domain] || 'sensor';
+
+  // Formatear valor según tipo
+  let value = entity.state;
+  if (entity.attributes.unit_of_measurement) {
+    value = `${entity.state} ${entity.attributes.unit_of_measurement}`;
+  } else if (domain === 'light' && entity.attributes.brightness) {
+    value = `${Math.round((entity.attributes.brightness / 255) * 100)}%`;
+  } else if (domain === 'climate' && entity.attributes.temperature) {
+    value = `${entity.attributes.temperature}°C`;
+  }
+
+  return {
+    id: entity.entity_id,
+    name: entity.attributes.friendly_name || entity.entity_id,
+    model: domain,
+    type: gadgetType,
+    status: entity.state,
+    value: value,
+    iconPath: getIconName(domain),
+    rgbColor: domain === 'light' ? entity.attributes.rgb_color : undefined,
+    isActive: entity.state !== 'off' && entity.state !== 'unavailable' && entity.state !== 'unknown' && entity.state !== 'closed' && entity.state !== 'locked',
+    // Actions will be attached by the consumer component since they need context/hooks
+  };
+};
+
 import { DeviceDetailsModal } from '../modals/DeviceDetailsModal';
 
 export const ZonesPanel: React.FC = () => {
   const [expandedZone, setExpandedZone] = useState<string | null>(null);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
-  const { zones, isConnected, error, toggleEntity } = useHomeAssistant();
+  const { zones, isConnected, error, toggleEntity, favorites, toggleFavorite, callService } = useHomeAssistant();
 
   const zonesWithGadgets = useMemo(() => {
     return zones.map((zone) => {
       const gadgets = zone.entities.map((entity) => {
-        const domain = entity.entity_id.split('.')[0];
-
-        // Mapear dominio a tipo de gadget
-        const typeMap: Record<string, any> = {
-          'light': 'light',
-          'switch': 'switch',
-          'sensor': 'sensor',
-          'binary_sensor': 'sensor',
-          'climate': 'thermostat',
-          'camera': 'camera',
-          'lock': 'lock',
-          'cover': 'cover',
-          'media_player': 'remote',
-        };
-
-        const gadgetType = typeMap[domain] || 'sensor';
-
-        // Formatear valor según tipo
-        let value = entity.state;
-        if (entity.attributes.unit_of_measurement) {
-          value = `${entity.state} ${entity.attributes.unit_of_measurement}`;
-        } else if (domain === 'light' && entity.attributes.brightness) {
-          value = `${Math.round((entity.attributes.brightness / 255) * 100)}%`;
-        } else if (domain === 'climate' && entity.attributes.temperature) {
-          value = `${entity.attributes.temperature}°C`;
-        }
-
+        const baseGadget = mapEntityToGadget(entity);
         return {
-          id: entity.entity_id,
-          name: entity.attributes.friendly_name || entity.entity_id,
-          model: domain,
-          type: gadgetType,
-          status: entity.state,
-          value: value,
-          iconPath: getIconName(domain), // Passing SVG filename
-          rgbColor: domain === 'light' ? entity.attributes.rgb_color : undefined, // Pass RGB color for lights
-          isActive: entity.state !== 'off' && entity.state !== 'unavailable' && entity.state !== 'unknown' && entity.state !== 'closed' && entity.state !== 'locked',
-          onPrimaryAction: ['light', 'switch', 'lock', 'cover', 'fan', 'input_boolean', 'automation', 'script'].includes(domain) ? () => {
+          ...baseGadget,
+          onPrimaryAction: ['light', 'switch', 'lock', 'cover', 'fan', 'input_boolean', 'automation', 'script'].includes(baseGadget.model) ? () => {
             console.log('[ZonesPanel] Toggling entity:', entity.entity_id);
             toggleEntity(entity.entity_id).catch(err => {
               console.error('[ZonesPanel] Error toggling entity:', err);
@@ -80,7 +89,7 @@ export const ZonesPanel: React.FC = () => {
             console.log('[ZonesPanel] Opening settings for:', entity.entity_id);
             setSelectedDeviceId(entity.entity_id);
           },
-          onColorChange: domain === 'light' ? (rgb: number[]) => {
+          onColorChange: baseGadget.model === 'light' ? (rgb: number[]) => {
             console.log('[ZonesPanel] Changing color for:', entity.entity_id, rgb);
             callService('light', 'turn_on', { entity_id: entity.entity_id, rgb_color: rgb }).catch(err => {
               console.error('[ZonesPanel] Error changing color:', err);
@@ -202,6 +211,8 @@ export const ZonesPanel: React.FC = () => {
       <DeviceDetailsModal
         entityId={selectedDeviceId}
         onClose={() => setSelectedDeviceId(null)}
+        isFavorite={selectedDeviceId ? favorites.includes(selectedDeviceId) : false}
+        onToggleFavorite={selectedDeviceId ? () => toggleFavorite(selectedDeviceId) : undefined}
       />
     </div >
   );

@@ -1,12 +1,14 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sun, Thermometer, Lock, Power } from 'lucide-react';
+import { X, Sun, Thermometer, Lock, Power, Star } from 'lucide-react';
 import { useHomeAssistant } from '../HomeAssistant';
 import { ColorWheel } from '../../ColorWheel';
 
 interface DeviceDetailsModalProps {
     entityId: string | null;
     onClose: () => void;
+    isFavorite?: boolean;
+    onToggleFavorite?: () => void;
 }
 
 // Helper functions for RGB <-> Hex conversion
@@ -24,7 +26,7 @@ const hexToRgb = (hex: string): number[] => {
     ] : [255, 255, 255];
 };
 
-export const DeviceDetailsModal: React.FC<DeviceDetailsModalProps> = ({ entityId, onClose }) => {
+export const DeviceDetailsModal: React.FC<DeviceDetailsModalProps> = ({ entityId, onClose, isFavorite, onToggleFavorite }) => {
     const { entities, callService } = useHomeAssistant();
     const entity = entities.find(e => e.entity_id === entityId);
 
@@ -76,12 +78,22 @@ export const DeviceDetailsModal: React.FC<DeviceDetailsModalProps> = ({ entityId
                                     <h2 className="text-2xl font-bold text-white">{name}</h2>
                                     <p className="text-gray-400 text-sm font-mono">{entityId}</p>
                                 </div>
-                                <button
-                                    onClick={onClose}
-                                    className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
-                                >
-                                    <X className="w-5 h-5 text-gray-400" />
-                                </button>
+                                <div className="flex gap-2">
+                                    {onToggleFavorite && (
+                                        <button
+                                            onClick={onToggleFavorite}
+                                            className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors group"
+                                        >
+                                            <Star className={`w-5 h-5 transition-colors ${isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400 group-hover:text-yellow-400'}`} />
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={onClose}
+                                        className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                                    >
+                                        <X className="w-5 h-5 text-gray-400" />
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Content based on domain */}
