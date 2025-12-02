@@ -176,28 +176,16 @@ class HomeAssistantClient {
 
   async connectWebSocket(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Construct WebSocket URL compatible with add-on ingress and external access
+      // Connect to the add-on's proxy WebSocket (NOT directly to Home Assistant)
+      // The proxy backend handles the Home Assistant WebSocket connection
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host;
-      const pathname = window.location.pathname;
+      const wsUrl = `${wsProtocol}//${window.location.host}${window.location.pathname}ws`;
 
-      // For ingress: wss://host/api/hassio_ingress/TOKEN/api/websocket
-      // For external: wss://host/api/websocket
-      // The backend proxy should handle the routing
-      let wsUrl: string;
-      if (pathname.includes('/api/hassio_ingress/')) {
-        // Running in ingress mode - use the ingress path + api/websocket
-        wsUrl = `${wsProtocol}//${host}${pathname}api/websocket`;
-      } else {
-        // Running externally or locally
-        wsUrl = `${wsProtocol}//${host}/api/websocket`;
-      }
-
-      console.log('[Nexdom] Conectando WebSocket:', wsUrl);
+      console.log('[Nexdom] Conectando WebSocket al proxy del add-on:', wsUrl);
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        console.log('[Nexdom] WebSocket conectado');
+        console.log('[Nexdom] WebSocket conectado al proxy del add-on');
         this.lastStableConnection = Date.now();
         // No resolvemos aquí, esperamos auth_ok
       };
