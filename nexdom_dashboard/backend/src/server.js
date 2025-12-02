@@ -42,7 +42,8 @@ app.use(cors({
     `http://localhost:${FRONTEND_PORT}`,
     `http://localhost:${FRONTEND_PORT}/`,
     // Allow Home Assistant ingress origins
-    /^https?:\/\/.*\.local\.ha\.dev$/
+    /^https?:\/\/.*\.local\.ha\.dev$/,
+    'https://cheko.nexdom.mx'
   ],
   credentials: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

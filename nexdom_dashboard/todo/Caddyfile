@@ -1,0 +1,93 @@
+cheko.nexdom.mx {
+        tls {
+                dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+        }
+
+        log {
+                output file /var/log/caddy/cheko-access.log
+                format json
+        }
+
+        route {
+
+                # =========================================================
+                # 0) INTERCEPTAR CALLBACK DE AUTH Y REDIRIGIR A INGRESS
+                # =========================================================
+                @auth_callback {
+                        query auth_callback=1
+                        not path /hassio/ingress/*
+                }
+                handle @auth_callback {
+                        redir https://cheko.nexdom.mx/hassio/ingress/nexdom_dashboard/?auth_callback=1&code={query.code}
+                }
+
+                # =========================================================
+                # 1) NO TOCAR /api/hassio_ingress/**
+                #    DEBE IR DIRECTO AL BACKEND SIN TEMPLATES
+                # =========================================================
+                @ingress path /api/hassio_ingress/*
+                handle @ingress {
+                        reverse_proxy 192.168.100.148:8123 {
+                                header_up Host {host}
+                                header_up X-Real-IP {remote_host}
+                                header_up X-Forwarded-For {remote_host}
+                                header_up X-Forwarded-Proto https
+
+
+                                # 🔥 Reenvía la cookie de sesión a Home Assistant
+                                header_up Cookie {http.request.header.Cookie}
+
+                                # 🔥 Respeta Set-Cookie que manda HA
+                                header_down Set-Cookie {http.response.header.Set-Cookie}
+                        }
+                }
+
+                # =========================================================
+                # 2) ROOT → LOGIN CUSTOM
+                # =========================================================
+                @root path /
+                handle @root {
+                        root * /var/www/nexdom-login
+                        try_files {path} /index.html
+                        file_server
+                }
+
+                # =========================================================
+                # 3) Archivos estáticos del login
+                # =========================================================
+                @custom_login_get {
+                        method GET
+                        path /auth/login* /auth/authorize*
+                }
+                handle @custom_login_get {
+                        root * /var/www/nexdom-login
+                        rewrite * /index.html
+                        file_server
+                }
+
+                handle_path /login_assets/* {
+                        root * /var/www/nexdom-login
+                        file_server
+                }
+
+                # =========================================================
+                # 4) Fallback total → Home Assistant
+                # =========================================================
+                handle {
+                        reverse_proxy 192.168.100.148:8123 {
+                                header_up Host {host}
+                                header_up X-Real-IP {remote_host}
+                                header_up X-Forwarded-For {remote_host}
+                                header_up X-Forwarded-Proto https
+
+                                header_up Cookie {http.request.header.Cookie}
+                                header_down Set-Cookie {http.response.header.Set-Cookie}
+                        }
+                }
+        }
+}
+
+# Redirect HTTP → HTTPS
+http://cheko.nexdom.mx {
+        redir https://cheko.nexdom.mx{uri} permanent
+}
