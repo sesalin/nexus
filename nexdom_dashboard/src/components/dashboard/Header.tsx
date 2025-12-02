@@ -4,15 +4,16 @@ import { useNexdomStore } from '../../store/nexdomStore';
 import { motion } from 'framer-motion';
 import logoWhite from '../../assets/logo-white.svg';
 import { AccountMenu } from './account/AccountMenu';
+import { useAlerts } from './Alerts';
 
 interface HeaderProps {
   pwaHeader?: React.ReactNode;
 }
 
 export const Header: React.FC<HeaderProps> = ({ pwaHeader }) => {
-  const alerts = useNexdomStore((state) => state.alerts);
   const toggleMobileMenu = useNexdomStore((state) => state.toggleMobileMenu);
-  const unreadCount = alerts.filter(a => !a.read).length;
+  const alerts = useAlerts();
+  const alertCount = alerts.length;
 
   return (
     <motion.header
@@ -57,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({ pwaHeader }) => {
           className="p-3 rounded-full bg-nexdom-glass backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-nexdom-lime/50 transition-all relative group"
         >
           <Bell className="w-5 h-5 text-gray-300 group-hover:text-nexdom-lime transition-colors" />
-          {unreadCount > 0 && (
+          {alertCount > 0 && (
             <span className="absolute top-2 right-2 w-2 h-2 bg-nexdom-lime rounded-full shadow-[0_0_10px_#00FF88]"></span>
           )}
         </motion.button>

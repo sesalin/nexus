@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useHomeAssistant } from './HomeAssistant';
-import { AlertTriangle, Info, X, CheckCircle, BatteryWarning, Lock, DoorOpen } from 'lucide-react';
+import { AlertTriangle, Info, X, BatteryWarning, Lock, DoorOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const Alerts: React.FC = () => {
   const { states } = useHomeAssistant();
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
 
   const alerts = useMemo(() => {
     if (!states) return [];
@@ -16,7 +17,6 @@ export const Alerts: React.FC = () => {
       const deviceClass = attributes.device_class;
 
       // 1. Low Battery Alerts
-      // Check battery_level attribute or battery device_class
       if (attributes.battery_level !== undefined && typeof attributes.battery_level === 'number') {
         if (attributes.battery_level < 20) {
           activeAlerts.push({
@@ -25,7 +25,7 @@ export const Alerts: React.FC = () => {
             title: 'Low Battery',
             message: `${attributes.friendly_name || entity.entity_id} is at ${attributes.battery_level}%`,
             timestamp: entity.last_updated,
-            icon: <BatteryWarning className="w-5 h-5" />
+            icon: <BatteryWarning className="w-4 h-4" />
           });
         }
       } else if (deviceClass === 'battery' && domain === 'binary_sensor' && entity.state === 'on') {
@@ -35,7 +35,7 @@ export const Alerts: React.FC = () => {
           title: 'Low Battery',
           message: `${attributes.friendly_name || entity.entity_id} battery is low`,
           timestamp: entity.last_updated,
-          icon: <BatteryWarning className="w-5 h-5" />
+          icon: <BatteryWarning className="w-4 h-4" />
         });
       }
 
@@ -45,11 +45,11 @@ export const Alerts: React.FC = () => {
           if (entity.state === 'on' || entity.state === 'open') {
             activeAlerts.push({
               id: `sec-${entity.entity_id}`,
-              type: 'info', // Info for open doors, maybe warning if armed?
+              type: 'info',
               title: `${deviceClass === 'window' ? 'Window' : 'Door'} Open`,
               message: `${attributes.friendly_name || entity.entity_id} is open`,
-              timestamp: entity.last_changed, // Use last_changed for open/close duration
-              icon: <DoorOpen className="w-5 h-5" />
+              timestamp: entity.last_changed,
+              icon: <DoorOpen className="w-4 h-4" />
             });
           }
         }
@@ -62,7 +62,7 @@ export const Alerts: React.FC = () => {
           title: 'Unlocked',
           message: `${attributes.friendly_name || entity.entity_id} is unlocked`,
           timestamp: entity.last_changed,
-          icon: <Lock className="w-5 h-5" />
+          icon: <Lock className="w-4 h-4" />
         });
       }
 
@@ -76,15 +76,20 @@ export const Alerts: React.FC = () => {
               title: `${deviceClass ? deviceClass.toUpperCase() : 'Safety'} Alert`,
               message: `${attributes.friendly_name || entity.entity_id} detected issue!`,
               timestamp: entity.last_changed,
-              icon: <AlertTriangle className="w-5 h-5" />
+              icon: <AlertTriangle className="w-4 h-4" />
             });
           }
         }
       }
     });
 
-    return activeAlerts;
-  }, [states]);
+    // Filter out dismissed alerts
+    return activeAlerts.filter(alert => !dismissedAlerts.has(alert.id));
+  }, [states, dismissedAlerts]);
+
+  const handleDismiss = (alertId: string) => {
+    setDismissedAlerts(prev => new Set(prev).add(alertId));
+  };
 
   if (alerts.length === 0) return null;
 
@@ -97,42 +102,42 @@ export const Alerts: React.FC = () => {
             initial={{ opacity: 0, x: 50, scale: 0.9 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-            className={`mb-4 p-4 rounded-2xl border backdrop-blur-md relative overflow-hidden group ${alert.type === 'critical'
-                ? 'bg-red-500/10 border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.2)]'
-                : alert.type === 'warning'
-                  ? 'bg-nexdom-gold/10 border-nexdom-gold/30 shadow-[0_0_20px_rgba(230,195,106,0.2)]'
-                  : 'bg-blue-500/10 border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.2)]'
+            className={`mb-3 px-4 py-3 rounded-xl border backdrop-blur-md relative overflow-hidden group ${alert.type === 'critical'
+              ? 'bg-red-500/10 border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.15)]'
+              : alert.type === 'warning'
+                ? 'bg-nexdom-gold/10 border-nexdom-gold/30 shadow-[0_0_15px_rgba(230,195,106,0.15)]'
+                : 'bg-blue-500/10 border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.15)]'
               }`}
           >
-            {/* Holographic Scanline Effect */}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent opacity-20 animate-scan pointer-events-none"></div>
-
-            <div className="flex items-start justify-between relative z-10">
-              <div className="flex items-start gap-4">
-                <div className={`p-2 rounded-full ${alert.type === 'critical' ? 'bg-red-500/20 text-red-400' :
-                    alert.type === 'warning' ? 'bg-nexdom-gold/20 text-nexdom-gold' :
-                      'bg-blue-500/20 text-blue-400'
+            <div className="flex items-center justify-between relative z-10">
+              <div className="flex items-center gap-3 flex-1">
+                <div className={`p-1.5 rounded-lg ${alert.type === 'critical' ? 'bg-red-500/20 text-red-400' :
+                  alert.type === 'warning' ? 'bg-nexdom-gold/20 text-nexdom-gold' :
+                    'bg-blue-500/20 text-blue-400'
                   }`}>
                   {alert.icon || (
                     alert.type === 'critical' || alert.type === 'warning' ? (
-                      <AlertTriangle className="w-5 h-5" />
+                      <AlertTriangle className="w-4 h-4" />
                     ) : (
-                      <Info className="w-5 h-5" />
+                      <Info className="w-4 h-4" />
                     )
                   )}
                 </div>
-                <div>
-                  <h4 className={`font-bold text-sm tracking-wide uppercase ${alert.type === 'critical' ? 'text-red-400' :
-                      alert.type === 'warning' ? 'text-nexdom-gold' :
-                        'text-blue-400'
+                <div className="flex-1">
+                  <h4 className={`font-semibold text-xs tracking-wide uppercase ${alert.type === 'critical' ? 'text-red-400' :
+                    alert.type === 'warning' ? 'text-nexdom-gold' :
+                      'text-blue-400'
                     }`}>
                     {alert.title}
                   </h4>
-                  <p className="text-white/90 text-sm mt-1 font-light">{alert.message}</p>
-                  <p className="text-xs text-white/40 mt-2 font-mono">
-                    Since: {new Date(alert.timestamp).toLocaleTimeString()}
-                  </p>
+                  <p className="text-white/80 text-xs mt-0.5">{alert.message}</p>
                 </div>
+                <button
+                  onClick={() => handleDismiss(alert.id)}
+                  className="p-1.5 rounded-lg hover:bg-white/10 transition-colors group/close"
+                >
+                  <X className="w-4 h-4 text-gray-400 group-hover/close:text-white" />
+                </button>
               </div>
             </div>
           </motion.div>
@@ -140,4 +145,44 @@ export const Alerts: React.FC = () => {
       </AnimatePresence>
     </div>
   );
+};
+
+// Export hook for use in Header notification count
+export const useAlerts = () => {
+  const { states } = useHomeAssistant();
+
+  return useMemo(() => {
+    if (!states) return [];
+    const activeAlerts: any[] = [];
+
+    states.forEach(entity => {
+      const domain = entity.entity_id.split('.')[0];
+      const attributes = entity.attributes || {};
+      const deviceClass = attributes.device_class;
+
+      if (attributes.battery_level !== undefined && typeof attributes.battery_level === 'number' && attributes.battery_level < 20) {
+        activeAlerts.push({ id: `batt-${entity.entity_id}`, type: 'warning' });
+      } else if (deviceClass === 'battery' && domain === 'binary_sensor' && entity.state === 'on') {
+        activeAlerts.push({ id: `batt-bin-${entity.entity_id}`, type: 'warning' });
+      }
+
+      if ((domain === 'binary_sensor' || domain === 'cover') &&
+        (['door', 'window', 'garage_door', 'garage'].includes(deviceClass) || domain === 'cover') &&
+        (entity.state === 'on' || entity.state === 'open')) {
+        activeAlerts.push({ id: `sec-${entity.entity_id}`, type: 'info' });
+      }
+
+      if (domain === 'lock' && entity.state === 'unlocked') {
+        activeAlerts.push({ id: `lock-${entity.entity_id}`, type: 'warning' });
+      }
+
+      if (domain === 'binary_sensor' &&
+        ['smoke', 'gas', 'moisture', 'safety', 'tamper', 'problem'].includes(deviceClass) &&
+        (entity.state === 'on' || entity.state === 'unsafe')) {
+        activeAlerts.push({ id: `safe-${entity.entity_id}`, type: 'critical' });
+      }
+    });
+
+    return activeAlerts;
+  }, [states]);
 };
