@@ -10,7 +10,7 @@ class HomeAssistantClient {
   private messageId: number = Date.now();
   private listeners: Map<string, Function[]> = new Map();
   private reconnectAttempts: number = 0;
-  private maxReconnectAttempts: number = 5;
+  private lastStableConnection: number = 0;
   private sessionToken: string | null = null;
   private pendingRequests: Map<number, { resolve: (data: any) => void; reject: (err: any) => void }> = new Map();
   private areaRegistry: any[] = [];
@@ -186,7 +186,7 @@ class HomeAssistantClient {
 
       this.ws.onopen = () => {
         console.log('[Nexdom] WebSocket conectado al proxy backend');
-        this.reconnectAttempts = 0;
+        this.lastStableConnection = Date.now();
         // No resolvemos aquí, esperamos auth_ok
       };
 
@@ -223,20 +223,28 @@ class HomeAssistantClient {
         this.ws = null;
         this.emit('connected', false);
 
-        // Reconectar con backoff exponencial
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-          this.reconnectAttempts++;
-          const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts - 1), 30000);
-          console.log(`[Nexdom] Reintentando conexión en ${delay}ms (intento ${this.reconnectAttempts})`);
+        // Clean up pending requests
+        this.pendingRequests.forEach((pending) => {
+          pending.reject(new Error('WebSocket closed'));
+        });
+        this.pendingRequests.clear();
 
-          setTimeout(() => {
-            this.connectWebSocket().catch(err => {
-              console.error('[Nexdom] Reconnect failed:', err);
-            });
-          }, delay);
-        } else {
-          console.error('[Nexdom] Máximo número de intentos de reconexión alcanzado');
+        // Reset reconnect attempts if connection was stable for 60s
+        const timeSinceLastStable = Date.now() - this.lastStableConnection;
+        if (timeSinceLastStable > 60000) {
+          this.reconnectAttempts = 0;
         }
+
+        // Infinite reconnection with exponential backoff (capped at 60s)
+        this.reconnectAttempts++;
+        const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts - 1), 60000);
+        console.log(`[Nexdom] Reintentando conexión en ${delay}ms (intento ${this.reconnectAttempts})`);
+
+        setTimeout(() => {
+          this.connectWebSocket().catch(err => {
+            console.error('[Nexdom] Reconnect failed:', err);
+          });
+        }, delay);
       };
 
       this.ws.onerror = (error) => {
@@ -401,6 +409,12 @@ class HomeAssistantClient {
     this.listeners.get(event)?.push(callback);
   }
 
+  off(event: string, callback: Function) {
+    const listeners = this.listeners.get(event);
+    if (!listeners) return;
+    this.listeners.set(event, listeners.filter(cb => cb !== callback));
+  }
+
   private emit(event: string, data: any) {
     const callbacks = this.listeners.get(event) || [];
     callbacks.forEach(callback => {
@@ -516,50 +530,47 @@ export const HomeAssistantProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     // Configurar listeners ANTES de conectar WebSocket
-    haClient.on('connected', (connected: boolean) => {
+    const onConnected = (connected: boolean) => {
       console.log('[Nexdom] Conexión WebSocket:', connected ? 'establecida' : 'perdida');
       setIsConnected(connected);
-    });
+    };
 
-    // Cuando llegan los states
-    haClient.on('states_loaded', (states: any[]) => {
+    const onStatesLoaded = (states: any[]) => {
       console.log('[Nexdom] States cargados, actualizando UI');
       loadedStates = states;
       setEntities(states);
       setError(null);
       tryCreateZones();
-    });
+    };
 
-    // Cuando se cargan las áreas
-    haClient.on('area_registry', (areas: any[]) => {
+    const onAreaRegistry = (areas: any[]) => {
       console.log('[Nexdom] Evento: area_registry recibido');
       loadedAreas = areas;
       setAreaRegistry(areas);
       tryCreateZones();
-    });
+    };
 
-    // Cuando se carga el entity registry
-    haClient.on('entity_registry', (entityReg: any[]) => {
+    const onEntityRegistry = (entityReg: any[]) => {
       console.log('[Nexdom] Evento: entity_registry recibido');
       loadedEntityRegistry = entityReg;
       setEntityRegistry(entityReg);
       tryCreateZones();
-    });
+    };
 
-    haClient.on('device_registry', (deviceReg: any[]) => {
+    const onDeviceRegistry = (deviceReg: any[]) => {
       console.log('[Nexdom] Evento: device_registry recibido');
       loadedDeviceRegistry = deviceReg;
       setDeviceRegistry(deviceReg);
       tryCreateZones();
-    });
+    };
 
-    haClient.on('state_changed', (data: any) => {
+    const onStateChanged = (data: any) => {
       const { entity_id, new_state } = data;
       if (!new_state) return;
 
       // Actualizar entidades
       setEntities(prev => {
-        // console.log(`[Nexdom] Updating state for ${entity_id}: ${new_state.state}`);
+        console.log(`[Nexdom] Updating state for ${entity_id}: ${new_state.state}`);
         return prev.map(entity =>
           entity.entity_id === entity_id
             ? { ...entity, ...new_state, attributes: { ...entity.attributes, ...new_state.attributes } }
@@ -571,7 +582,14 @@ export const HomeAssistantProvider: React.FC<{ children: React.ReactNode }> = ({
       window.dispatchEvent(new CustomEvent('homeassistant:state_changed', {
         detail: data
       }));
-    });
+    };
+
+    haClient.on('connected', onConnected);
+    haClient.on('states_loaded', onStatesLoaded);
+    haClient.on('area_registry', onAreaRegistry);
+    haClient.on('entity_registry', onEntityRegistry);
+    haClient.on('device_registry', onDeviceRegistry);
+    haClient.on('state_changed', onStateChanged);
 
     // Conectar WebSocket - los requests se harán automáticamente después de auth_ok
     console.log('[Nexdom] Iniciando conexión WebSocket...');
@@ -589,7 +607,13 @@ export const HomeAssistantProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
     return () => {
-      console.log('[Nexdom] Limpiando conexión...');
+      console.log('[Nexdom] Limpiando conexión y listeners...');
+      haClient.off('connected', onConnected);
+      haClient.off('states_loaded', onStatesLoaded);
+      haClient.off('area_registry', onAreaRegistry);
+      haClient.off('entity_registry', onEntityRegistry);
+      haClient.off('device_registry', onDeviceRegistry);
+      haClient.off('state_changed', onStateChanged);
       haClient.disconnect();
     };
   }, []);
