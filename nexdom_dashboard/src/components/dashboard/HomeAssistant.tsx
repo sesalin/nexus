@@ -420,8 +420,24 @@ class HomeAssistantClient {
   }
 }
 
-// Hook para usar Home Assistant
-export const useHomeAssistant = () => {
+// Context Definition
+interface HomeAssistantContextType {
+  client: HomeAssistantClient | null;
+  isConnected: boolean;
+  entities: any[];
+  states: any[]; // Alias for entities
+  zones: any[];
+  error: string | null;
+  callService: (domain: string, service: string, data: any) => Promise<any>;
+  toggleEntity: (entityId: string) => Promise<void>;
+  favorites: string[];
+  toggleFavorite: (entityId: string) => void;
+}
+
+const HomeAssistantContext = React.createContext<HomeAssistantContextType | null>(null);
+
+// Provider Component
+export const HomeAssistantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [client, setClient] = useState<HomeAssistantClient | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [entities, setEntities] = useState<any[]>([]);
@@ -495,8 +511,6 @@ export const useHomeAssistant = () => {
     // Función para crear zonas cuando tengamos todos los datos
     const tryCreateZones = () => {
       if (loadedStates.length > 0 && loadedAreas.length > 0) {
-        // Esperamos a tener device_registry también, pero si tarda mucho o falla, procedemos
-        // Idealmente deberíamos esperar a los 4, pero para no bloquear UI usamos lo que tengamos
         createZonesFromEntities(loadedStates, loadedAreas, loadedEntityRegistry, loadedDeviceRegistry);
       }
     };
@@ -545,7 +559,7 @@ export const useHomeAssistant = () => {
 
       // Actualizar entidades
       setEntities(prev => {
-        console.log(`[Nexdom] Updating state for ${entity_id}: ${new_state.state}`);
+        // console.log(`[Nexdom] Updating state for ${entity_id}: ${new_state.state}`);
         return prev.map(entity =>
           entity.entity_id === entity_id
             ? { ...entity, ...new_state, attributes: { ...entity.attributes, ...new_state.attributes } }
@@ -564,7 +578,6 @@ export const useHomeAssistant = () => {
     haClient.connectWebSocket()
       .then(() => {
         console.log('[Nexdom] ✓ WebSocket conectado');
-        // Los requests de states/areas/entities se hacen automáticamente en auth_ok
       })
       .catch(error => {
         console.error('[Nexdom] ✗ Error conectando WebSocket:', error);
@@ -583,12 +596,10 @@ export const useHomeAssistant = () => {
 
   // CRITICAL FIX: Re-calcular zonas cuando las entidades cambian (state_changed)
   useEffect(() => {
-    // console.log('[Nexdom] useEffect triggered by dependency change');
     if (entities.length > 0 && areaRegistry.length > 0) {
-      // console.log('[Nexdom] Recalculating zones due to entity/registry update');
       createZonesFromEntities(entities, areaRegistry, entityRegistry, deviceRegistry);
     }
-  }, [entities, areaRegistry, entityRegistry, filterConfig, client, deviceRegistry]); // Added filterConfig, client, deviceRegistry as dependencies
+  }, [entities, areaRegistry, entityRegistry, filterConfig, client, deviceRegistry]);
 
   // Group entities by device and identify primary/secondary entities
   const groupEntitiesByDevice = (
@@ -596,8 +607,6 @@ export const useHomeAssistant = () => {
     entityRegistry: any[],
     deviceRegistry: any[]
   ): Map<string, { primary: any; secondary: any[] }> => {
-    // console.log('[Nexdom] Grouping entities by device...');
-
     // Auxiliary entity patterns to exclude from primary selection
     const auxiliaryPatterns = [
       '*_battery*',
@@ -643,9 +652,6 @@ export const useHomeAssistant = () => {
       }
     });
 
-    // console.log(`[Nexdom] Found ${deviceGroups.size} devices with entities`);
-    // console.log(`[Nexdom] Found ${entitiesWithoutDevice.length} entities without device`);
-
     // For each device, identify primary and secondary entities
     const result = new Map<string, { primary: any; secondary: any[] }>();
 
@@ -674,7 +680,6 @@ export const useHomeAssistant = () => {
       const secondary = deviceEntities.filter(e => e.entity_id !== primary.entity_id);
 
       result.set(deviceId, { primary, secondary });
-      // console.log(`[Nexdom] Device ${deviceId}: primary=${primary.entity_id}, secondary=${secondary.length}`);
     });
 
     // Add entities without device as individual "devices" (no secondary entities)
@@ -687,11 +692,8 @@ export const useHomeAssistant = () => {
 
   // Crear zonas desde entidades
   const createZonesFromEntities = (states: any[], areas: any[], entityRegistry: any[], deviceRegistry: any[] = []) => {
-    console.log('[Nexdom] Creando zonas:', { states: states.length, areas: areas.length, entities: entityRegistry.length, devices: deviceRegistry.length });
-
     // CRITICAL: Apply entity filters BEFORE processing
     const filteredStates = client?.applyEntityFilters(states, filterConfig) || states;
-    // console.log(`[Nexdom] Using ${filteredStates.length} entities after filtering (from ${states.length} total)`);
 
     if (!areas || areas.length === 0) {
       console.warn('[Nexdom] No hay áreas disponibles');
@@ -701,7 +703,6 @@ export const useHomeAssistant = () => {
 
     // CRITICAL: Group entities by device AFTER filtering
     const deviceGroups = groupEntitiesByDevice(filteredStates, entityRegistry, deviceRegistry);
-    // console.log(`[Nexdom] Grouped into ${deviceGroups.size} devices`);
 
     // Extract only primary entities for zone assignment
     const primaryEntities: any[] = [];
@@ -711,8 +712,6 @@ export const useHomeAssistant = () => {
       group.primary._secondary_entities = group.secondary;
       primaryEntities.push(group.primary);
     });
-
-    // console.log(`[Nexdom] Using ${primaryEntities.length} primary entities (from ${filteredStates.length} filtered)`);
 
     // 1. Mapa Device ID -> Area ID
     const deviceAreaMap = new Map<string, string>();
@@ -755,14 +754,10 @@ export const useHomeAssistant = () => {
       const areaId = area.area_id;
       const areaName = area.name || `Área ${areaId}`;
 
-      // console.log(`[Nexdom] Procesando área: ${areaName} (${areaId})`);
-
       const areaEntities = primaryEntities.filter((entity) => {
         const assignedAreaId = getEntityAreaId(entity.entity_id, entity.attributes);
         return assignedAreaId === areaId;
       });
-
-      // console.log(`[Nexdom]   Área ${areaName}: ${areaEntities.length} entidades`);
 
       return {
         id: areaId,
@@ -777,11 +772,6 @@ export const useHomeAssistant = () => {
       return !assignedAreaId;
     });
 
-    // console.log(`[Nexdom] Entidades sin asignar: ${unassignedEntities.length}`);
-    if (unassignedEntities.length > 0) {
-      // console.log('[Nexdom] Sample unassigned:', unassignedEntities.slice(0, 5).map(e => e.entity_id));
-    }
-
     if (unassignedEntities.length > 0) {
       zonesBuilt.push({
         id: 'unassigned',
@@ -790,8 +780,6 @@ export const useHomeAssistant = () => {
       });
     }
 
-    // console.log(`[Nexdom] ✓ ${zonesBuilt.length} zonas creadas con mapeo completo`);
-    // console.log('[Nexdom] Resumen de zonas:', zonesBuilt.map(z => ({ name: z.name, entities: z.entities.length })));
     setZones(zonesBuilt);
   };
 
@@ -821,7 +809,6 @@ export const useHomeAssistant = () => {
         service = entity.state === 'locked' ? 'unlock' : 'lock';
         break;
       case 'cover':
-        // Si está abierto o abriendo -> cerrar, si no -> abrir
         service = ['open', 'opening'].includes(entity.state) ? 'close_cover' : 'open_cover';
         break;
       case 'button':
@@ -832,24 +819,23 @@ export const useHomeAssistant = () => {
         service = 'turn_on';
         break;
       case 'script':
-        service = 'turn_on'; // Scripts se ejecutan con turn_on
+        service = 'turn_on';
         break;
       case 'media_player':
         service = entity.state === 'playing' ? 'media_pause' : 'media_play';
         break;
       default:
-        // Para luces, switches, fans, etc.
         service = entity.state === 'off' ? 'turn_on' : 'turn_off';
     }
 
     await callService(domain, service, serviceData);
   };
 
-  return {
+  const value = {
     client,
     isConnected,
     entities,
-    states: entities, // Alias entities as states for compatibility
+    states: entities,
     zones,
     error,
     callService,
@@ -857,6 +843,21 @@ export const useHomeAssistant = () => {
     favorites,
     toggleFavorite
   };
+
+  return (
+    <HomeAssistantContext.Provider value={value}>
+      {children}
+    </HomeAssistantContext.Provider>
+  );
+};
+
+// Hook para usar Home Assistant (ahora usa Context)
+export const useHomeAssistant = () => {
+  const context = React.useContext(HomeAssistantContext);
+  if (!context) {
+    throw new Error('useHomeAssistant must be used within a HomeAssistantProvider');
+  }
+  return context;
 };
 
 // Datos mock para fallback

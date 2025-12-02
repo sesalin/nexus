@@ -25,7 +25,7 @@ const getIconName = (type: string): string => {
 };
 
 export const GadgetGrid: React.FC = () => {
-  const { zones, toggleEntity, callService } = useHomeAssistant();
+  const { zones, toggleEntity, callService, favorites, toggleFavorite } = useHomeAssistant();
   const [expandedDomain, setExpandedDomain] = useState<string | null>(null); // All closed by default
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
@@ -175,15 +175,12 @@ export const GadgetGrid: React.FC = () => {
       ))}
 
       {/* Device Details Modal */}
-      <AnimatePresence>
-        {selectedDeviceId && (
-          <DeviceDetailsModal
-            deviceId={selectedDeviceId}
-            isOpen={!!selectedDeviceId}
-            onClose={() => setSelectedDeviceId(null)}
-          />
-        )}
-      </AnimatePresence>
+      <DeviceDetailsModal
+        entityId={selectedDeviceId}
+        onClose={() => setSelectedDeviceId(null)}
+        isFavorite={selectedDeviceId ? favorites.includes(selectedDeviceId) : false}
+        onToggleFavorite={selectedDeviceId ? () => toggleFavorite(selectedDeviceId) : undefined}
+      />
     </div>
   );
 };

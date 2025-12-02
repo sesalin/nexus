@@ -126,22 +126,26 @@ export const Icon: React.FC<IconProps> = ({
       finalSource = `.${finalSource}`;
     }
 
-    // Use img tag with filter for color if active
-    // This is more robust than mask-image for path resolution
+    // Use mask-image to allow coloring via currentColor or style prop
     return (
-      <img
-        src={finalSource}
-        alt={svgName}
+      <div
         className={`
           ${sizeClasses[size]} 
           transition-all duration-300 
-          object-contain
+          ${isActive ? 'text-white' : 'text-gray-400'}
           ${className}
-          ${isActive ? 'brightness-[1000%] sepia-[100%] hue-rotate-[90deg] saturate-[500%]' : 'opacity-60'} 
         `}
         style={{
-          filter: isActive ? 'drop-shadow(0 0 2px rgba(0,255,136,0.8))' : 'none',
-          ...style
+          backgroundColor: 'currentColor',
+          maskImage: `url(${finalSource})`,
+          maskSize: 'contain',
+          maskRepeat: 'no-repeat',
+          maskPosition: 'center',
+          WebkitMaskImage: `url(${finalSource})`,
+          WebkitMaskSize: 'contain',
+          WebkitMaskRepeat: 'no-repeat',
+          WebkitMaskPosition: 'center',
+          ...style, // Merge custom styles (including color from GadgetCard)
         }}
       />
     );
