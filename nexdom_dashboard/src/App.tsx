@@ -23,7 +23,7 @@ import { usePWA } from './pwa/PWAUtils';
 
 import './index.css';
 import './index.css';
-import { useHomeAssistant, HomeAssistantProvider } from './components/dashboard/HomeAssistant';
+import { useHomeAssistant } from './components/dashboard/HomeAssistant';
 import { Device } from './store/nexdomStore';
 
 function App() {
@@ -77,47 +77,45 @@ function App() {
   }, [zones, setRooms]);
 
   return (
-    <HomeAssistantProvider>
-      <PWAProvider>
-        <Router>
-          <div className="min-h-screen bg-black text-white font-sans selection:bg-nexdom-lime/30">
-            {/* PWA Header & Install Prompt */}
-            <PWAHeader />
-            <PWAInstallPrompt />
+    <PWAProvider>
+      <Router>
+        <div className="min-h-screen bg-black text-white font-sans selection:bg-nexdom-lime/30">
+          {/* PWA Header & Install Prompt */}
+          <PWAHeader />
+          <PWAInstallPrompt />
 
-            <div className="flex h-screen overflow-hidden">
-              {/* Sidebar Navigation */}
-              <ModuleNav />
+          <div className="flex h-screen overflow-hidden">
+            {/* Sidebar Navigation */}
+            <ModuleNav />
 
-              {/* Main Content Area */}
-              <main className="flex-1 relative overflow-hidden flex flex-col">
-                <Header />
+            {/* Main Content Area */}
+            <main className="flex-1 relative overflow-hidden flex flex-col">
+              <Header />
 
-                <div className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth">
-                  <div className="absolute inset-0 pb-24 lg:pb-0">
-                    <Routes>
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="/zones" element={<Zones />} />
-                      <Route path="/gadgets" element={<Gadgets />} />
-                      <Route path="/energy" element={<Energy />} />
-                      <Route path="/security" element={<Security />} />
-                      <Route path="/scenes" element={<Scenes />} />
-                      <Route path="/routines" element={<Routines />} />
-                      <Route path="/battery" element={<Battery />} />
-                      <Route path="/voice" element={<VoiceAI />} />
-                      <Route path="/debug" element={<Debug />} />
-                    </Routes>
-                  </div>
+              <div className="flex-1 overflow-y-auto overflow-x-hidden relative scroll-smooth">
+                <div className="absolute inset-0 pb-24 lg:pb-0">
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/zones" element={<Zones />} />
+                    <Route path="/gadgets" element={<Gadgets />} />
+                    <Route path="/energy" element={<Energy />} />
+                    <Route path="/security" element={<Security />} />
+                    <Route path="/scenes" element={<Scenes />} />
+                    <Route path="/routines" element={<Routines />} />
+                    <Route path="/battery" element={<Battery />} />
+                    <Route path="/voice" element={<VoiceAI />} />
+                    <Route path="/debug" element={<Debug />} />
+                  </Routes>
                 </div>
-              </main>
-            </div>
-
-            {/* Notification Settings Modal */}
-            <NotificationSettings />
+              </div>
+            </main>
           </div>
-        </Router>
-      </PWAProvider>
-    </HomeAssistantProvider>
+
+          {/* Notification Settings Modal */}
+          <NotificationSettings />
+        </div>
+      </Router>
+    </PWAProvider>
   );
 }
 
