@@ -3,7 +3,7 @@ export class PWAUtils {
   private static deferredPrompt: any = null;
   private static serviceWorker: ServiceWorker | null = null;
   private static isInstalled = false;
-  private static isOnline = navigator.onLine;
+  private static _isOnline = navigator.onLine;
 
   // Inicializar PWA
   static async init() {
@@ -12,33 +12,33 @@ export class PWAUtils {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js');
         this.serviceWorker = registration.serviceWorker;
-        
+
         console.log('[PWA] Service Worker registrado:', registration.scope);
-        
+
         // Escuchar eventos del Service Worker
         navigator.serviceWorker.addEventListener('message', this.handleServiceWorkerMessage.bind(this));
-        
+
         // Verificar si la app ya está instalada
         this.checkInstallState();
-        
+
         // Escuchar eventos de instalación
         window.addEventListener('beforeinstallprompt', this.handleBeforeInstallPrompt.bind(this));
         window.addEventListener('appinstalled', this.handleAppInstalled.bind(this));
-        
+
         // Escuchar cambios de conectividad
         window.addEventListener('online', this.handleOnline.bind(this));
         window.addEventListener('offline', this.handleOffline.bind(this));
-        
+
       } catch (error) {
         console.error('[PWA] Error registrando Service Worker:', error);
       }
     } else {
       console.warn('[PWA] Service Worker no soportado');
     }
-    
+
     // Inicializar sistema de notificaciones
     await this.initNotifications();
-    
+
     // Mostrar prompt de instalación si es apropiado
     this.maybeShowInstallPrompt();
   }
@@ -46,8 +46,8 @@ export class PWAUtils {
   // Verificar estado de instalación
   private static checkInstallState() {
     // Verificar si está running standalone
-    if (window.matchMedia('(display-mode: standalone)').matches || 
-        (window.navigator as any).standalone === true) {
+    if (window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true) {
       this.isInstalled = true;
       console.log('[PWA] App ejecutándose como PWA');
     }
@@ -65,7 +65,7 @@ export class PWAUtils {
     this.isInstalled = true;
     this.deferredPrompt = null;
     console.log('[PWA] App instalada correctamente');
-    
+
     // Disparar evento personalizado
     window.dispatchEvent(new CustomEvent('pwa:installed'));
   }
@@ -87,13 +87,13 @@ export class PWAUtils {
     // No mostrar si ya se ha mostrado antes
     const hasShownPrompt = localStorage.getItem('nexdom-pwa-prompt-shown');
     if (hasShownPrompt) return false;
-    
+
     // Solo mostrar en móviles o tablets
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
+
     // Solo mostrar si el usuario ha interactuado con la app
     const hasInteracted = sessionStorage.getItem('nexdom-user-interacted');
-    
+
     return isMobile && hasInteracted;
   }
 
@@ -107,10 +107,10 @@ export class PWAUtils {
     try {
       const result = await this.deferredPrompt.prompt();
       console.log('[PWA] Resultado del prompt:', result.outcome);
-      
+
       // Marcar que se mostró el prompt
       localStorage.setItem('nexdom-pwa-prompt-shown', 'true');
-      
+
       return result.outcome === 'accepted';
     } catch (error) {
       console.error('[PWA] Error mostrando prompt:', error);
@@ -127,14 +127,14 @@ export class PWAUtils {
 
     // Verificar permisos
     const permission = Notification.permission;
-    
+
     if (permission === 'default') {
       // Pedir permisos la primera vez
       console.log('[PWA] Solicitando permisos de notificación...');
       const result = await Notification.requestPermission();
       return result === 'granted';
     }
-    
+
     return permission === 'granted';
   }
 
@@ -163,7 +163,7 @@ export class PWAUtils {
     };
 
     const notification = new Notification(title, defaultOptions);
-    
+
     // Auto-cerrar después de 5 segundos si no es importante
     if (!options.requireInteraction) {
       setTimeout(() => notification.close(), 5000);
@@ -173,7 +173,7 @@ export class PWAUtils {
     notification.onclick = () => {
       window.focus();
       notification.close();
-      
+
       // Enviar mensaje al Service Worker
       if (this.serviceWorker) {
         this.serviceWorker.postMessage({
@@ -190,7 +190,7 @@ export class PWAUtils {
   static showHomeAssistantNotification(entity: any, event: 'on' | 'off' | 'alert' | 'trigger') {
     const titles = {
       'on': `${entity.name || entity.attributes?.friendly_name || entity.entity_id} activado`,
-      'off': `${entity.name || entity.attributes?.friendly_name || entity.entity_id} desactivado`, 
+      'off': `${entity.name || entity.attributes?.friendly_name || entity.entity_id} desactivado`,
       'alert': `Alerta: ${entity.name || entity.attributes?.friendly_name || entity.entity_id}`,
       'trigger': `Disparado: ${entity.name || entity.attributes?.friendly_name || entity.entity_id}`
     };
@@ -205,7 +205,7 @@ export class PWAUtils {
     const icons = {
       'on': '/icon-192.svg',
       'off': '/icon-192.svg',
-      'alert': '/icon-192.svg', 
+      'alert': '/icon-192.svg',
       'trigger': '/icon-192.svg'
     };
 
@@ -232,13 +232,13 @@ export class PWAUtils {
 
   // Manejar cambios de conectividad
   private static handleOnline() {
-    this.isOnline = true;
+    this._isOnline = true;
     console.log('[PWA] Conexión restaurada');
     window.dispatchEvent(new CustomEvent('pwa:online'));
   }
 
   private static handleOffline() {
-    this.isOnline = false;
+    this._isOnline = false;
     console.log('[PWA] Sin conexión');
     window.dispatchEvent(new CustomEvent('pwa:offline'));
   }
@@ -246,17 +246,17 @@ export class PWAUtils {
   // Manejar mensajes del Service Worker
   private static handleServiceWorkerMessage(event: MessageEvent) {
     const { type, data } = event.data;
-    
+
     switch (type) {
       case 'PWA_INSTALL_PROMPT':
         console.log('[PWA] Prompt de instalación disponible desde SW');
         break;
-        
+
       case 'PWA_INSTALLED':
         console.log('[PWA] App instalada desde SW');
         this.isInstalled = true;
         break;
-        
+
       case 'NOTIFICATION_CLICK':
         console.log('[PWA] Click en notificación:', data);
         // Disparar evento personalizado para que la app maneje la navegación
@@ -308,28 +308,28 @@ export class PWAUtils {
 
   // Verificar si la app está instalada
   static isPWAInstalled(): boolean {
-    return this.isInstalled || 
-           window.matchMedia('(display-mode: standalone)').matches ||
-           (window.navigator as any).standalone === true;
+    return this.isInstalled ||
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true;
   }
 
   // Verificar si está online
   static isOnline(): boolean {
-    return this.isOnline;
+    return this._isOnline;
   }
 
   // Verificar soporte PWA
   static supportsPWA(): boolean {
-    return 'serviceWorker' in navigator && 
-           'Notification' in window && 
-           'beforeinstallprompt' in window;
+    return 'serviceWorker' in navigator &&
+      'Notification' in window &&
+      'beforeinstallprompt' in window;
   }
 
   // Obtener información de instalación
   static getInstallInfo() {
     return {
       isInstalled: this.isInstalled,
-      isOnline: this.isOnline,
+      isOnline: this._isOnline,
       supportsPWA: this.supportsPWA(),
       hasInstallPrompt: !!this.deferredPrompt,
       canNotify: 'Notification' in window && Notification.permission === 'granted'
