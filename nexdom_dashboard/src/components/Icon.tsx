@@ -126,27 +126,18 @@ export const Icon: React.FC<IconProps> = ({
       finalSource = `.${finalSource}`;
     }
 
-    // Use mask-image to allow coloring via currentColor or style prop
+    // Use img tag directly as requested by user
     return (
-      <div
+      <img
+        src={finalSource}
+        alt={svgName}
         className={`
           ${sizeClasses[size]} 
           transition-all duration-300 
-          ${isActive ? 'text-white' : 'text-gray-400'}
+          object-contain
           ${className}
         `}
-        style={{
-          backgroundColor: 'currentColor',
-          maskImage: `url(${finalSource})`,
-          maskSize: 'contain',
-          maskRepeat: 'no-repeat',
-          maskPosition: 'center',
-          WebkitMaskImage: `url(${finalSource})`,
-          WebkitMaskSize: 'contain',
-          WebkitMaskRepeat: 'no-repeat',
-          WebkitMaskPosition: 'center',
-          ...style, // Merge custom styles (including color from GadgetCard)
-        }}
+        style={style}
       />
     );
   }
