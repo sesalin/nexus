@@ -31,12 +31,12 @@ export const LiveStatus: React.FC = () => {
 
       {/* Favorites Grid */}
       {favoriteEntities.length === 0 ? (
-        <div className="text-center py-12 bg-white/5 rounded-[2rem] border border-white/5 mb-10">
+        <div className="text-center py-12 glass-panel rounded-[2rem] border border-white/5">
           <p className="text-gray-400 mb-2">No favorites added yet</p>
           <p className="text-xs text-gray-600">Click on any device card to add it to favorites</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <AnimatePresence>
             {favoriteEntities.map((entity) => {
               const gadget = mapEntityToGadget(entity);
