@@ -1,5 +1,9 @@
 import React from 'react';
 import * as LucideIcons from 'lucide-react';
+import {
+  Lightbulb, ToggleLeft, Lock, Thermometer, Blinds, Camera, Tv, Fan, Speaker, Shield, Zap, Wifi, Radio,
+  Power, Battery, BatteryCharging, BatteryLow, BatteryWarning, DoorOpen, AlertTriangle
+} from 'lucide-react';
 
 // SVG icon imports (existing imports from ModuleNav)
 import energyIcon from '../assets/icons/Energia.svg';
@@ -19,6 +23,32 @@ for (const path in iconModules) {
     iconMap[filename] = iconModules[path].default;
   }
 }
+
+// Mapping from legacy SVG names to Lucide Components
+const legacyIconMapping: Record<string, React.ElementType> = {
+  'light': Lightbulb,
+  'switch': ToggleLeft,
+  'lock': Lock,
+  'climate': Thermometer,
+  'thermostat': Thermometer,
+  'cover': Blinds,
+  'camera': Camera,
+  'media_player': Tv,
+  'fan': Fan,
+  'speaker': Speaker,
+  'security': Shield,
+  'energy': Zap,
+  'sensor': Wifi,
+  'remote': Radio,
+  'button': Power,
+  'battery': Battery,
+  'door': DoorOpen,
+  'alert': AlertTriangle,
+  'Smart-plug': Zap, // Map specific file names if needed
+  'Energia': Zap,
+  'Camara': Camera,
+  'Asistente-voz': Radio
+};
 
 interface IconProps {
   // For Lucide React icons
@@ -74,7 +104,7 @@ export const Icon: React.FC<IconProps> = ({
     return 'text-gray-400';
   };
 
-  // Render Lucide React icon
+  // Render Lucide React icon (Explicit prop)
   if (lucideIcon) {
     const IconComponent = LucideIcons[lucideIcon] as React.ElementType;
     if (IconComponent) {
@@ -86,12 +116,29 @@ export const Icon: React.FC<IconProps> = ({
             ${getColorClasses()}
             ${className}
           `}
+          style={style}
         />
       );
     }
   }
 
-  // Render SVG icon
+  // Render Mapped Lucide Icon (from svgName)
+  if (svgName && legacyIconMapping[svgName]) {
+    const IconComponent = legacyIconMapping[svgName];
+    return (
+      <IconComponent
+        className={`
+          ${sizeClasses[size]} 
+          transition-all duration-300 
+          ${className} 
+          /* Allow parent to control color via className or style */
+        `}
+        style={style}
+      />
+    );
+  }
+
+  // Render SVG icon (Fixed types)
   if (svgSource) {
     return (
       <img
@@ -109,7 +156,7 @@ export const Icon: React.FC<IconProps> = ({
     );
   }
 
-  // Render dynamic SVG by name or URL
+  // Render dynamic SVG by name or URL (Fallback for unmapped icons)
   if (svgName) {
     // Try to find in our map first
     let finalSource = iconMap[svgName];
