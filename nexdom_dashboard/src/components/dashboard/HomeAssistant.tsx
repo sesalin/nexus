@@ -176,16 +176,28 @@ class HomeAssistantClient {
 
   async connectWebSocket(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // Para WebSocket, SÍ necesitamos el path completo incluyendo ingress
-      // porque nginx necesita el path completo para hacer el upgrade
+      // Construct WebSocket URL compatible with add-on ingress and external access
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${wsProtocol}//${window.location.host}${window.location.pathname}ws`;
+      const host = window.location.host;
+      const pathname = window.location.pathname;
 
-      console.log('[Nexdom] Conectando WebSocket al proxy backend:', wsUrl);
+      // For ingress: wss://host/api/hassio_ingress/TOKEN/api/websocket
+      // For external: wss://host/api/websocket
+      // The backend proxy should handle the routing
+      let wsUrl: string;
+      if (pathname.includes('/api/hassio_ingress/')) {
+        // Running in ingress mode - use the ingress path + api/websocket
+        wsUrl = `${wsProtocol}//${host}${pathname}api/websocket`;
+      } else {
+        // Running externally or locally
+        wsUrl = `${wsProtocol}//${host}/api/websocket`;
+      }
+
+      console.log('[Nexdom] Conectando WebSocket:', wsUrl);
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
-        console.log('[Nexdom] WebSocket conectado al proxy backend');
+        console.log('[Nexdom] WebSocket conectado');
         this.lastStableConnection = Date.now();
         // No resolvemos aquí, esperamos auth_ok
       };
@@ -208,6 +220,8 @@ class HomeAssistantClient {
             this.handleWebSocketMessage(message);
             // Resolver la promesa cuando recibamos auth_ok
             if (message.type === 'auth_ok') {
+              // Reset reconnect attempts on successful authentication
+              this.reconnectAttempts = 0;
               resolve();
             } else if (message.type === 'auth_invalid') {
               reject(new Error('WebSocket authentication failed'));
