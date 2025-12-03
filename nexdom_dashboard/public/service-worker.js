@@ -4,7 +4,7 @@
  * Version: 1.0.0
  */
 
-const CACHE_VERSION = 'nexdom-os-v0.0.119';
+const CACHE_VERSION = 'nexdom-os-v0.0.120';
 const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_DYNAMIC = `${CACHE_VERSION}-dynamic`;
 const CACHE_API = `${CACHE_VERSION}-api`;
