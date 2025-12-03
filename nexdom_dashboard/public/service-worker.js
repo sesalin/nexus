@@ -14,9 +14,9 @@ const VAPID_PUBLIC_KEY = 'BD2GM11cRtxX9R1efFvu8m-H2SrcUmrqQcT5oDdBAM9a9k8AhkzF38
 
 // Critical files to cache on install
 const STATIC_CACHE_URLS = [
-    '/',
-    '/index.html',
-    '/manifest.json'
+    './',
+    './index.html',
+    './manifest.json'
 ];
 
 // API endpoints to cache

@@ -126,7 +126,7 @@
       window.addEventListener('load', async () => {
         try {
           swRegistration = await navigator.serviceWorker.register('./service-worker.js', {
-            scope: '/'
+            scope: './'
           });
           console.log('[PWA] Service Worker registered:', swRegistration.scope);
 

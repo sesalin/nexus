@@ -2,8 +2,8 @@
     "name": "Nexdom OS",
     "short_name": "Nexdom OS",
     "description": "Home automation platform that puts local control and privacy first.",
-    "start_url": "/?homescreen=1",
-    "scope": "/",
+    "start_url": "./?homescreen=1",
+    "scope": "./",
     "display": "standalone",
     "theme_color": "#1FC70E",
     "background_color": "#000000",
@@ -127,7 +127,7 @@
             "name": "Dashboard",
             "short_name": "Home",
             "description": "Dashboard principal",
-            "url": "/?source=shortcut",
+            "url": "./?source=shortcut",
             "icons": [
                 {
                     "src": "./pwa/maskable_icon-96x96.png",
