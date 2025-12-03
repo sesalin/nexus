@@ -1,24 +1,11 @@
 /* Service Worker para Nexdom OS */
-const CACHE_NAME = 'nexdom-os-v1.0.0';
-const OFFLINE_CACHE_NAME = 'nexdom-offline-v1.0.0';
+const CACHE_NAME = 'nexdom-os-v0.0.106';
+const OFFLINE_CACHE_NAME = 'nexdom-offline-v0.0.106';
 
 // Archivos a cachear para funcionamiento offline
+// Solo incluimos el index.html, los assets se cachearán dinámicamente
 const CACHE_FILES = [
-  '/',
-  '/zones',
-  '/gadgets',
-  '/energy',
-  '/security',
-  '/scenes',
-  '/routines',
-  '/voice',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
-  '/assets/logo-white.svg',
-  '/assets/images/kitchen.jpg',
-  '/assets/images/living.jpg',
-  '/assets/images/bedroom.jpg',
-  '/assets/images/office.jpg'
+  './'
 ];
 
 // URLs de APIs críticas que necesitan cache especial
@@ -30,7 +17,7 @@ const API_CACHE_PATTERNS = [
 // Instalación del Service Worker
 self.addEventListener('install', (event) => {
   console.log('[SW] Instalando Service Worker...');
-  
+
   event.waitUntil(
     Promise.all([
       // Cachear archivos estáticos
@@ -49,7 +36,7 @@ self.addEventListener('install', (event) => {
 // Activación del Service Worker
 self.addEventListener('activate', (event) => {
   console.log('[SW] Activando Service Worker...');
-  
+
   event.waitUntil(
     Promise.all([
       // Limpiar caches obsoletos
@@ -95,12 +82,12 @@ function isApiRequest(request) {
 }
 
 function isStaticAsset(request) {
-  return request.url.includes('/assets/') || 
-         request.url.includes('.js') || 
-         request.url.includes('.css') ||
-         request.url.includes('.svg') ||
-         request.url.includes('.png') ||
-         request.url.includes('.jpg');
+  return request.url.includes('/assets/') ||
+    request.url.includes('.js') ||
+    request.url.includes('.css') ||
+    request.url.includes('.svg') ||
+    request.url.includes('.png') ||
+    request.url.includes('.jpg');
 }
 
 // Estrategias de cache
@@ -108,27 +95,27 @@ function isStaticAsset(request) {
 // Para requests de API (Network First con fallback)
 async function handleApiRequest(request) {
   const cache = await caches.open(OFFLINE_CACHE_NAME);
-  
+
   try {
     // Intentar network primero
     const response = await fetch(request);
-    
+
     if (response.ok) {
       // Cachear respuesta exitosa
       cache.put(request, response.clone());
       return response;
     }
-    
+
     throw new Error('Network response not ok');
   } catch (error) {
     console.log('[SW] Error de red para API, intentando cache...');
-    
+
     // Fallback a cache
     const cachedResponse = await cache.match(request);
     if (cachedResponse) {
       return cachedResponse;
     }
-    
+
     // Si no hay cache, devolver respuesta offline genérica
     return new Response(JSON.stringify({
       error: 'offline',
@@ -144,13 +131,13 @@ async function handleApiRequest(request) {
 // Para assets estáticos (Cache First)
 async function handleStaticAsset(request) {
   const cache = await caches.open(CACHE_NAME);
-  
+
   // Buscar en cache primero
   const cachedResponse = await cache.match(request);
   if (cachedResponse) {
     return cachedResponse;
   }
-  
+
   // Si no está en cache, intentar network
   try {
     const response = await fetch(request);
@@ -167,7 +154,7 @@ async function handleStaticAsset(request) {
 // Para páginas (Network First con fallback)
 async function handlePageRequest(request) {
   const cache = await caches.open(CACHE_NAME);
-  
+
   try {
     // Intentar network primero
     const response = await fetch(request);
@@ -177,19 +164,19 @@ async function handlePageRequest(request) {
     return response;
   } catch (error) {
     console.log('[SW] Error de red para página, intentando cache...');
-    
+
     // Fallback a cache
     const cachedResponse = await cache.match(request);
     if (cachedResponse) {
       return cachedResponse;
     }
-    
+
     // Fallback final a la página principal
     const indexResponse = await cache.match('/');
     if (indexResponse) {
       return indexResponse;
     }
-    
+
     // Respuesta de emergencia
     return new Response(`
       <!DOCTYPE html>
@@ -236,16 +223,16 @@ async function handlePageRequest(request) {
 // Manejo de mensajes desde el cliente
 self.addEventListener('message', (event) => {
   const { type, data } = event.data;
-  
+
   switch (type) {
     case 'SKIP_WAITING':
       self.skipWaiting();
       break;
-      
+
     case 'GET_VERSION':
       event.ports[0].postMessage({ version: CACHE_NAME });
       break;
-      
+
     case 'CLEAR_CACHE':
       clearCaches().then(() => {
         event.ports[0].postMessage({ success: true });
@@ -271,10 +258,10 @@ async function doBackgroundSync() {
   try {
     // Intentar sincronizar datos pendientes
     console.log('[SW] Ejecutando sincronización en segundo plano...');
-    
+
     // Aquí iría la lógica para sincronizar datos pendientes
     // Por ejemplo: comandos que no se pudieron ejecutar offline
-    
+
   } catch (error) {
     console.error('[SW] Error en sincronización:', error);
   }
@@ -283,21 +270,21 @@ async function doBackgroundSync() {
 // Notificaciones Push
 self.addEventListener('push', (event) => {
   console.log('[SW] Push notification recibida');
-  
+
   if (event.data) {
     const data = event.data.json();
-    
+
     const options = {
       body: data.body,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: './pwa/favicon-192x192.png',
+      badge: './pwa/maskable_icon-96x96.png',
       vibrate: [100, 50, 100],
       data: data.data,
       actions: data.actions || [],
       requireInteraction: data.requireInteraction || false,
       silent: data.silent || false
     };
-    
+
     event.waitUntil(
       self.registration.showNotification(data.title, options)
     );
@@ -307,16 +294,16 @@ self.addEventListener('push', (event) => {
 // Manejo de clicks en notificaciones
 self.addEventListener('notificationclick', (event) => {
   console.log('[SW] Click en notificación:', event.notification.tag);
-  
+
   event.notification.close();
-  
+
   const data = event.notification.data;
   let urlToOpen = '/';
-  
+
   if (data && data.url) {
     urlToOpen = data.url;
   }
-  
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
@@ -324,14 +311,14 @@ self.addEventListener('notificationclick', (event) => {
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && 'focus' in client) {
             client.focus();
-            client.postMessage({ 
-              type: 'NOTIFICATION_CLICK', 
-              data: event.notification.data 
+            client.postMessage({
+              type: 'NOTIFICATION_CLICK',
+              data: event.notification.data
             });
             return;
           }
         }
-        
+
         // Si no hay ventana abierta, abrir una nueva
         if (clients.openWindow) {
           return clients.openWindow(urlToOpen);
@@ -343,12 +330,12 @@ self.addEventListener('notificationclick', (event) => {
 // Manejo de instalación del PWA
 self.addEventListener('beforeinstallprompt', (event) => {
   console.log('[SW] Prompt de instalación disponible');
-  
+
   event.preventDefault();
-  
+
   // Guardar el evento para usarlo más tarde
   self.deferredPrompt = event;
-  
+
   // Notificar a la app principal que el prompt está disponible
   self.clients.matchAll().then((clients) => {
     clients.forEach(client => {
@@ -360,9 +347,9 @@ self.addEventListener('beforeinstallprompt', (event) => {
 // Notificar cuando la app se instala
 self.addEventListener('appinstalled', (event) => {
   console.log('[SW] PWA instalada correctamente');
-  
+
   self.deferredPrompt = null;
-  
+
   self.clients.matchAll().then((clients) => {
     clients.forEach(client => {
       client.postMessage({ type: 'PWA_INSTALLED' });
