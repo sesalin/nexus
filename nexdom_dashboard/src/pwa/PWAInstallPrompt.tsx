@@ -1,24 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { X, Download, Smartphone, Wifi, WifiOff } from 'lucide-react';
+import { X, Download, Smartphone, Wifi, WifiOff, ExternalLink } from 'lucide-react';
 import { usePWA } from './PWAUtils';
 
 interface PWAInstallPromptProps {
   className?: string;
 }
 
-export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ 
-  className = "" 
+export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
+  className = ""
 }) => {
-  const { 
-    hasInstallPrompt, 
-    install, 
-    isInstalled, 
-    isOnline, 
-    registerInteraction 
+  const {
+    hasInstallPrompt,
+    install,
+    isInstalled,
+    isOnline,
+    registerInteraction
   } = usePWA();
-  
+
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
+  const [isInIframe, setIsInIframe] = useState(false);
+
+  useEffect(() => {
+    setIsInIframe(window.self !== window.top);
+  }, []);
 
   useEffect(() => {
     // Registrar interacción del usuario
@@ -52,7 +57,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
 
   const handleInstall = async () => {
     if (isInstalling) return;
-    
+
     setIsInstalling(true);
     try {
       const success = await install();
@@ -77,6 +82,44 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
     return null;
   }
 
+  if (isInIframe) {
+    return (
+      <div className={`fixed bottom-4 left-4 right-4 z-50 ${className}`}>
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-4 shadow-2xl border border-purple-400/20 backdrop-blur-md">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <ExternalLink className="w-6 h-6 text-white" />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <h3 className="text-white font-semibold text-sm mb-1">
+                🚀 Abrir App Independiente
+              </h3>
+              <p className="text-purple-100 text-xs mb-3">
+                Para instalar Nexdom OS, necesitas abrirlo fuera de Home Assistant.
+              </p>
+
+              <button
+                onClick={() => window.open(window.location.href, '_blank')}
+                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 w-full justify-center"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Abrir en Nueva Pestaña
+              </button>
+            </div>
+
+            <button
+              onClick={() => setIsInIframe(false)}
+              className="flex-shrink-0 text-purple-100 hover:text-white p-1 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!showPrompt) {
     return null;
   }
@@ -88,7 +131,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
           <div className="flex-shrink-0">
             <Smartphone className="w-6 h-6 text-white" />
           </div>
-          
+
           <div className="flex-1 min-w-0">
             <h3 className="text-white font-semibold text-sm mb-1">
               📱 Instalar Nexdom OS
@@ -96,7 +139,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
             <p className="text-cyan-100 text-xs mb-3">
               Añade la app a tu pantalla de inicio para acceso rápido y notificaciones
             </p>
-            
+
             <div className="flex gap-2">
               <button
                 onClick={handleInstall}
@@ -115,7 +158,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
                   </>
                 )}
               </button>
-              
+
               <button
                 onClick={handleDismiss}
                 className="text-cyan-100 hover:text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
@@ -124,7 +167,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
               </button>
             </div>
           </div>
-          
+
           <button
             onClick={handleDismiss}
             className="flex-shrink-0 text-cyan-100 hover:text-white p-1 transition-colors"
@@ -188,12 +231,12 @@ export const PWAStatus: React.FC = () => {
           <div className={`w-2 h-2 rounded-full ${isInstalled ? 'bg-green-400' : 'bg-gray-400'}`} />
           <span>{isInstalled ? 'PWA Instalada' : 'PWA No Instalada'}</span>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-400' : 'bg-red-400'}`} />
           <span>{isOnline ? 'En Línea' : 'Sin Conexión'}</span>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Wifi className="w-3 h-3" />
           <span>PWA Soportado</span>
