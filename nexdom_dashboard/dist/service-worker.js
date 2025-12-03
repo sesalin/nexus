@@ -4,7 +4,7 @@
  * Version: 1.0.0
  */
 
-const CACHE_VERSION = 'nexdom-os-v0.0.112';
+const CACHE_VERSION = 'nexdom-os-v0.0.113';
 const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_DYNAMIC = `${CACHE_VERSION}-dynamic`;
 const CACHE_API = `${CACHE_VERSION}-api`;
@@ -16,7 +16,7 @@ const VAPID_PUBLIC_KEY = 'BD2GM11cRtxX9R1efFvu8m-H2SrcUmrqQcT5oDdBAM9a9k8AhkzF38
 const STATIC_CACHE_URLS = [
     './',
     './index.html',
-    './manifest.json'
+    './nexdom.webmanifest'
 ];
 
 // API endpoints to cache
