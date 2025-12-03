@@ -14,152 +14,161 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
     install,
     isInstalled,
     isOnline,
-    registerInteraction
+    registerInteraction,
+    isIOS
   } = usePWA();
+} = usePWA();
 
-  const [showPrompt, setShowPrompt] = useState(false);
-  const [isInstalling, setIsInstalling] = useState(false);
-  const [isInIframe, setIsInIframe] = useState(false);
+const [showPrompt, setShowPrompt] = useState(false);
+const [isInstalling, setIsInstalling] = useState(false);
+const [isInIframe, setIsInIframe] = useState(false);
 
-  useEffect(() => {
-    setIsInIframe(window.self !== window.top);
-  }, []);
+useEffect(() => {
+  setIsInIframe(window.self !== window.top);
+}, []);
 
-  useEffect(() => {
-    // Registrar interacción del usuario
-    const handleUserInteraction = () => {
-      registerInteraction();
-      // Solo escuchar una vez
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
-    };
-
-    document.addEventListener('click', handleUserInteraction);
-    document.addEventListener('touchstart', handleUserInteraction);
-
-    return () => {
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
-    };
-  }, [registerInteraction]);
-
-  useEffect(() => {
-    // Mostrar prompt si hay instalación disponible y la app no está instalada
-    if (hasInstallPrompt && !isInstalled) {
-      // Esperar un poco antes de mostrar el prompt
-      const timer = setTimeout(() => {
-        setShowPrompt(true);
-      }, 15000); // 15 segundos después de cargar
-
-      return () => clearTimeout(timer);
-    }
-  }, [hasInstallPrompt, isInstalled]);
-
-  const handleInstall = async () => {
-    if (isInstalling) return;
-
-    setIsInstalling(true);
-    try {
-      const success = await install();
-      if (success) {
-        setShowPrompt(false);
-      }
-    } catch (error) {
-      console.error('Error installing PWA:', error);
-    } finally {
-      setIsInstalling(false);
-    }
+useEffect(() => {
+  // Registrar interacción del usuario
+  const handleUserInteraction = () => {
+    registerInteraction();
+    // Solo escuchar una vez
+    document.removeEventListener('click', handleUserInteraction);
+    document.removeEventListener('touchstart', handleUserInteraction);
   };
 
-  const handleDismiss = () => {
-    setShowPrompt(false);
-    // No mostrar de nuevo en esta sesión
-    sessionStorage.setItem('nexdom-pwa-dismissed', 'true');
+  document.addEventListener('click', handleUserInteraction);
+  document.addEventListener('touchstart', handleUserInteraction);
+
+  return () => {
+    document.removeEventListener('click', handleUserInteraction);
+    document.removeEventListener('touchstart', handleUserInteraction);
   };
+}, [registerInteraction]);
 
-  // No mostrar si ya se ha descartado en esta sesión
-  if (sessionStorage.getItem('nexdom-pwa-dismissed') === 'true') {
-    return null;
+useEffect(() => {
+  // Mostrar prompt si hay instalación disponible (Android) o es iOS, y no está instalada
+  if ((hasInstallPrompt || isIOS) && !isInstalled) {
+    // Esperar un poco antes de mostrar el prompt (reducido a 2s)
+    const timer = setTimeout(() => {
+      setShowPrompt(true);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }
+}, [hasInstallPrompt, isInstalled, isIOS]);
+
+const [showIOSHelp, setShowIOSHelp] = useState(false);
+
+const handleInstall = async () => {
+  if (isIOS) {
+    setShowIOSHelp(true);
+    return;
   }
 
-  if (isInIframe) {
-    return (
-      <div className={`fixed bottom-4 left-4 right-4 z-50 ${className}`}>
-        <div className="bg-gradient-to-r from-nexdom-lime to-green-500 rounded-2xl p-4 shadow-2xl border border-nexdom-lime/20 backdrop-blur-md">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0">
-              <ExternalLink className="w-6 h-6 text-white" />
-            </div>
+  if (isInstalling) return;
 
-            <div className="flex-1 min-w-0">
-              <h3 className="text-black font-bold text-sm mb-1">
-                🚀 Abrir App Independiente
-              </h3>
-              <p className="text-black/80 text-xs mb-3">
-                Para instalar Nexdom OS, necesitas abrirlo fuera de Home Assistant.
-              </p>
-
-              <button
-                onClick={() => window.open(window.location.href, '_blank')}
-                className="bg-black/90 hover:bg-black text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 w-full justify-center"
-              >
-                <ExternalLink className="w-3 h-3" />
-                Abrir en Nueva Pestaña
-              </button>
-            </div>
-
-            <button
-              onClick={() => setIsInIframe(false)}
-              className="flex-shrink-0 text-black/70 hover:text-black p-1 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+  setIsInstalling(true);
+  try {
+    const success = await install();
+    if (success) {
+      setShowPrompt(false);
+    }
+  } catch (error) {
+    console.error('Error installing PWA:', error);
+  } finally {
+    setIsInstalling(false);
   }
+};
 
-  if (!showPrompt) {
-    return null;
-  }
+const handleDismiss = () => {
+  setShowPrompt(false);
+  // No mostrar de nuevo en esta sesión
+  sessionStorage.setItem('nexdom-pwa-dismissed', 'true');
+};
 
+// No mostrar si ya se ha descartado en esta sesión
+if (sessionStorage.getItem('nexdom-pwa-dismissed') === 'true') {
+  return null;
+}
+
+if (isInIframe) {
   return (
-    <div className={`fixed bottom-0 left-0 right-0 z-50 ${className}`}>
-      <div className="bg-[#0F1412] border-t-2 border-[#00C26F] py-4 px-6 shadow-2xl">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          {/* Texto */}
+    <div className={`fixed bottom-4 left-4 right-4 z-50 ${className}`}>
+      <div className="bg-gradient-to-r from-nexdom-lime to-green-500 rounded-2xl p-4 shadow-2xl border border-nexdom-lime/20 backdrop-blur-md">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0">
+            <ExternalLink className="w-6 h-6 text-white" />
+          </div>
+
           <div className="flex-1 min-w-0">
-            <h3 className="text-white font-bold text-base mb-0.5">
-              Descarga Nexdom OS
+            <h3 className="text-black font-bold text-sm mb-1">
+              🚀 Abrir App Independiente
             </h3>
-            <p className="text-[#B7C0BC] text-xs">
-              Tu casa inteligente, siempre disponible. Instálalo como app en 1 minuto.
+            <p className="text-black/80 text-xs mb-3">
+              Para instalar Nexdom OS, necesitas abrirlo fuera de Home Assistant.
             </p>
-          </div>
-
-          {/* Botones */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleInstall}
-              disabled={isInstalling}
-              className="bg-[#00C26F] hover:bg-[#22D98C] text-[#0B0F0D] font-bold px-6 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50 whitespace-nowrap"
-            >
-              {isInstalling ? 'Instalando...' : 'Descargar Nexdom OS'}
-            </button>
 
             <button
-              onClick={handleDismiss}
-              className="text-[#B7C0BC] hover:text-white p-2 transition-colors"
-              aria-label="Cerrar"
+              onClick={() => window.open(window.location.href, '_blank')}
+              className="bg-black/90 hover:bg-black text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 w-full justify-center"
             >
-              <X className="w-5 h-5" />
+              <ExternalLink className="w-3 h-3" />
+              Abrir en Nueva Pestaña
             </button>
           </div>
+
+          <button
+            onClick={() => setIsInIframe(false)}
+            className="flex-shrink-0 text-black/70 hover:text-black p-1 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </div>
   );
+}
+
+if (!showPrompt) {
+  return null;
+}
+
+return (
+  <div className={`fixed bottom-0 left-0 right-0 z-50 ${className}`}>
+    <div className="bg-[#0F1412] border-t-2 border-[#00C26F] py-4 px-6 shadow-2xl">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        {/* Texto */}
+        <div className="flex-1 min-w-0">
+          <h3 className="text-white font-bold text-base mb-0.5">
+            Descarga Nexdom OS
+          </h3>
+          <p className="text-[#B7C0BC] text-xs">
+            Tu casa inteligente, siempre disponible. Instálalo como app en 1 minuto.
+          </p>
+        </div>
+
+        {/* Botones */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleInstall}
+            disabled={isInstalling}
+            className="bg-[#00C26F] hover:bg-[#22D98C] text-[#0B0F0D] font-bold px-6 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50 whitespace-nowrap"
+          >
+            {isInstalling ? 'Instalando...' : (isIOS ? 'Instalar en iOS' : 'Descargar Nexdom OS')}
+          </button>
+
+          <button
+            onClick={handleDismiss}
+            className="text-[#B7C0BC] hover:text-white p-2 transition-colors"
+            aria-label="Cerrar"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 };
 
 // Componente para mostrar estado de conectividad

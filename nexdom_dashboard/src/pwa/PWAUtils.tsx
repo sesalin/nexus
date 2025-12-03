@@ -75,12 +75,10 @@ export class PWAUtils {
   // Mostrar prompt de instalación si es apropiado
   private static maybeShowInstallPrompt() {
     if (this.deferredPrompt && !this.isInstalled) {
-      // Esperar un poco antes de mostrar el prompt
-      setTimeout(() => {
-        if (this.shouldShowInstallPrompt()) {
-          this.showInstallPrompt();
-        }
-      }, 10000); // 10 segundos después de cargar
+      if (this.shouldShowInstallPrompt()) {
+        // Disparar evento para que la UI sepa que puede mostrar el prompt
+        window.dispatchEvent(new CustomEvent('pwa:install-available'));
+      }
     }
   }
 
@@ -93,10 +91,7 @@ export class PWAUtils {
     // Solo mostrar en móviles o tablets
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    // Solo mostrar si el usuario ha interactuado con la app
-    const hasInteracted = sessionStorage.getItem('nexdom-user-interacted');
-
-    return isMobile && hasInteracted;
+    return isMobile;
   }
 
   // Mostrar prompt de instalación
@@ -322,9 +317,13 @@ export class PWAUtils {
 
   // Verificar soporte PWA
   static supportsPWA(): boolean {
-    return 'serviceWorker' in navigator &&
-      'Notification' in window &&
-      'beforeinstallprompt' in window;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    return ('serviceWorker' in navigator && 'Notification' in window) || isIOS;
+  }
+
+  // Detectar iOS
+  static isIOS(): boolean {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
   }
 
   // Obtener información de instalación
@@ -334,6 +333,7 @@ export class PWAUtils {
       isOnline: this._isOnline,
       supportsPWA: this.supportsPWA(),
       hasInstallPrompt: !!this.deferredPrompt,
+      isIOS: this.isIOS(),
       canNotify: 'Notification' in window && Notification.permission === 'granted'
     };
   }
