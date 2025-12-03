@@ -147,39 +147,93 @@ export const Alerts: React.FC = () => {
   );
 };
 
-// Export hook for use in Header notification count
-export const useAlerts = () => {
+// Export Alert type for use in modal
+export interface Alert {
+  id: string;
+  type: 'critical' | 'warning' | 'info';
+  title: string;
+  message: string;
+  timestamp: string;
+  icon?: React.ReactNode;
+}
+
+// Export hook for use in Header notification count and modal
+export const useAlerts = (): Alert[] => {
   const { states } = useHomeAssistant();
 
   return useMemo(() => {
     if (!states) return [];
-    const activeAlerts: any[] = [];
+    const activeAlerts: Alert[] = [];
 
     states.forEach(entity => {
       const domain = entity.entity_id.split('.')[0];
       const attributes = entity.attributes || {};
       const deviceClass = attributes.device_class;
 
-      if (attributes.battery_level !== undefined && typeof attributes.battery_level === 'number' && attributes.battery_level < 20) {
-        activeAlerts.push({ id: `batt-${entity.entity_id}`, type: 'warning' });
+      // 1. Low Battery Alerts
+      if (attributes.battery_level !== undefined && typeof attributes.battery_level === 'number') {
+        if (attributes.battery_level < 20) {
+          activeAlerts.push({
+            id: `batt-${entity.entity_id}`,
+            type: 'warning',
+            title: 'Low Battery',
+            message: `${attributes.friendly_name || entity.entity_id} is at ${attributes.battery_level}%`,
+            timestamp: entity.last_updated,
+            icon: <BatteryWarning className="w-4 h-4" />
+          });
+        }
       } else if (deviceClass === 'battery' && domain === 'binary_sensor' && entity.state === 'on') {
-        activeAlerts.push({ id: `batt-bin-${entity.entity_id}`, type: 'warning' });
+        activeAlerts.push({
+          id: `batt-bin-${entity.entity_id}`,
+          type: 'warning',
+          title: 'Low Battery',
+          message: `${attributes.friendly_name || entity.entity_id} battery is low`,
+          timestamp: entity.last_updated,
+          icon: <BatteryWarning className="w-4 h-4" />
+        });
       }
 
-      if ((domain === 'binary_sensor' || domain === 'cover') &&
-        (['door', 'window', 'garage_door', 'garage'].includes(deviceClass) || domain === 'cover') &&
-        (entity.state === 'on' || entity.state === 'open')) {
-        activeAlerts.push({ id: `sec-${entity.entity_id}`, type: 'info' });
+      // 2. Security Alerts (Doors, Windows, Garage, Locks)
+      if (domain === 'binary_sensor' || domain === 'cover') {
+        if (['door', 'window', 'garage_door', 'garage'].includes(deviceClass) || domain === 'cover') {
+          if (entity.state === 'on' || entity.state === 'open') {
+            activeAlerts.push({
+              id: `sec-${entity.entity_id}`,
+              type: 'info',
+              title: `${deviceClass === 'window' ? 'Window' : 'Door'} Open`,
+              message: `${attributes.friendly_name || entity.entity_id} is open`,
+              timestamp: entity.last_changed,
+              icon: <DoorOpen className="w-4 h-4" />
+            });
+          }
+        }
       }
 
       if (domain === 'lock' && entity.state === 'unlocked') {
-        activeAlerts.push({ id: `lock-${entity.entity_id}`, type: 'warning' });
+        activeAlerts.push({
+          id: `lock-${entity.entity_id}`,
+          type: 'warning',
+          title: 'Unlocked',
+          message: `${attributes.friendly_name || entity.entity_id} is unlocked`,
+          timestamp: entity.last_changed,
+          icon: <Lock className="w-4 h-4" />
+        });
       }
 
-      if (domain === 'binary_sensor' &&
-        ['smoke', 'gas', 'moisture', 'safety', 'tamper', 'problem'].includes(deviceClass) &&
-        (entity.state === 'on' || entity.state === 'unsafe')) {
-        activeAlerts.push({ id: `safe-${entity.entity_id}`, type: 'critical' });
+      // 3. Safety Alerts (Smoke, Gas, Moisture, Tamper)
+      if (domain === 'binary_sensor') {
+        if (['smoke', 'gas', 'moisture', 'safety', 'tamper', 'problem'].includes(deviceClass)) {
+          if (entity.state === 'on' || entity.state === 'unsafe') {
+            activeAlerts.push({
+              id: `safe-${entity.entity_id}`,
+              type: 'critical',
+              title: `${deviceClass ? deviceClass.toUpperCase() : 'Safety'} Alert`,
+              message: `${attributes.friendly_name || entity.entity_id} detected issue!`,
+              timestamp: entity.last_changed,
+              icon: <AlertTriangle className="w-4 h-4" />
+            });
+          }
+        }
       }
     });
 

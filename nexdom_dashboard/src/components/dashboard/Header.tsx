@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Bell, Mic, Search } from 'lucide-react';
 import { useNexdomStore } from '../../store/nexdomStore';
 import { motion } from 'framer-motion';
 import logoWhite from '../../assets/logo-white.svg';
 import { AccountMenu } from './account/AccountMenu';
 import { useAlerts } from './Alerts';
+import { AlertsModal } from './modals/AlertsModal';
 
 interface HeaderProps {
   pwaHeader?: React.ReactNode;
@@ -14,6 +15,7 @@ export const Header: React.FC<HeaderProps> = ({ pwaHeader }) => {
   const toggleMobileMenu = useNexdomStore((state) => state.toggleMobileMenu);
   const alerts = useAlerts();
   const alertCount = alerts.length;
+  const [isAlertsModalOpen, setIsAlertsModalOpen] = useState(false);
 
   return (
     <motion.header
@@ -53,6 +55,7 @@ export const Header: React.FC<HeaderProps> = ({ pwaHeader }) => {
         {pwaHeader}
 
         <motion.button
+          onClick={() => setIsAlertsModalOpen(true)}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           className="p-3 rounded-full bg-nexdom-glass backdrop-blur-md border border-white/10 hover:bg-white/10 hover:border-nexdom-lime/50 transition-all relative group"
@@ -83,6 +86,13 @@ export const Header: React.FC<HeaderProps> = ({ pwaHeader }) => {
           <AccountMenu />
         </div>
       </div>
+
+      {/* Alerts Modal */}
+      <AlertsModal
+        isOpen={isAlertsModalOpen}
+        onClose={() => setIsAlertsModalOpen(false)}
+        alerts={alerts}
+      />
     </motion.header>
   );
 };

@@ -149,4 +149,4 @@ display_options:
 # 3. Las reglas se aplican en orden: allowed_domains → hide_patterns → force_show → force_hide
 # 4. Si una entidad está en force_hide, NUNCA se mostrará
 # 5. Si una entidad está en force_show, SIEMPRE se mostrará (excepto si está en force_hide)
-# ============================================================================
+# === =========================================================================

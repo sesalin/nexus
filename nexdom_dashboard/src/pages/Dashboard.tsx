@@ -7,9 +7,9 @@ import { Cloud, CloudRain, Sun, Wind, Droplets } from 'lucide-react';
 export const Dashboard: React.FC = () => {
   const { states } = useHomeAssistant();
 
-  // Find weather entity
+  // Find weather entity - using specific forecast_casa entity
   const weatherEntity = useMemo(() => {
-    return states?.find(e => e.entity_id.startsWith('weather.')) || null;
+    return states?.find(e => e.entity_id === 'weather.forecast_casa') || null;
   }, [states]);
 
   const temperature = weatherEntity?.attributes?.temperature || '--';

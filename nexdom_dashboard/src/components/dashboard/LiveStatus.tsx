@@ -19,7 +19,7 @@ export const LiveStatus: React.FC = () => {
       <div className="flex items-center justify-between mb-6 px-2">
         <div className="flex items-center gap-3">
           <div className="w-1 h-6 bg-nexdom-lime rounded-full shadow-[0_0_10px_#00FF88]"></div>
-          <h2 className="text-xl font-bold text-white tracking-wide">Live Status</h2>
+          <h2 className="text-xl font-bold text-white tracking-wide">Favoritos</h2>
         </div>
         <div className="flex gap-2">
           <div className="px-3 py-1 bg-nexdom-lime/10 border border-nexdom-lime/20 rounded-full flex items-center gap-2">
