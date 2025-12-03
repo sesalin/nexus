@@ -125,55 +125,37 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
   }
 
   return (
-    <div className={`fixed bottom-4 left-4 right-4 z-50 ${className}`}>
-      <div className="bg-gradient-to-r from-nexdom-lime to-green-500 rounded-2xl p-4 shadow-2xl border border-nexdom-lime/20 backdrop-blur-md">
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0">
-            <Smartphone className="w-6 h-6 text-white" />
-          </div>
-
+    <div className={`fixed bottom-0 left-0 right-0 z-50 ${className}`}>
+      <div className="bg-[#0F1412] border-t-2 border-[#00C26F] py-4 px-6 shadow-2xl">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          {/* Texto */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-black font-bold text-sm mb-1">
-              📱 ¡Instala Nexdom OS!
+            <h3 className="text-white font-bold text-base mb-0.5">
+              Descarga Nexdom OS
             </h3>
-            <p className="text-black/80 text-xs mb-3">
-              Haz click para instalar la app en tu dispositivo
+            <p className="text-[#B7C0BC] text-xs">
+              Tu casa inteligente, siempre disponible. Instálalo como app en 1 minuto.
             </p>
-
-            <div className="flex gap-2">
-              <button
-                onClick={handleInstall}
-                disabled={isInstalling}
-                className="bg-black/90 hover:bg-black text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 flex items-center gap-1"
-              >
-                {isInstalling ? (
-                  <>
-                    <div className="w-3 h-3 border border-white/50 border-t-white rounded-full animate-spin" />
-                    Instalando...
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-3 h-3" />
-                    Instalar
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={handleDismiss}
-                className="text-black/70 hover:text-black px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-              >
-                Ahora no
-              </button>
-            </div>
           </div>
 
-          <button
-            onClick={handleDismiss}
-            className="flex-shrink-0 text-black/70 hover:text-black p-1 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          {/* Botones */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleInstall}
+              disabled={isInstalling}
+              className="bg-[#00C26F] hover:bg-[#22D98C] text-[#0B0F0D] font-bold px-6 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50 whitespace-nowrap"
+            >
+              {isInstalling ? 'Instalando...' : 'Descargar Nexdom OS'}
+            </button>
+
+            <button
+              onClick={handleDismiss}
+              className="text-[#B7C0BC] hover:text-white p-2 transition-colors"
+              aria-label="Cerrar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
