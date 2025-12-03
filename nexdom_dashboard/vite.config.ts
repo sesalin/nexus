@@ -5,6 +5,11 @@ import { youwareVitePlugin } from "@youware/vite-plugin-react";
 // https://vite.dev/config/
 export default defineConfig({
   base: './',
+  resolve: {
+    alias: {
+      "@": "/src",
+    },
+  },
   plugins: [youwareVitePlugin(), react()],
   server: {
     host: "127.0.0.1",
