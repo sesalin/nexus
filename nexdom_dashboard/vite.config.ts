@@ -13,5 +13,32 @@ export default defineConfig({
   build: {
     // Desactivar sourcemaps en build para evitar requests a archivos locales en HA ingress
     sourcemap: false,
+    // Configurar rollupOptions para empaquetar todas las dependencias
+    rollupOptions: {
+      output: {
+        // Estrategia de chunking manual para mejor control
+        manualChunks: undefined,
+      },
+    },
+    // Asegurar que las dependencias se incluyan en el bundle
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
+  },
+  // Optimización de dependencias
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'zustand',
+      'framer-motion',
+      'lucide-react',
+      'gsap',
+      'three',
+      'i18next',
+      'react-i18next',
+    ],
   },
 });
