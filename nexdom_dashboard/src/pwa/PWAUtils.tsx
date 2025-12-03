@@ -10,7 +10,9 @@ export class PWAUtils {
     // Registrar Service Worker
     if ('serviceWorker' in navigator) {
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js');
+        const registration = await navigator.serviceWorker.register('./sw.js', {
+          scope: './'
+        });
         this.serviceWorker = registration.serviceWorker;
 
         console.log('[PWA] Service Worker registrado:', registration.scope);
@@ -156,8 +158,8 @@ export class PWAUtils {
     }
 
     const defaultOptions: NotificationOptions = {
-      icon: '/icon-192.svg',
-      badge: '/icon-192.svg',
+      icon: './pwa/favicon-192x192.png',
+      badge: './pwa/maskable_icon-96x96.png',
       vibrate: [100, 50, 100],
       ...options
     };
@@ -203,10 +205,10 @@ export class PWAUtils {
     };
 
     const icons = {
-      'on': '/icon-192.svg',
-      'off': '/icon-192.svg',
-      'alert': '/icon-192.svg',
-      'trigger': '/icon-192.svg'
+      'on': './pwa/favicon-192x192.png',
+      'off': './pwa/favicon-192x192.png',
+      'alert': './pwa/favicon-192x192.png',
+      'trigger': './pwa/favicon-192x192.png'
     };
 
     this.showNotification(titles[event], {
