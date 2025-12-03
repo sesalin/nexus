@@ -22,6 +22,35 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
   const [isInstalling, setIsInstalling] = useState(false);
   const [isInIframe, setIsInIframe] = useState(false);
   const [showIOSHelp, setShowIOSHelp] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const EXTERNAL_HINT_URL = typeof window !== 'undefined' ? window.location.href : '';
+
+  const handleOpen = () => {
+    // Intento 1: romper el iframe (PC / algunos móviles)
+    try {
+      if (window.top && window.top !== window.self) {
+        window.top.location.href = window.location.href;
+        return;
+      }
+    } catch (e) {
+      // cross-origin, ignoramos y seguimos
+    }
+
+    // Intento 2: abrir en nueva pestaña
+    window.open(window.location.href, '_blank');
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(EXTERNAL_HINT_URL);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      // fallback: seleccionar texto o mostrar mensaje
+      alert('No se pudo copiar automáticamente. Copia el enlace manualmente.');
+    }
+  };
 
   useEffect(() => {
     setIsInIframe(window.self !== window.top);
@@ -100,19 +129,37 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
 
             <div className="flex-1 min-w-0">
               <h3 className="text-black font-bold text-sm mb-1">
-                🚀 Abrir App Independiente
+                🚀 Abrir NexdomOS fuera de Home Assistant
               </h3>
-              <p className="text-black/80 text-xs mb-3">
-                Para instalar Nexdom OS, necesitas abrirlo fuera de Home Assistant.
+
+              <p className="text-black/80 text-xs mb-2">
+                Para instalar NexdomOS como app, ábrelo en el navegador (Chrome/Safari), no dentro de Home Assistant.
               </p>
 
-              <button
-                onClick={() => window.open(window.location.href, '_blank')}
-                className="bg-black/90 hover:bg-black text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 w-full justify-center"
-              >
-                <ExternalLink className="w-3 h-3" />
-                Abrir en Nueva Pestaña
-              </button>
+              <p className="text-black/70 text-[10px] break-all mb-2 bg-black/5 rounded-md px-2 py-1 font-mono">
+                {EXTERNAL_HINT_URL}
+              </p>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={handleOpen}
+                  className="bg-black/90 hover:bg-black text-white px-3 py-2 rounded-lg text-[11px] font-bold transition-colors flex items-center gap-1 flex-1 justify-center"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Abrir en navegador
+                </button>
+
+                <button
+                  onClick={handleCopy}
+                  className="bg-white/90 hover:bg-white text-black px-3 py-2 rounded-lg text-[11px] font-semibold transition-colors flex-1"
+                >
+                  {copied ? '✅ Copiado' : 'Copiar enlace'}
+                </button>
+              </div>
+
+              <p className="text-black/60 text-[10px] mt-2">
+                En el celular: pega el enlace en Chrome/Safari para que te aparezca la opción de instalar NexdomOS.
+              </p>
             </div>
 
             <button
