@@ -2,11 +2,12 @@
     "name": "NexdomOS Dashboard",
     "short_name": "NexdomOS",
     "description": "Control total de tu hogar inteligente con NexdomOS",
-    "start_url": ".",
-    "scope": ".",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "orientation": "portrait-primary",
     "background_color": "#000000",
+    "id": "/",
     "theme_color": "#00ff00",
     "icons": [
         {
