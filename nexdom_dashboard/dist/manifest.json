@@ -1,14 +1,17 @@
 {
     "name": "Nexdom OS",
-    "short_name": "Nexdom",
-    "description": "Next-generation smart home dashboard for Home Assistant",
-    "start_url": "./",
+    "short_name": "Nexdom OS",
+    "description": "Home automation platform that puts local control and privacy first.",
+    "start_url": "/?homescreen=1",
+    "scope": "/",
     "display": "standalone",
-    "theme_color": "#00FF88",
-    "background_color": "#0a0a0a",
-    "orientation": "portrait-primary",
+    "theme_color": "#1FC70E",
+    "background_color": "#000000",
+    "orientation": "portrait",
+    "lang": "es",
+    "dir": "ltr",
     "categories": [
-        "smart-home",
+        "productivity",
         "utilities"
     ],
     "icons": [
@@ -109,14 +112,14 @@
             "sizes": "1280x720",
             "type": "image/png",
             "form_factor": "wide",
-            "label": "Dashboard principal"
+            "label": "Dashboard principal de Nexdom OS"
         },
         {
             "src": "./pwa/screenshot-mobile.png",
             "sizes": "390x844",
             "type": "image/png",
             "form_factor": "narrow",
-            "label": "Vista móvil"
+            "label": "Vista móvil de Nexdom OS"
         }
     ],
     "shortcuts": [
@@ -124,7 +127,7 @@
             "name": "Dashboard",
             "short_name": "Home",
             "description": "Dashboard principal",
-            "url": "./",
+            "url": "/?source=shortcut",
             "icons": [
                 {
                     "src": "./pwa/maskable_icon-96x96.png",
@@ -134,13 +137,9 @@
             ]
         }
     ],
-    "features": [
+    "permissions": [
         "notifications",
-        "offline",
-        "background-sync"
+        "push"
     ],
-    "prefer_related_applications": false,
-    "scope": "./",
-    "lang": "es",
-    "dir": "ltr"
+    "prefer_related_applications": false
 }
