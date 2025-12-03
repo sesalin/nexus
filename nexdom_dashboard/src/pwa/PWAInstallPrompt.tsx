@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, ExternalLink, Wifi, WifiOff } from 'lucide-react';
-import { usePWAInstall } from '@/hooks/usePWAInstall';
+import { usePWAInstall } from '@/hooks/usePWAInstall.ts';
 import { usePWA } from './PWAUtils'; // Mantener para status de conexión
 
 interface PWAInstallPromptProps {
