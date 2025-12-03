@@ -1,0 +1,19 @@
+{
+  "name": "nexdomos-backend",
+  "version": "0.1.0",
+  "description": "NexdomOS backend skeleton with HA OAuth2 (PKCE) + JWT sessions",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "NODE_ENV=development node src/server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.19.0",
+    "jsonwebtoken": "^9.0.2",
+    "nanoid": "^5.0.7",
+    "sqlite3": "^5.1.7",
+    "bcryptjs": "^2.4.3"
+  }
+}

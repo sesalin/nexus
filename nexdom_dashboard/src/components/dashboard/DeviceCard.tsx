@@ -3,6 +3,7 @@ import { Device } from '../../types/nexdom';
 import { Lightbulb, Thermometer, Lock, Camera, Activity, Power, Battery, Wifi } from 'lucide-react';
 import { useNexdomStore } from '../../store/nexdomStore';
 import { motion } from 'framer-motion';
+import { useOffline } from '../../hooks/useOffline';
 
 interface DeviceCardProps {
   device: Device;
@@ -10,6 +11,7 @@ interface DeviceCardProps {
 
 export const DeviceCard: React.FC<DeviceCardProps> = ({ device }) => {
   const toggleDevice = useNexdomStore((state) => state.toggleDevice);
+  const { isOffline } = useOffline();
 
   const getIcon = () => {
     switch (device.type) {
@@ -31,17 +33,18 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device }) => {
   const isActive = device.status === 'on' || device.status === 'locked';
 
   return (
-    <motion.div 
+    <motion.div
       whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}
       className={`
         relative overflow-hidden rounded-[2rem] p-5 cursor-pointer transition-all duration-300
-        ${isActive 
-          ? 'bg-gradient-to-br from-white/10 to-white/5 border border-nexdom-lime/30 shadow-[0_0_15px_rgba(0,255,136,0.1)]' 
+        ${isActive
+          ? 'bg-gradient-to-br from-white/10 to-white/5 border border-nexdom-lime/30 shadow-[0_0_15px_rgba(0,255,136,0.1)]'
           : 'bg-nexdom-glass border border-white/5 hover:border-white/20'
         }
+        ${isOffline ? 'opacity-50 cursor-not-allowed grayscale' : ''}
       `}
-      onClick={() => toggleDevice(device.id)}
+      onClick={() => !isOffline && toggleDevice(device.id)}
     >
       {/* Background Glow for Active State */}
       {isActive && (
@@ -49,35 +52,33 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device }) => {
       )}
 
       <div className="flex justify-between items-start mb-4 relative z-10">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-          isActive ? 'bg-white/10' : 'bg-black/20'
-        }`}>
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isActive ? 'bg-white/10' : 'bg-black/20'
+          }`}>
           {getIcon()}
         </div>
-        
+
         {device.battery && (
           <div className="flex items-center gap-1">
             <div className="w-8 h-1 bg-gray-700 rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full ${device.battery > 20 ? 'bg-nexdom-lime' : 'bg-red-500'}`} 
+              <div
+                className={`h-full rounded-full ${device.battery > 20 ? 'bg-nexdom-lime' : 'bg-red-500'}`}
                 style={{ width: `${device.battery}%` }}
               ></div>
             </div>
           </div>
         )}
       </div>
-      
+
       <div className="relative z-10">
         <h3 className="font-medium text-white text-sm mb-1 tracking-wide">{device.name}</h3>
         <p className="text-xs text-gray-400 mb-3">{device.room}</p>
-        
+
         <div className="flex items-center justify-between">
-          <span className={`text-sm font-bold ${
-            isActive ? 'text-nexdom-lime text-glow-lime' : 'text-gray-500'
-          }`}>
+          <span className={`text-sm font-bold ${isActive ? 'text-nexdom-lime text-glow-lime' : 'text-gray-500'
+            }`}>
             {getStatusText()}
           </span>
-          
+
           {device.status !== 'offline' && (
             <Wifi className="w-3 h-3 text-gray-600" />
           )}

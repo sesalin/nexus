@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Power, Settings } from 'lucide-react';
 import { Icon } from '../../Icon';
+import { useOffline } from '../../../hooks/useOffline';
 
 export interface GadgetProps {
   id: string;
@@ -32,6 +33,8 @@ export const GadgetCard: React.FC<GadgetProps> = ({
   onSecondaryAction,
   onColorChange
 }) => {
+  const { isOffline } = useOffline();
+
   // Determine color scheme based on type
   const getColorScheme = () => {
     // Special handling for lights with RGB color
@@ -137,6 +140,7 @@ export const GadgetCard: React.FC<GadgetProps> = ({
       className={`
         relative p-5 rounded-[1.5rem] glass-panel transition-all duration-500 group overflow-hidden
         ${isActive ? `${colors.glow} bg-white/5` : 'border-white/5 hover:border-white/20'}
+        ${isOffline ? 'opacity-50 grayscale' : ''}
       `}
       style={
         isActive && (colors as any).customColor
@@ -227,8 +231,10 @@ export const GadgetCard: React.FC<GadgetProps> = ({
               whileTap={{ scale: 0.95 }}
               onClick={(e) => {
                 e.stopPropagation();
-                onPrimaryAction();
+                if (!isOffline) onPrimaryAction();
               }}
+              disabled={isOffline}
+              style={{ cursor: isOffline ? 'not-allowed' : 'pointer' }}
               className={`
                 col-span-3 py-3 px-4 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all duration-300
                 ${isActive
@@ -249,8 +255,10 @@ export const GadgetCard: React.FC<GadgetProps> = ({
             whileTap={{ scale: 0.9 }}
             onClick={(e) => {
               e.stopPropagation();
-              onSecondaryAction?.();
+              if (!isOffline) onSecondaryAction?.();
             }}
+            disabled={isOffline}
+            style={{ cursor: isOffline ? 'not-allowed' : 'pointer' }}
             className="col-span-1 py-3 rounded-xl flex items-center justify-center bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/10 transition-all"
           >
             <Settings className="w-4 h-4" />

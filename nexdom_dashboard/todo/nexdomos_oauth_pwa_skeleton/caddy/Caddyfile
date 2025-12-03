@@ -1,0 +1,26 @@
+{
+    # global options placeholder
+}
+
+https://nexdomos.local {
+    encode gzip
+
+    @pwaArtifacts {
+        path /manifest.json
+        path /service-worker.js
+        path /assets/icons/*
+    }
+
+    handle @pwaArtifacts {
+        root * /data/web/public
+        file_server {
+            precompressed br gzip
+        }
+        header Cache-Control "public, max-age=60"
+        header Content-Security-Policy "default-src 'self'; script-src 'self'; object-src 'none'"
+    }
+
+    handle {
+        reverse_proxy localhost:3000
+    }
+}

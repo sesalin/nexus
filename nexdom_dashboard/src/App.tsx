@@ -20,6 +20,7 @@ import { PWAInstallPrompt, ConnectionStatus, PWAStatus } from './pwa/PWAInstallP
 import { PWAHeader } from './pwa/PWAHeader';
 import { NotificationSettings } from './pwa/NotificationSettings';
 import { usePWA } from './pwa/PWAUtils';
+import { OfflineBanner } from './components/OfflineBanner';
 
 import './index.css';
 import './index.css';
@@ -80,6 +81,9 @@ function App() {
     <PWAProvider>
       <Router>
         <div className="min-h-screen bg-black text-white font-sans selection:bg-nexdom-lime/30">
+          {/* Offline Banner */}
+          <OfflineBanner />
+
           {/* PWA Header & Install Prompt */}
           <PWAHeader />
           <PWAInstallPrompt />
@@ -111,8 +115,8 @@ function App() {
             </main>
           </div>
 
-          {/* Notification Settings Modal */}
-          <NotificationSettings />
+          {/* Notification Settings Modal (requires state management) */}
+          {/* <NotificationSettings /> */}
         </div>
       </Router>
     </PWAProvider>
