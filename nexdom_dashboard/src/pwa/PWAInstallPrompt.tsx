@@ -85,23 +85,23 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
   if (isInIframe) {
     return (
       <div className={`fixed bottom-4 left-4 right-4 z-50 ${className}`}>
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-4 shadow-2xl border border-purple-400/20 backdrop-blur-md">
+        <div className="bg-gradient-to-r from-nexdom-lime to-green-500 rounded-2xl p-4 shadow-2xl border border-nexdom-lime/20 backdrop-blur-md">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
               <ExternalLink className="w-6 h-6 text-white" />
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3 className="text-white font-semibold text-sm mb-1">
+              <h3 className="text-black font-bold text-sm mb-1">
                 🚀 Abrir App Independiente
               </h3>
-              <p className="text-purple-100 text-xs mb-3">
+              <p className="text-black/80 text-xs mb-3">
                 Para instalar Nexdom OS, necesitas abrirlo fuera de Home Assistant.
               </p>
 
               <button
                 onClick={() => window.open(window.location.href, '_blank')}
-                className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 w-full justify-center"
+                className="bg-black/90 hover:bg-black text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-1 w-full justify-center"
               >
                 <ExternalLink className="w-3 h-3" />
                 Abrir en Nueva Pestaña
@@ -110,7 +110,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
 
             <button
               onClick={() => setIsInIframe(false)}
-              className="flex-shrink-0 text-purple-100 hover:text-white p-1 transition-colors"
+              className="flex-shrink-0 text-black/70 hover:text-black p-1 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
