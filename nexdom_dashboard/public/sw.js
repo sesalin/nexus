@@ -1,6 +1,6 @@
 /* Service Worker para Nexdom OS */
-const CACHE_NAME = 'nexdom-os-v0.0.106';
-const OFFLINE_CACHE_NAME = 'nexdom-offline-v0.0.106';
+const CACHE_NAME = 'nexdom-os-v0.0.108';
+const OFFLINE_CACHE_NAME = 'nexdom-offline-v0.0.108';
 
 // Archivos a cachear para funcionamiento offline
 // Solo incluimos el index.html, los assets se cachearán dinámicamente
@@ -100,8 +100,8 @@ async function handleApiRequest(request) {
     // Intentar network primero
     const response = await fetch(request);
 
-    if (response.ok) {
-      // Cachear respuesta exitosa
+    if (response.ok && request.method === 'GET') {
+      // Cachear respuesta exitosa (solo GET)
       cache.put(request, response.clone());
       return response;
     }
@@ -141,7 +141,7 @@ async function handleStaticAsset(request) {
   // Si no está en cache, intentar network
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    if (response.ok && request.method === 'GET') {
       cache.put(request, response.clone());
     }
     return response;
@@ -158,7 +158,8 @@ async function handlePageRequest(request) {
   try {
     // Intentar network primero
     const response = await fetch(request);
-    if (response.ok) {
+    if (response.ok && request.method === 'GET') {
+      // Solo cachear requests GET, POST no está soportado por Cache API
       cache.put(request, response.clone());
     }
     return response;
