@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Download, Smartphone, Wifi, WifiOff, ExternalLink } from 'lucide-react';
-import { usePWA } from './PWAUtils';
+import { X, ExternalLink, Wifi, WifiOff } from 'lucide-react';
+import { usePWAInstall } from '../hooks/usePWAInstall';
+import { usePWA } from './PWAUtils'; // Mantener para status de conexión
 
 interface PWAInstallPromptProps {
   className?: string;
@@ -9,35 +10,41 @@ interface PWAInstallPromptProps {
 export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
   className = ""
 }) => {
-  const {
-    hasInstallPrompt,
-    install,
-    isInstalled,
-    isOnline,
-    registerInteraction,
-    isIOS
-  } = usePWA();
+  const { canInstall, installed, isInStandalone, install, isIOS } = usePWAInstall();
+  const { isOnline } = usePWA(); // Solo para status online/offline
 
-  const [showPrompt, setShowPrompt] = useState(false);
-  const [isInstalling, setIsInstalling] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [isInIframe, setIsInIframe] = useState(false);
   const [showIOSHelp, setShowIOSHelp] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
 
   const EXTERNAL_HINT_URL = typeof window !== 'undefined' ? window.location.href : '';
 
+  useEffect(() => {
+    setIsInIframe(window.self !== window.top);
+  }, []);
+
+  // Mostrar banner si es instalable (Android/PC) o es iOS (manual)
+  useEffect(() => {
+    if (!installed && !isInStandalone && !isInIframe) {
+      if (canInstall || isIOS) {
+        // Pequeño delay para no ser intrusivo
+        const timer = setTimeout(() => setVisible(true), 2000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [canInstall, installed, isInStandalone, isInIframe, isIOS]);
+
   const handleOpen = () => {
-    // Intento 1: romper el iframe (PC / algunos móviles)
     try {
       if (window.top && window.top !== window.self) {
         window.top.location.href = window.location.href;
         return;
       }
     } catch (e) {
-      // cross-origin, ignoramos y seguimos
+      // ignore
     }
-
-    // Intento 2: abrir en nueva pestaña
     window.open(window.location.href, '_blank');
   };
 
@@ -47,77 +54,34 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (e) {
-      // fallback: seleccionar texto o mostrar mensaje
-      alert('No se pudo copiar automáticamente. Copia el enlace manualmente.');
+      alert('Copia el enlace manualmente.');
     }
   };
 
-  useEffect(() => {
-    setIsInIframe(window.self !== window.top);
-  }, []);
-
-  useEffect(() => {
-    // Registrar interacción del usuario
-    const handleUserInteraction = () => {
-      registerInteraction();
-      // Solo escuchar una vez
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
-    };
-
-    document.addEventListener('click', handleUserInteraction);
-    document.addEventListener('touchstart', handleUserInteraction);
-
-    return () => {
-      document.removeEventListener('click', handleUserInteraction);
-      document.removeEventListener('touchstart', handleUserInteraction);
-    };
-  }, [registerInteraction]);
-
-  useEffect(() => {
-    // Mostrar prompt si hay instalación disponible (Android) o es iOS, y no está instalada
-    if ((hasInstallPrompt || isIOS) && !isInstalled) {
-      // Esperar un poco antes de mostrar el prompt (reducido a 2s)
-      const timer = setTimeout(() => {
-        setShowPrompt(true);
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [hasInstallPrompt, isInstalled, isIOS]);
-
-  const handleInstall = async () => {
+  const handleInstallClick = async () => {
     if (isIOS) {
       setShowIOSHelp(true);
       return;
     }
 
-    if (isInstalling) return;
-
     setIsInstalling(true);
-    try {
-      const success = await install();
-      if (success) {
-        setShowPrompt(false);
-      }
-    } catch (error) {
-      console.error('Error installing PWA:', error);
-    } finally {
-      setIsInstalling(false);
+    const ok = await install();
+    setIsInstalling(false);
+    if (ok) {
+      setVisible(false);
     }
   };
 
   const handleDismiss = () => {
-    setShowPrompt(false);
-    // No mostrar de nuevo en esta sesión
+    setVisible(false);
     sessionStorage.setItem('nexdom-pwa-dismissed', 'true');
   };
 
-  // No mostrar si ya se ha descartado en esta sesión
-  if (sessionStorage.getItem('nexdom-pwa-dismissed') === 'true') {
+  if (sessionStorage.getItem('nexdom-pwa-dismissed') === 'true' && !isInIframe) {
     return null;
   }
 
+  // 1. Banner de Ingress (Iframe Breakout)
   if (isInIframe) {
     return (
       <div className={`fixed bottom-4 left-4 right-4 z-50 ${className}`}>
@@ -174,32 +138,31 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
     );
   }
 
-  if (!showPrompt) {
-    return null;
-  }
+  // 2. Banner de Instalación (PWA)
+  if (!visible) return null;
 
   return (
     <div className={`fixed bottom-0 left-0 right-0 z-50 ${className}`}>
       <div className="bg-[#0F1412] border-t-2 border-[#00C26F] py-4 px-6 shadow-2xl">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          {/* Texto */}
           <div className="flex-1 min-w-0">
             <h3 className="text-white font-bold text-base mb-0.5">
-              Descarga Nexdom OS
+              {isIOS ? 'Instalar en iOS' : 'Descarga Nexdom OS'}
             </h3>
             <p className="text-[#B7C0BC] text-xs">
-              Tu casa inteligente, siempre disponible. Instálalo como app en 1 minuto.
+              {isIOS
+                ? 'Añade NexdomOS a tu pantalla de inicio para la mejor experiencia.'
+                : 'Tu casa inteligente, siempre disponible. Instálalo como app en 1 minuto.'}
             </p>
           </div>
 
-          {/* Botones */}
           <div className="flex items-center gap-3">
             <button
-              onClick={handleInstall}
+              onClick={handleInstallClick}
               disabled={isInstalling}
               className="bg-[#00C26F] hover:bg-[#22D98C] text-[#0B0F0D] font-bold px-6 py-2.5 rounded-lg text-sm transition-colors disabled:opacity-50 whitespace-nowrap"
             >
-              {isInstalling ? 'Instalando...' : (isIOS ? 'Instalar en iOS' : 'Descargar Nexdom OS')}
+              {isInstalling ? 'Instalando...' : (isIOS ? 'Ver Instrucciones' : 'Descargar Nexdom OS')}
             </button>
 
             <button
@@ -274,39 +237,31 @@ export const ConnectionStatus: React.FC = () => {
   );
 };
 
-// Componente para mostrar estado PWA
+// Componente para mostrar estado PWA (Debug)
 export const PWAStatus: React.FC = () => {
-  const { isInstalled, isOnline, supportsPWA } = usePWA();
+  const { installed, isInStandalone } = usePWAInstall();
+  const { isOnline } = usePWA();
   const [showStatus, setShowStatus] = useState(false);
 
   useEffect(() => {
-    // Solo mostrar en desarrollo o cuando sea útil
     if (process.env.NODE_ENV === 'development') {
       const timer = setTimeout(() => setShowStatus(true), 2000);
       return () => clearTimeout(timer);
     }
   }, []);
 
-  if (!showStatus || !supportsPWA) {
-    return null;
-  }
+  if (!showStatus) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-40 bg-black/50 backdrop-blur-sm rounded-lg p-3 text-white text-xs">
+    <div className="fixed top-4 right-4 z-40 bg-black/50 backdrop-blur-sm rounded-lg p-3 text-white text-xs pointer-events-none">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${isInstalled ? 'bg-green-400' : 'bg-gray-400'}`} />
-          <span>{isInstalled ? 'PWA Instalada' : 'PWA No Instalada'}</span>
+          <div className={`w-2 h-2 rounded-full ${installed || isInStandalone ? 'bg-green-400' : 'bg-gray-400'}`} />
+          <span>{installed || isInStandalone ? 'PWA Instalada' : 'PWA No Instalada'}</span>
         </div>
-
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-400' : 'bg-red-400'}`} />
           <span>{isOnline ? 'En Línea' : 'Sin Conexión'}</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Wifi className="w-3 h-3" />
-          <span>PWA Soportado</span>
         </div>
       </div>
     </div>
