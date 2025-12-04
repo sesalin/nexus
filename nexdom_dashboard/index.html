@@ -117,38 +117,7 @@
 
   <!-- Service Worker registration -->
   <script>
-    // Service Worker Registration
-    let swRegistration = null;
-
-    // Register SW on load
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', async () => {
-        try {
-          swRegistration = await navigator.serviceWorker.register('./service-worker.js', {
-            scope: './'
-          });
-          console.log('[PWA] Service Worker registered:', swRegistration.scope);
-
-          // Handle updates
-          swRegistration.addEventListener('updatefound', () => {
-            const newWorker = swRegistration.installing;
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('[PWA] New Service Worker available');
-                window.dispatchEvent(new CustomEvent('sw-update-available', {
-                  detail: { registration: swRegistration }
-                }));
-              }
-            });
-          });
-
-          // Check for updates periodically
-          setInterval(() => swRegistration.update(), 60 * 60 * 1000);
-        } catch (error) {
-          console.error('[PWA] Service Worker registration failed:', error);
-        }
-      });
-    }
+    // Service Worker registration is handled by PWAUtils.tsx
 
     // Handle install prompt
     let deferredPrompt;
