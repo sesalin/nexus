@@ -138,6 +138,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
     );
   }
 
+  /*
   // 2. Banner de Instalación (PWA)
   if (!visible) return null;
 
@@ -178,6 +179,8 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
       {showIOSHelp && <IOSInstructions onClose={() => setShowIOSHelp(false)} />}
     </div>
   );
+  */
+  return null;
 };
 
 import { IOSInstructions } from './IOSInstructions';
