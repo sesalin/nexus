@@ -11,6 +11,12 @@
     "theme_color": "#00ff00",
     "icons": [
         {
+            "src": "./logo-white.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
             "src": "./pwa/maskable_icon-48x48.png",
             "sizes": "48x48",
             "type": "image/png",
