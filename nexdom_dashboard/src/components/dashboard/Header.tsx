@@ -6,6 +6,7 @@ import logoWhite from '../../assets/logo-white.svg';
 import { AccountMenu } from './account/AccountMenu';
 import { useAlerts } from './Alerts';
 import { AlertsModal } from './modals/AlertsModal';
+import { PWAInstallButton } from '../../pwa/PWAInstallButton';
 
 interface HeaderProps {
   pwaHeader?: React.ReactNode;
@@ -52,6 +53,7 @@ export const Header: React.FC<HeaderProps> = ({ pwaHeader }) => {
       {/* Actions */}
       <div className="flex items-center gap-4 pointer-events-auto">
         {/* Componentes PWA */}
+        <PWAInstallButton />
         {pwaHeader}
 
         <motion.button
