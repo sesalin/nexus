@@ -1,6 +1,6 @@
 // Integración de Notificaciones de Home Assistant con PWA
 import { PWAUtils } from './PWAUtils';
-import { useHomeAssistant } from '../dashboard/HomeAssistant';
+import { useHomeAssistant } from '../components/dashboard/HomeAssistant';
 
 interface HAPushNotification {
   entity_id: string;
@@ -26,7 +26,7 @@ export class HomeAssistantNotifications {
     event: 'on' | 'off' | 'alert' | 'trigger';
     timestamp: number;
   }> = [];
-  
+
   private static alertSettings = {
     device: true,
     security: true,
@@ -37,13 +37,13 @@ export class HomeAssistantNotifications {
   // Inicializar sistema de notificaciones HA
   static async init() {
     console.log('[HA Notifications] Inicializando sistema de notificaciones');
-    
+
     // Configurar listeners para eventos de HA
     this.setupHomeAssistantListeners();
-    
+
     // Configurar Service Worker para notificaciones push
     this.setupServiceWorkerListeners();
-    
+
     // Cargar configuración guardada
     this.loadNotificationSettings();
   }
@@ -55,13 +55,13 @@ export class HomeAssistantNotifications {
       const { entity, old_state, new_state } = event.detail;
       this.handleEntityStateChange(entity, old_state, new_state);
     });
-    
+
     // Escuchar alertas de seguridad
     window.addEventListener('homeassistant:security_alert', (event: any) => {
       const { entity, message } = event.detail;
       this.showSecurityAlert(entity, message);
     });
-    
+
     // Escuchar alertas del sistema
     window.addEventListener('homeassistant:system_alert', (event: any) => {
       const { title, message, severity } = event.detail;
@@ -74,7 +74,7 @@ export class HomeAssistantNotifications {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('message', (event) => {
         const { type, data } = event.data;
-        
+
         switch (type) {
           case 'HA_NOTIFICATION_CLICK':
             this.handleNotificationClick(data);
@@ -87,24 +87,24 @@ export class HomeAssistantNotifications {
   // Manejar cambios de estado de entidades
   private static handleEntityStateChange(entity: any, oldState: any, newState: any) {
     if (!Notification.permission === 'granted') return;
-    
+
     const domain = entity.entity_id.split('.')[0];
     const deviceName = entity.attributes.friendly_name || entity.entity_id;
-    
+
     // Solo notificar cambios relevantes
     if (this.shouldNotifyStateChange(domain, oldState?.state, newState?.state)) {
       const event = newState?.state === 'on' ? 'on' : 'off';
-      
+
       // Mostrar notificación inmediata
       PWAUtils.showHomeAssistantNotification(entity, event);
-      
+
       // Encolar para logging
       this.notificationQueue.push({
         entity,
         event,
         timestamp: Date.now()
       });
-      
+
       // Limpiar cola si es muy grande
       if (this.notificationQueue.length > 100) {
         this.notificationQueue = this.notificationQueue.slice(-50);
@@ -116,28 +116,28 @@ export class HomeAssistantNotifications {
   private static shouldNotifyStateChange(domain: string, oldState: string, newState: string): boolean {
     // No notificar si el estado no cambió realmente
     if (oldState === newState) return false;
-    
+
     // Notificar estos tipos de dispositivos
     const notifyDomains = ['light', 'switch', 'fan', 'lock', 'binary_sensor', 'sensor'];
     if (!notifyDomains.includes(domain)) return false;
-    
+
     // Para sensores, solo notificar cambios importantes (no 'unknown', 'unavailable')
     if (domain === 'sensor' && (newState === 'unknown' || newState === 'unavailable')) {
       return false;
     }
-    
+
     // Para sensores binarios, solo cambios relevantes
     if (domain === 'binary_sensor' && !['on', 'off'].includes(newState)) {
       return false;
     }
-    
+
     return true;
   }
 
   // Mostrar alerta de seguridad
   private static showSecurityAlert(entity: any, message: string) {
     if (!this.alertSettings.security) return;
-    
+
     PWAUtils.showNotification('🚨 Alerta de Seguridad', {
       body: `${entity.attributes.friendly_name}: ${message}`,
       icon: '/icon-security.png',
@@ -167,14 +167,14 @@ export class HomeAssistantNotifications {
   // Mostrar alerta del sistema
   private static showSystemAlert(title: string, message: string, severity: string = 'info') {
     if (!this.alertSettings.system) return;
-    
+
     const icons = {
       info: '/icon-info.png',
       warning: '/icon-warning.png',
       error: '/icon-error.png',
       critical: '/icon-critical.png'
     };
-    
+
     PWAUtils.showNotification(`⚙️ ${title}`, {
       body: message,
       icon: icons[severity] || icons.info,
@@ -272,9 +272,9 @@ export class HomeAssistantNotifications {
       name: 'Luz Sala de Estar',
       attributes: { friendly_name: 'Luz Sala de Estar' }
     };
-    
+
     PWAUtils.showHomeAssistantNotification(testEntity, 'on');
-    
+
     setTimeout(() => {
       PWAUtils.showHomeAssistantNotification(testEntity, 'off');
     }, 3000);
