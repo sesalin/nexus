@@ -86,7 +86,7 @@ export class HomeAssistantNotifications {
 
   // Manejar cambios de estado de entidades
   private static handleEntityStateChange(entity: any, oldState: any, newState: any) {
-    if (!Notification.permission === 'granted') return;
+    if (Notification.permission !== 'granted') return;
 
     const domain = entity.entity_id.split('.')[0];
     const deviceName = entity.attributes.friendly_name || entity.entity_id;
@@ -212,7 +212,7 @@ export class HomeAssistantNotifications {
       vibrate: this.getVibrationPattern(notification.priority),
       requireInteraction: notification.priority === 'critical',
       data: notification.data || {}
-    };
+    } as any;
 
     PWAUtils.showNotification(notification.title, options);
   }
