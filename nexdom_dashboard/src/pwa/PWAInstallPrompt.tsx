@@ -81,6 +81,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
     return null;
   }
 
+  /*
   // 1. Banner de Ingress (Iframe Breakout)
   if (isInIframe) {
     return (
@@ -137,6 +138,8 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
       </div>
     );
   }
+  */
+
 
   /*
   // 2. Banner de Instalación (PWA)
