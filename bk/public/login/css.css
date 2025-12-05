@@ -1,0 +1,51 @@
+.liquid-ether-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+#login-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  text-align: center;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#login-container input[type="text"],
+#login-container input[type="password"],
+#login-container button {
+  display: block;
+  margin: 10px 0;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.8);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#login-container button {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#login-container .login-remember {
+  width: 100%;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+  color: #fff;
+  font-size: 14px;
+}

@@ -4,7 +4,7 @@
  * Version: 1.0.0
  */
 
-const CACHE_VERSION = 'nexdom-os-v0.0.115';
+const CACHE_VERSION = 'nexdom-os-v0.0.143';
 const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_DYNAMIC = `${CACHE_VERSION}-dynamic`;
 const CACHE_API = `${CACHE_VERSION}-api`;
@@ -113,7 +113,9 @@ self.addEventListener('fetch', (event) => {
     }
 
     // Route to appropriate handler
-    if (isApiRequest(request)) {
+    if (request.url.includes('manifest.json') || request.url.includes('nexdom.webmanifest')) {
+        event.respondWith(handleManifestRequest(request));
+    } else if (isApiRequest(request)) {
         event.respondWith(handleApiRequest(request));
     } else if (isDynamicAsset(request)) {
         event.respondWith(handleDynamicAsset(request));
@@ -121,6 +123,20 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(handleNavigationRequest(request));
     }
 });
+
+// Handle manifest requests specifically to bypass HA proxy issues
+async function handleManifestRequest(request) {
+    // Try to fetch the manifest relative to the SW scope first
+    try {
+        const response = await fetch('./manifest.json');
+        if (response.ok) return response;
+    } catch (e) {
+        console.log('[SW] Failed to fetch local manifest, trying request url');
+    }
+
+    // Fallback to network
+    return fetch(request);
+}
 
 /* ==================== REQUEST CLASSIFICATION ==================== */
 

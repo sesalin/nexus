@@ -1,0 +1,115 @@
+# Cloudflare Tunnel termina TLS, así que este bloque escucha HTTP en el origen
+http://cheko.nexdom.mx {
+
+    log {
+        output file /var/log/caddy/cheko-access.log
+        format json
+    }
+
+    route {
+        @custom_login_get {
+            method GET
+            path /auth/login* /auth/authorize*
+        }
+        handle @custom_login_get {
+            root * /var/www/nexdom-login
+            rewrite * /index.html
+            file_server
+        }
+
+        handle_path /login_assets/* {
+            root * /var/www/nexdom-login
+            file_server
+        }
+
+        handle_path /static/icons/* {
+            rewrite * /local/nexdom/favico/{path}
+            reverse_proxy 192.168.100.185:8123 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto https
+            }
+        }
+
+        handle_path /auth/static/icons/* {
+            rewrite * /local/nexdom/favico/{path}
+            reverse_proxy 192.168.100.185:8123 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto https
+            }
+        }
+
+        @favicons {
+            path_regexp fav ".*favicon.*\\.(png|ico)$"
+        }
+        handle @favicons {
+            rewrite * /local/nexdom/favico/{http.regexp.fav.0}
+            reverse_proxy 192.168.100.185:8123 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto https
+            }
+        }
+
+        @frontendlogos {
+            path_regexp logos "^/frontend_latest/.*(logo|icon).*\\.(png|jpg)$"
+        }
+        handle @frontendlogos {
+            rewrite * /local/nexdom/favico/favicon-1024x1024.png
+            reverse_proxy 192.168.100.185:8123 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto https
+            }
+        }
+
+        handle /manifest.json {
+            rewrite * /local/nexdom/pwa/manifest.json
+            reverse_proxy 192.168.100.185:8123 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto https
+            }
+        }
+
+        @maskable {
+            path_regexp mask ".*(maskable|apple-touch).*\\.(png)$"
+        }
+
+        handle @maskable {
+            rewrite * /local/nexdom/favico/{http.regexp.mask.0}
+            reverse_proxy 192.168.100.185:8123 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto https
+            }
+        }
+
+        handle_path /static/images/ohf-badge.svg {
+            rewrite * /local/nexdom/others/nexdom-badge.svg
+            reverse_proxy 192.168.100.185:8123 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto https
+            }
+        }
+
+        # Fallback dentro del route: todo lo demás va a HAOS
+        handle {
+            reverse_proxy 192.168.100.185:8123 {
+                header_up Host {host}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto https
+            }
+        }
+    }
+}

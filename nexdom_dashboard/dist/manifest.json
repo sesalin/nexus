@@ -2,65 +2,90 @@
     "name": "NexdomOS Dashboard",
     "short_name": "NexdomOS",
     "description": "Control total de tu hogar inteligente con NexdomOS",
-    "start_url": ".",
-    "scope": ".",
+    "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "orientation": "portrait-primary",
     "background_color": "#000000",
-    "theme_color": "#00ff00",
+    "id": "/",
+    "theme_color": "#000000",
     "icons": [
         {
-            "src": "/pwa/maskable_icon-48x48.png",
+            "src": "./logo-white.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "./logo-white.svg",
             "sizes": "48x48",
-            "type": "image/png",
+            "type": "image/svg+xml",
             "purpose": "any"
         },
         {
-            "src": "/pwa/maskable_icon-72x72.png",
+            "src": "./logo-white.svg",
             "sizes": "72x72",
-            "type": "image/png",
+            "type": "image/svg+xml",
             "purpose": "any"
         },
         {
-            "src": "/pwa/maskable_icon-96x96.png",
+            "src": "./logo-white.svg",
             "sizes": "96x96",
-            "type": "image/png",
+            "type": "image/svg+xml",
             "purpose": "any"
         },
         {
-            "src": "/pwa/maskable_icon-128x128.png",
+            "src": "./logo-white.svg",
             "sizes": "128x128",
-            "type": "image/png",
+            "type": "image/svg+xml",
             "purpose": "any"
         },
         {
-            "src": "/pwa/maskable_icon-192x192.png",
+            "src": "./logo-white.svg",
             "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "/pwa/maskable_icon-384x384.png",
-            "sizes": "384x384",
-            "type": "image/png",
+            "type": "image/svg+xml",
             "purpose": "any"
         },
         {
-            "src": "/pwa/maskable_icon-512x512.png",
+            "src": "./logo-white.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "maskable"
+        },
+        {
+            "src": "./logo-white.svg",
+            "sizes": "384x384",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "./logo-white.svg",
+            "sizes": "384x384",
+            "type": "image/svg+xml",
+            "purpose": "maskable"
+        },
+        {
+            "src": "./logo-white.svg",
             "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any maskable"
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "./logo-white.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "maskable"
         }
     ],
     "screenshots": [
         {
-            "src": "/pwa/screenshot-mobile.png",
+            "src": "./pwa/screenshot-mobile.png",
             "sizes": "750x1334",
             "type": "image/png",
             "form_factor": "narrow"
         },
         {
-            "src": "/pwa/screenshot-desktop.png",
+            "src": "./pwa/screenshot-desktop.png",
             "sizes": "1920x1080",
             "type": "image/png",
             "form_factor": "wide"

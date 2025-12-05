@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Nexdom Login</title>
+    <link rel="stylesheet" href="/login/css.css">
+</head>
+
+<body>
+    <div id="effect" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;"></div>
+
+    <div id="login-container">
+        <img src="/login/logo-white.svg" alt="Nexdom" style="width: 200px; height: auto; margin-bottom: 20px;">
+        <input type="text" placeholder="Usuario" id="user" autocomplete="username">
+        <input type="password" placeholder="Contraseña" id="password" autocomplete="current-password">
+        <label class="login-remember">
+            <input type="checkbox" id="remember" checked>
+            Mantener la sesión iniciada
+        </label>
+        <button id="login-btn">Ingresar</button>
+        <p id="status" style="color:#fff;margin-top:16px;min-height:20px;font-size:14px;"></p>
+    </div>
+
+    <script src="/login/polyfills.js"></script>
+    <script src="/login/three.min.js"></script>
+    <script src="/login/liquid-ether.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            LiquidEther.init(document.getElementById('effect'), {
+                autoDemo: true,
+                colors: ['#1a8c2d', '#25fd44', '#5eed39']
+            });
+
+            const userInput = document.getElementById('user');
+            const passInput = document.getElementById('password');
+            const rememberInput = document.getElementById('remember');
+            const loginBtn = document.getElementById('login-btn');
+            const statusLabel = document.getElementById('status');
+            const rememberPrefKey = 'nexdomRemember';
+
+            try {
+                const savedPref = localStorage.getItem(rememberPrefKey);
+                if (savedPref !== null) {
+                    rememberInput.checked = savedPref === '1';
+                }
+            } catch (err) {
+                console.warn('No se pudo leer la preferencia de sesión:', err);
+            }
+
+            const qs = new URLSearchParams(window.location.search);
+            const origin = window.location.origin;
+            const suggestedOrigin = (window.location.hostname === 'localhost') ? 'http://127.0.0.1:5173' : origin;
+            const clientOrigin = qs.get('client_id') || suggestedOrigin;
+            const redirectUriParam = qs.get('redirect_uri');
+            const redirectUri = redirectUriParam || new URL('/auth_callback.html', clientOrigin).toString();
+            const oauthState = qs.get('state');
+            const defaultState = btoa(JSON.stringify({ clientId: clientOrigin }));
+            const stateParam = oauthState && oauthState.trim() ? oauthState : defaultState;
+
+            async function doLogin() {
+                const username = userInput.value.trim();
+                const password = passInput.value;
+                const rememberSession = rememberInput.checked;
+
+                try {
+                    localStorage.setItem(rememberPrefKey, rememberSession ? '1' : '0');
+                } catch (err) {
+                    console.warn('No se pudo guardar la preferencia de sesión:', err);
+                }
+
+                if (!username || !password) {
+                    statusLabel.textContent = 'Falta usuario o contraseña';
+                    return;
+                }
+
+                const candidates = (window.location.hostname === 'localhost')
+                  ? ['http://127.0.0.1:5173', 'http://localhost:5173']
+                  : [clientOrigin];
+
+                for (const cid of candidates) {
+                  const cb = new URL('/auth_callback.html', cid).toString();
+                  const s = encodeURIComponent(btoa(JSON.stringify({ clientId: cid, ts: Date.now() })));
+                  const url = new URL('/auth/authorize', origin);
+                  url.searchParams.set('client_id', cid);
+                  url.searchParams.set('redirect_uri', cb);
+                  url.searchParams.set('state', s);
+                  try {
+                    const res = await fetch(url.toString(), { method: 'GET', credentials: 'include' });
+                    if (res.status !== 500) {
+                      statusLabel.textContent = 'Redirigiendo a autorización...';
+                      window.location.href = url.toString();
+                      return;
+                    }
+                  } catch {}
+                }
+
+                statusLabel.textContent = 'No se pudo iniciar autorización (client_id inválido). Prueba abrir con 127.0.0.1:5173.';
+            }
+
+            loginBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                doLogin();
+            });
+
+            passInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    doLogin();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
