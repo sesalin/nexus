@@ -3,13 +3,332 @@
 **Agent**: AI-4  
 **Priority**: 🟢 MEDIUM  
 **Duration**: 6-8 horas  
-**Dependencies**: TASK 2 & TASK 3 complete
+**Dependencies**: TASK 2 complete (pages migrated)
+
+---
+
+## ⚠️ CRITICAL - DO NOT
+
+**NEVER** read, search, or edit files in:
+- ❌ `node_modules/` - Third-party packages (waste of time)
+- ❌ `dist/` or `build/` - Build artifacts
+- ❌ `.vite/` or `.cache/` - Cache directories
+- ❌ `.git/` - Version control
+
+**ONLY** work in:
+- ✅ `PWA/src/` - Source code
+- ✅ `PWA/public/` - Static assets
+- ✅ Root config files (`package.json`, `tailwind.config.js`, `vite.config.ts`)
 
 ---
 
 ## 🎯 Objetivo
 
 Asegurar que TODA la app sea mobile-first responsive y PWA-compliant. Desktop es secundario, mobile es primario.
+
+---
+
+## 🎯 Objetivo
+
+Asegurar mobile-first responsiveness y optimizar PWA completo con manifest, service worker, notificaciones push y full-screen mode.
+
+---
+
+## 🚨 PWA ASSETS YA DISPONIBLES
+
+**Carpeta**: `PWA/public/pwa/`
+
+Contiene:
+- Imágenes de iconos (varios tamaños)
+- `manifest.json` (con rutas a corregir)
+
+### ACCIÓN REQUERIDA:
+
+#### 1. Corregir rutas en manifest.json
+
+**Archivo**: `PWA/public/pwa/manifest.json`
+
+Las rutas deben ser **relativas a `public/`**:
+
+```json
+{
+  "icons": [
+    {
+      "src": "/pwa/icon-192x192.png",  // ✅ CORRECTO (relativo a public/)
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa/icon-512x512.png",  // ✅ CORRECTO
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+```
+
+❌ **MAL**: `"src": "pwa/icon-192x192.png"` (sin `/` inicial)  
+❌ **MAL**: `"src": "./pwa/icon-192x192.png"` (no funciona en PWA)  
+✅ **BIEN**: `"src": "/pwa/icon-192x192.png"`
+
+#### 2. Full Screen Mode
+
+Agregar a manifest.json:
+
+```json
+{
+  "name": "Nexdom Dashboard",
+  "short_name": "Nexdom",
+  "display": "fullscreen",  // ✅ Full screen en móviles
+  "orientation": "portrait-primary",
+  "theme_color": "#0A0A0F",
+  "background_color": "#0A0A0F",
+  "start_url": "/",
+  "scope": "/"
+}
+```
+
+#### 3. Incluir manifest en index.html
+
+**Archivo**: `PWA/index.html`
+
+```html
+<head>
+  <link rel="manifest" href="/pwa/manifest.json">
+  <meta name="theme-color" content="#0A0A0F">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+```
+
+---
+
+## 🔔 NOTIFICACIONES PUSH
+
+### Implementar Permission Request
+
+**Archivo**: `PWA/src/utils/notifications.ts`
+
+```typescript
+export async function requestNotificationPermission(): Promise<boolean> {
+  if (!('Notification' in window)) {
+    console.warn('Notifications not supported');
+    return false;
+  }
+  
+  if (Notification.permission === 'granted') {
+    return true;
+  }
+  
+  if (Notification.permission !== 'denied') {
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  }
+  
+  return false;
+}
+
+export function sendTestNotification(title: string, body: string) {
+  if (Notification.permission === 'granted') {
+    new Notification(title, {
+      body,
+      icon: '/pwa/icon-192x192.png',
+      badge: '/pwa/icon-96x96.png',
+      vibrate: [200, 100, 200],
+    });
+  }
+}
+```
+
+### Componente para solicitar permisos
+
+**Archivo**: `PWA/src/components/NotificationPrompt.tsx`
+
+```typescript
+import { useState, useEffect } from 'react';
+import { requestNotificationPermission } from '@/utils/notifications';
+
+export function NotificationPrompt() {
+  const [show, setShow] = useState(false);
+  
+  useEffect(() => {
+    // Mostrar prompt solo si no se ha pedido antes
+    if (Notification.permission === 'default') {
+      setTimeout(() => setShow(true), 5000); // Después de 5s
+    }
+  }, []);
+  
+  const handleRequest = async () => {
+    const granted = await requestNotificationPermission();
+    setShow(false);
+    
+    if (granted) {
+      // Enviar notificación de prueba
+      new Notification('¡Listo!', {
+        body: 'Recibirás notificaciones de tu hogar inteligente',
+        icon: '/pwa/icon-192x192.png',
+      });
+    }
+  };
+  
+  if (!show) return null;
+  
+  return (
+    <div className="fixed bottom-4 right-4 glass-panel p-4 rounded-xl max-w-sm z-50">
+      <h3 className="font-bold mb-2">🔔 Notificaciones</h3>
+      <p className="text-sm text-gray-300 mb-4">
+        Recibe alertas importantes de tu hogar inteligente
+      </p>
+      <div className="flex gap-2">
+        <button
+          onClick={handleRequest}
+          className="flex-1 bg-nexdom-lime text-black px-4 py-2 rounded-lg font-bold"
+        >
+          Permitir
+        </button>
+        <button
+          onClick={() => setShow(false)}
+          className="px-4 py-2 rounded-lg bg-white/10"
+        >
+          Ahora no
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+### Agregar al Dashboard
+
+**Archivo**: `PWA/src/App.tsx` o `Dashboard.tsx`
+
+```typescript
+import { NotificationPrompt } from '@/components/NotificationPrompt';
+
+function App() {
+  return (
+    <>
+      {/* App content */}
+      <NotificationPrompt />
+    </>
+  );
+}
+```
+
+---
+
+## 📱 PWA INSTALL PROMPT
+
+**Archivo**: `PWA/src/components/PWAInstallButton.tsx`
+
+```typescript
+import { useState, useEffect } from 'react';
+
+export function PWAInstallButton() {
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showButton, setShowButton] = useState(false);
+  
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowButton(true);
+    };
+    
+    window.addEventListener('beforeinstallprompt', handler);
+    
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+  
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    console.log('Install outcome:', outcome);
+    setDeferredPrompt(null);
+    setShowButton(false);
+  };
+  
+  if (!showButton) return null;
+  
+  return (
+    <button
+      onClick={handleInstall}
+      className="glass-panel px-4 py-2 rounded-full flex items-center gap-2 hover:bg-nexdom-lime/20 transition-all"
+    >
+      <span>📱</span>
+      <span className="text-sm font-bold">Instalar App</span>
+    </button>
+  );
+}
+```
+
+---
+
+## 🧪 TESTING NOTIFICATIONS
+
+### Script de prueba
+
+**Archivo**: `PWA/src/pages/Debug.tsx`
+
+Agregar sección de testing:
+
+```typescript
+import { sendTestNotification } from '@/utils/notifications';
+
+function Debug() {
+  const testNotification = () => {
+    sendTestNotification(
+      '🚨 Alerta de Prueba',
+      'Esta es una notificación de prueba desde Nexdom Dashboard'
+    );
+  };
+  
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-4">Notification Testing</h2>
+      
+      <div className="glass-panel p-4 rounded-xl mb-4">
+        <p className="mb-4">Permission status: <strong>{Notification.permission}</strong></p>
+        
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              const granted = await requestNotificationPermission();
+              alert(granted ? 'Granted!' : 'Denied');
+            }}
+            className="bg-nexdom-lime text-black px-4 py-2 rounded-lg"
+          >
+            Request Permission
+          </button>
+          
+          <button
+            onClick={testNotification}
+            className="bg-nexdom-gold text-black px-4 py-2 rounded-lg"
+            disabled={Notification.permission !== 'granted'}
+          >
+            Send Test Notification
+          </button>
+        </div>
+      </div>
+      
+      <div className="glass-panel p-4 rounded-xl">
+        <h3 className="font-bold mb-2">📝 Testing Instructions:</h3>
+        <ol className="list-decimal list-inside space-y-1 text-sm">
+          <li>Click "Request Permission"</li>
+          <li>Allow notifications in browser prompt</li>
+          <li>Click "Send Test Notification"</li>
+          <li>Verify notification appears</li>
+          <li>Check notification icon, body, vibration</li>
+        </ol>
+      </div>
+    </div>
+  );
+}
+```
 
 ---
 
