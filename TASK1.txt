@@ -1,0 +1,203 @@
+# TASK 1: Core Setup & Authentication
+**Agent**: AI-1  
+**Priority**: 🔴 CRITICAL - BLOQUEA TODO  
+**Duration**: 6-8 horas  
+**Dependencies**: None
+---
+## 🎯 Objetivo
+Configurar @hakit/core, eliminar backend Node.js, establecer conexión WebSocket con Home Assistant.
+---
+## 📋 Checklist
+### Setup Inicial
+- [ ] Instalar @hakit/core y @hakit/components
+- [ ] Configurar HassConnect en App.tsx
+- [ ] Eliminar imports de HomeAssistant.tsx custom
+- [ ] Configurar HA URL detection (production vs dev)
+### Backend Elimination
+- [ ] Eliminar directorio `backend/`
+- [ ] Actualizar Dockerfile (remover Node.js backend)
+- [ ] Actualizar run.sh (solo nginx)
+- [ ] Limpiar package.json (remover deps de backend)
+### Authentication
+- [ ] Configurar OAuth2 flow con @hakit
+- [ ] Integrar con login existente en PWA/
+- [ ] Test conexión WebSocket directa a HAOS
+---
+## 📂 Archivos a Modificar
+### 1. `PWA/package.json`
+```json
+{
+  "dependencies": {
+    "@hakit/core": "^6.0.0",
+    "@hakit/components": "^6.0.0",
+    "react": "^19.0.0-rc.1",
+    "react-dom": "^19.0.0-rc.1",
+    "framer-motion": "^12.23.25",
+    "lucide-react": "^0.555.0",
+    "react-router-dom": "^7.10.1",
+    "zustand": "^5.0.9"
+  }
+}
+```
+**Comando**:
+```bash
+cd /home/cheko/nexdom/addon/PWA
+npm install @hakit/core@^6.0.0 @hakit/components@^6.0.0
+```
+---
+### 2. `PWA/src/App.tsx`
+**Estado actual**: OAuth2 funcionando, pero sin conexión HA.
+**Cambiar a**:
+```typescript
+import { HassConnect } from '@hakit/core';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Login } from './pages/Login';
+import { AuthCallback } from './pages/AuthCallback';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { Dashboard } from './pages/Dashboard';
+import './App.css';
+function App() {
+  // Detect HA URL
+  const getHAUrl = () => {
+    if (window.location.hostname === 'cheko.nexdom.mx') {
+      return 'https://cheko.nexdom.mx';
+    }
+    return 'http://homeassistant.local:8123';
+  };
+  return (
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <HassConnect hassUrl={getHAUrl()}>
+                <Dashboard />
+              </HassConnect>
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Router>
+  );
+}
+export default App;
+```
+**Explicación**:
+- `HassConnect` maneja toda la conexión WebSocket
+- Detecta automáticamente si usa access_token de OAuth
+- No necesita backend proxy
+---
+### 3. `PWA/src/pages/Dashboard.tsx`
+**Crear nuevo archivo**:
+```typescript
+import { useHass, useAreas, useEntities } from '@hakit/core';
+import { useEffect } from 'react';
+export function Dashboard() {
+  const { auth, connection, entities } = useHass();
+  const areas = useAreas();
+  useEffect(() => {
+    console.log('[Dashboard] Connection status:', connection);
+    console.log('[Dashboard] Auth:', auth);
+    console.log('[Dashboard] Entities loaded:', entities.length);
+    console.log('[Dashboard] Areas:', areas.length);
+  }, [connection, auth, entities, areas]);
+  if (!connection) {
+    return <div>Conectando a Home Assistant...</div>;
+  }
+  return (
+    <div className="dashboard">
+      <h1>🏠 Nexdom Dashboard</h1>
+      <p>Conectado a HA: ✅</p>
+      <p>Entidades: {Object.keys(entities).length}</p>
+      <p>Áreas: {areas.length}</p>
+      
+      <h2>Áreas</h2>
+      <ul>
+        {areas.map(area => (
+          <li key={area.area_id}>{area.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+---
+### 4. Eliminar Backend
+**Comandos**:
+```bash
+# En nexdom_dashboard/ (proyecto viejo)
+cd /home/cheko/nexdom/addon/nexdom_dashboard
+rm -rf backend/
+# Verificar
+ls -la
+# backend/ NO debe existir
+```
+---
+## ✅ Acceptance Criteria
+### Must Have
+1. ✅ `npm run dev` funciona sin errores
+2. ✅ Browser console muestra: `[HassConnect] Connected`
+3. ✅ WebSocket a HAOS establecido (Network tab)
+4. ✅ `useHass()` retorna entities
+5. ✅ `useAreas()` retorna áreas de tu HAOS
+### Should Have
+6. ✅ No console errors
+7. ✅ OAuth2 flow mantiene funcionando
+8. ✅ Logout funciona
+### Nice to Have
+9. ✅ TypeScript sin errores
+10. ✅ Build production funciona
+---
+## 🧪 Testing
+### Test 1: Dev Server
+```bash
+cd /home/cheko/nexdom/addon/PWA
+npm run dev
+# Abrir http://localhost:5173
+# Login con OAuth
+# Ver dashboard con áreas
+```
+### Test 2: WebSocket Connection
+```javascript
+// En browser console
+window.__HAKIT_DEBUG__ = true;
+// Reload page
+// Deberías ver logs de @hakit/core
+```
+### Test 3: Entities Load
+```javascript
+// En Dashboard.tsx, agregar:
+console.log('All entities:', Object.keys(entities));
+// Deberías ver: light.*, switch.*, etc.
+```
+---
+## 🚨 Troubleshooting
+### Error: "Cannot connect to HA"
+- Check: HA URL correcta
+- Check: OAuth token válido
+- Check: CORS configurado en HA
+- Check: Network tab para ver requests
+### Error: "useHass must be used within HassConnect"
+- Verifica que Dashboard esté dentro de `<HassConnect>`
+- Orden correcto: Router → ProtectedRoute → HassConnect → Dashboard
+### Error: "Entities empty"
+- Espera 2-3 segundos (conexión WebSocket toma tiempo)
+- Check console logs
+- Verifica que tu HAOS tenga entities
+---
+## 📦 Deliverables
+Al finalizar TASK 1, debes tener:
+1. ✅ **Branch**: `feature/hakit-core-setup`
+2. ✅ **Commits**:
+   - "feat: install @hakit/core and @hakit/components"
+   - "feat: configure HassConnect in App.tsx"
+   - "feat: create initial Dashboard page with useHass"
+   - "chore: remove backend directory"
+3. ✅ **Screenshot**: Dashboard mostrando áreas de HAOS
+4. ✅ **Video** (opcional): WebSocket conectando en DevTools
+---
+**START NOW 🚀**

@@ -12,30 +12,14 @@ RUN npm ci && npm run build
 
 
 # ===============================
-# Stage 2: Build backend deps (prod only)
-# ===============================
-FROM node:20-alpine AS backend-builder
-WORKDIR /app/backend
-
-COPY backend/package*.json ./
-RUN npm ci --omit=dev
-
-# copy backend source here so queda completo en el stage
-COPY backend/src ./src
-
-
-# ===============================
-# Stage 3: Final runtime image
+# Stage 2: Final runtime image (nginx + static assets)
 # ===============================
 FROM nginx:alpine
 
-# Node runtime para backend
-RUN apk add --no-cache nodejs npm curl
-
 WORKDIR /app
 
-# Copia backend con node_modules ya listos
-COPY --from=backend-builder /app/backend /app/backend
+# Curl para healthcheck
+RUN apk add --no-cache curl
 
 # Copia frontend estático
 COPY --from=builder /app/dist /usr/share/nginx/html
@@ -48,13 +32,9 @@ RUN mkdir -p /app/scripts
 COPY ha-addon/run.sh /app/scripts/start.sh
 RUN chmod +x /app/scripts/start.sh
 
-# Defaults prod + límite RAM (puedes subir a 384 si quieres)
-ENV NODE_ENV=production
-ENV NODE_OPTIONS="--max-old-space-size=256"
-
-# Healthcheck directo al backend (más confiable)
+# Healthcheck a nginx/static
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:3000/health || exit 1
+  CMD curl -f http://localhost:8123/ || exit 1
 
 EXPOSE 8123
 CMD ["/app/scripts/start.sh"]
