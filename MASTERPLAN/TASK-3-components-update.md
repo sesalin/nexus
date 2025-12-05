@@ -7,6 +7,21 @@
 
 ---
 
+## ⚠️ CRITICAL - DO NOT
+
+**NEVER** read, search, or edit files in:
+- ❌ `node_modules/` - Third-party packages (waste of time)
+- ❌ `dist/` or `build/` - Build artifacts
+- ❌ `.vite/` or `.cache/` - Cache directories
+- ❌ `.git/` - Version control
+
+**ONLY** work in:
+- ✅ `PWA/src/` - Source code
+- ✅ `PWA/public/` - Static assets
+- ✅ Root config files (`package.json`, `tailwind.config.js`, `vite.config.ts`)
+
+---
+
 ## 🎯 Objetivo
 
 Actualizar componentes UI para trabajar con @hakit/core entities. Implementar controles avanzados (climate, media, camera) usando @hakit/components cuando ayude.

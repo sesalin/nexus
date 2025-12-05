@@ -1,7 +1,3 @@
-import React, { useMemo } from 'react';
-import { useHomeAssistant } from '../components/dashboard/HomeAssistant';
-import { Shield, Lock, Unlock, AlertTriangle, Camera, Eye, ToggleLeft, ToggleRight, Lightbulb } from 'lucide-react';
-
 import React, { useMemo, useState } from 'react';
 import { useHomeAssistant } from '../components/dashboard/HomeAssistant';
 import { Shield, Lock, Unlock, AlertTriangle, Camera, Eye, ToggleLeft, ToggleRight, Lightbulb, X, Maximize2 } from 'lucide-react';

@@ -3,7 +3,23 @@
 **Agent**: AI-5  
 **Priority**: 🔴 CRITICAL  
 **Duration**: 4-6 horas  
-**Dependencies**: ALL previous tasks complete
+**Dependencies**: TASK 2, 3, 4 complete
+
+---
+
+## ⚠️ CRITICAL - DO NOT
+
+**NEVER** read, search, or edit files in:
+- ❌ `node_modules/` - Third-party packages (waste of time)
+- ❌ `dist/` or `build/` - Build artifacts
+- ❌ `.vite/` or `.cache/` - Cache directories
+- ❌ `.git/` - Version control
+
+**ONLY** work in:
+- ✅ `PWA/src/` - Source code (for fixes)
+- ✅ `PWA/public/` - Static assets
+- ✅ Root files (`Dockerfile`, `package.json`, build configs)
+- ✅ `PWA/dist/` - Only for analyzing build output size
 
 ---
 

@@ -1,0 +1,59 @@
+# TASK-3: Components + Advanced Controls
+## LEER PRIMERO (en orden):
+1. [/home/cheko/nexdom/addon/MASTERPLAN/CRITICAL-DeviceGrouping.md](cci:7://file:///home/cheko/nexdom/addon/MASTERPLAN/CRITICAL-DeviceGrouping.md:0:0-0:0)
+2. [/home/cheko/nexdom/addon/MASTERPLAN/MODAL-SPECS.md](cci:7://file:///home/cheko/nexdom/addon/MASTERPLAN/MODAL-SPECS.md:0:0-0:0)
+3. [/home/cheko/nexdom/addon/MASTERPLAN/DYNAMIC-COLORS.md](cci:7://file:///home/cheko/nexdom/addon/MASTERPLAN/DYNAMIC-COLORS.md:0:0-0:0)
+4. [/home/cheko/nexdom/addon/MASTERPLAN/DESIGN-SYSTEM.md](cci:7://file:///home/cheko/nexdom/addon/MASTERPLAN/DESIGN-SYSTEM.md:0:0-0:0)
+5. [/home/cheko/nexdom/addon/MASTERPLAN/TASK-3-components-update.md](cci:7://file:///home/cheko/nexdom/addon/MASTERPLAN/TASK-3-components-update.md:0:0-0:0)
+## OBJETIVO:
+Crear componentes UI que funcionen con @hakit/core entities y modales específicos por device type.
+## COMPONENTES A CREAR:
+1. **GadgetCard**: Tarjeta universal con colores dinámicos
+2. **DeviceDetailsModal**: Modal con controles específicos
+3. **Modales por tipo**:
+   - LightControlsModal (color wheel + sliders)
+   - BatteryModal (nivel + timestamp)
+   - ClimateModal (temp + modos)
+   - CameraModal (stream + controls)
+   - MediaPlayerModal (playback + volume)
+4. **Favorites Store**: Zustand store para favoritos
+5. **LiveStatus**: Stats en tiempo real
+## CRITICAL REQUIREMENTS:
+✅ GadgetCard muestra SOLO entity primary
+✅ Modal muestra primary + secondary entities
+✅ Colores dinámicos según RGB del device
+✅ Glassmorphic + neon glow effects
+✅ Control específico por domain (light, climate, etc.)
+✅ Touch targets ≥ 44px (mobile)
+✅ Animaciones smooth (Framer Motion)
+## MODALES EXACTOS (ver screenshots en MODAL-SPECS.md):
+- Light: Color wheel + brightness sliders
+- Battery: Nivel grande + icono visual
+- Climate: Temp circular + mode buttons
+- Camera: Live stream + snapshot button
+- Media Player: Album art + playback controls
+## ACCEPTANCE CRITERIA:
+- [ ] GadgetCard funciona con ANY domain
+- [ ] Toggle works (lights, switches, locks, covers)
+- [ ] Modales abren/cierran correctamente
+- [ ] Light controls: color wheel + brightness
+- [ ] Climate controls: temperatura + modos
+- [ ] Favorites persisten en localStorage
+- [ ] LiveStatus muestra datos real-time
+- [ ] Mobile responsive (touch-friendly)
+- [ ] TypeScript sin errores
+## TRABAJAR EN:
+Directorio: `/home/cheko/nexdom/addon/PWA/`
+Branch: `feature/components-update`
+## DELIVERABLES:
+- PWA/src/components/GadgetCard.tsx
+- PWA/src/components/DeviceDetailsModal.tsx
+- PWA/src/components/modals/LightControlsModal.tsx
+- PWA/src/components/modals/BatteryModal.tsx
+- PWA/src/components/modals/ClimateModal.tsx
+- PWA/src/components/modals/CameraModal.tsx
+- PWA/src/components/modals/MediaPlayerModal.tsx
+- PWA/src/components/LiveStatus.tsx
+- PWA/src/store/favoritesStore.ts
+- Video demo de cada modal funcionando
+GO! 🔨
