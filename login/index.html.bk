@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Nexdom Login</title>
+    <link rel="stylesheet" href="/login_assets/css.css">
+</head>
+<body>
+    <div id="effect" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;"></div>
+
+    <div id="login-container">
+        <img src="/login_assets/logo-white.svg" alt="Nexdom" style="width: 200px; height: auto; margin-bottom: 20px;">
+        <input type="text" placeholder="Usuario" id="user" autocomplete="username">
+        <input type="password" placeholder="Contraseña" id="password" autocomplete="current-password">
+        <label class="login-remember">
+            <input type="checkbox" id="remember" checked>
+            Mantener la sesión iniciada
+        </label>
+        <button id="login-btn">Ingresar</button>
+        <p id="status" style="color:#fff;margin-top:16px;min-height:20px;font-size:14px;"></p>
+    </div>
+
+    <script src="/login_assets/polyfills.js"></script>
+    <script src="/login_assets/three.min.js"></script>
+    <script src="/login_assets/liquid-ether.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            LiquidEther.init(document.getElementById('effect'), {
+                autoDemo: true,
+                colors: ['#1a8c2d', '#25fd44', '#5eed39']
+            });
+
+            const userInput = document.getElementById('user');
+            const passInput = document.getElementById('password');
+            const rememberInput = document.getElementById('remember');
+            const loginBtn = document.getElementById('login-btn');
+            const statusLabel = document.getElementById('status');
+
+            const ingressCallback = 'https://cheko.nexdom.mx/api/hassio_ingress/9f83d400_nexdom_dashboard/';
+            const queryParams = new URLSearchParams(window.location.search);
+            const clientId = ingressCallback;
+            const redirectUri = ingressCallback;
+            const oauthState = queryParams.get('state');
+            let flowId = null;
+
+            async function ensureFlow() {
+                if (flowId) {
+                    return flowId;
+                }
+
+                statusLabel.textContent = 'Preparando autenticación...';
+
+                const payload = {
+                    client_id: clientId,
+                    redirect_uri: redirectUri,
+                    handler: ['homeassistant', null]
+                };
+
+                const res = await fetch('/auth/login_flow', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    throw new Error('No se pudo iniciar el flujo de autenticación');
+                }
+
+                const data = await res.json();
+                flowId = data.flow_id;
+                statusLabel.textContent = '';
+                return flowId;
+            }
+
+            async function doLogin() {
+                const username = userInput.value.trim();
+                const password = passInput.value;
+                const rememberSession = rememberInput.checked;
+
+                if (!username || !password) {
+                    statusLabel.textContent = 'Falta usuario o contraseña';
+                    return;
+                }
+
+                try {
+                    const currentFlowId = await ensureFlow();
+                    statusLabel.textContent = 'Validando credenciales...';
+
+                    const res = await fetch(`/auth/login_flow/${currentFlowId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            client_id: clientId,
+                            username,
+                            password
+                        })
+                    });
+
+                    if (!res.ok) {
+                        flowId = null;
+                        statusLabel.textContent = 'Credenciales inválidas o sesión expirada';
+                        return;
+                    }
+
+                    const payload = await res.json();
+
+                    if (payload.type !== 'create_entry' || !payload.result) {
+                        flowId = null;
+                        statusLabel.textContent = 'Respuesta inesperada del servidor';
+                        return;
+                    }
+
+                    const callbackUrl = new URL(ingressCallback);
+                    callbackUrl.searchParams.set('auth_callback', '1');
+                    callbackUrl.searchParams.set('code', payload.result);
+                    if (oauthState) {
+                        callbackUrl.searchParams.set('state', oauthState);
+                    }
+                    if (rememberSession) {
+                        callbackUrl.searchParams.set('store_token', '1');
+                    } else {
+                        callbackUrl.searchParams.delete('store_token');
+                    }
+
+                    statusLabel.textContent = 'Autenticado, redireccionando...';
+                    window.location.href = callbackUrl.toString();
+                } catch (err) {
+                    console.error(err);
+                    flowId = null;
+                    statusLabel.textContent = err.message || 'Error de conexión con el servidor';
+                }
+            }
+
+            loginBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                doLogin();
+            });
+
+            passInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    doLogin();
+                }
+            });
+
+            ensureFlow().catch((err) => {
+                console.error(err);
+                statusLabel.textContent = err.message;
+            });
+        });
+    </script>
+</body>
+</html>
